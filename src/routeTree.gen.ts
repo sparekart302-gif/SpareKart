@@ -11,6 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SellersRouteImport } from './routes/sellers'
+import { Route as SellerOnboardingRouteImport } from './routes/seller-onboarding'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as HelpRouteImport } from './routes/help'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CompatibilityRouteImport } from './routes/compatibility'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
@@ -27,6 +33,36 @@ const ShopRoute = ShopRouteImport.update({
 const SellersRoute = SellersRouteImport.update({
   id: '/sellers',
   path: '/sellers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SellerOnboardingRoute = SellerOnboardingRouteImport.update({
+  id: '/seller-onboarding',
+  path: '/seller-onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompatibilityRoute = CompatibilityRouteImport.update({
@@ -70,6 +106,12 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/compatibility': typeof CompatibilityRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/help': typeof HelpRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/search': typeof SearchRoute
+  '/seller-onboarding': typeof SellerOnboardingRoute
   '/sellers': typeof SellersRoute
   '/shop': typeof ShopRoute
   '/category/$slug': typeof CategorySlugRoute
@@ -81,6 +123,12 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/compatibility': typeof CompatibilityRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/help': typeof HelpRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/search': typeof SearchRoute
+  '/seller-onboarding': typeof SellerOnboardingRoute
   '/sellers': typeof SellersRoute
   '/shop': typeof ShopRoute
   '/category/$slug': typeof CategorySlugRoute
@@ -93,6 +141,12 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/compatibility': typeof CompatibilityRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/help': typeof HelpRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/search': typeof SearchRoute
+  '/seller-onboarding': typeof SellerOnboardingRoute
   '/sellers': typeof SellersRoute
   '/shop': typeof ShopRoute
   '/category/$slug': typeof CategorySlugRoute
@@ -106,6 +160,12 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/compatibility'
+    | '/forgot-password'
+    | '/help'
+    | '/login'
+    | '/register'
+    | '/search'
+    | '/seller-onboarding'
     | '/sellers'
     | '/shop'
     | '/category/$slug'
@@ -117,6 +177,12 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/compatibility'
+    | '/forgot-password'
+    | '/help'
+    | '/login'
+    | '/register'
+    | '/search'
+    | '/seller-onboarding'
     | '/sellers'
     | '/shop'
     | '/category/$slug'
@@ -128,6 +194,12 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/compatibility'
+    | '/forgot-password'
+    | '/help'
+    | '/login'
+    | '/register'
+    | '/search'
+    | '/seller-onboarding'
     | '/sellers'
     | '/shop'
     | '/category/$slug'
@@ -140,6 +212,12 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   CompatibilityRoute: typeof CompatibilityRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  HelpRoute: typeof HelpRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  SearchRoute: typeof SearchRoute
+  SellerOnboardingRoute: typeof SellerOnboardingRoute
   SellersRoute: typeof SellersRoute
   ShopRoute: typeof ShopRoute
   CategorySlugRoute: typeof CategorySlugRoute
@@ -161,6 +239,48 @@ declare module '@tanstack/react-router' {
       path: '/sellers'
       fullPath: '/sellers'
       preLoaderRoute: typeof SellersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seller-onboarding': {
+      id: '/seller-onboarding'
+      path: '/seller-onboarding'
+      fullPath: '/seller-onboarding'
+      preLoaderRoute: typeof SellerOnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compatibility': {
@@ -220,6 +340,12 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   CompatibilityRoute: CompatibilityRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  HelpRoute: HelpRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  SearchRoute: SearchRoute,
+  SellerOnboardingRoute: SellerOnboardingRoute,
   SellersRoute: SellersRoute,
   ShopRoute: ShopRoute,
   CategorySlugRoute: CategorySlugRoute,
