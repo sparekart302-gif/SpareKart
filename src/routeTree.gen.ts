@@ -9,38 +9,82 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ShopRouteImport } from './routes/shop'
+import { Route as CompatibilityRouteImport } from './routes/compatibility'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 
+const ShopRoute = ShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompatibilityRoute = CompatibilityRouteImport.update({
+  id: '/compatibility',
+  path: '/compatibility',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CategorySlugRoute = CategorySlugRouteImport.update({
+  id: '/category/$slug',
+  path: '/category/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/compatibility': typeof CompatibilityRoute
+  '/shop': typeof ShopRoute
+  '/category/$slug': typeof CategorySlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/compatibility': typeof CompatibilityRoute
+  '/shop': typeof ShopRoute
+  '/category/$slug': typeof CategorySlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/compatibility': typeof CompatibilityRoute
+  '/shop': typeof ShopRoute
+  '/category/$slug': typeof CategorySlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/compatibility' | '/shop' | '/category/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/compatibility' | '/shop' | '/category/$slug'
+  id: '__root__' | '/' | '/compatibility' | '/shop' | '/category/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CompatibilityRoute: typeof CompatibilityRoute
+  ShopRoute: typeof ShopRoute
+  CategorySlugRoute: typeof CategorySlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/shop': {
+      id: '/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof ShopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compatibility': {
+      id: '/compatibility'
+      path: '/compatibility'
+      fullPath: '/compatibility'
+      preLoaderRoute: typeof CompatibilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,12 +92,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/category/$slug': {
+      id: '/category/$slug'
+      path: '/category/$slug'
+      fullPath: '/category/$slug'
+      preLoaderRoute: typeof CategorySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CompatibilityRoute: CompatibilityRoute,
+  ShopRoute: ShopRoute,
+  CategorySlugRoute: CategorySlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
