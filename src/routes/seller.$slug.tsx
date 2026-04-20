@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Star, BadgeCheck, MapPin, Calendar, Package, Clock, Truck, RotateCcw, ShieldCheck, MessageCircle } from "lucide-react";
 import { PageLayout, Breadcrumbs } from "@/components/marketplace/PageLayout";
 import { ProductCard } from "@/components/marketplace/ProductCard";
-import { getSeller, getProductsBySeller, storeReviews, sellers, categories } from "@/data/marketplace";
+import { getProductsBySeller, storeReviews, sellers, categories, type Seller } from "@/data/marketplace";
 
 export const Route = createFileRoute("/seller/$slug")({
   loader: ({ params }) => {
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/seller/$slug")({
 });
 
 function SellerPage() {
-  const { seller } = Route.useLoaderData();
+  const { seller } = Route.useLoaderData() as { seller: Seller };
   const items = getProductsBySeller(seller.slug);
   const reviews = storeReviews.filter((r) => r.sellerSlug === seller.slug);
   const [tab, setTab] = useState<"products" | "reviews" | "policies">("products");

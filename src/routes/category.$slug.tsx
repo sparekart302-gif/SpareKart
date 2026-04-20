@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { PageLayout, Breadcrumbs } from "@/components/marketplace/PageLayout";
 import { ProductCard } from "@/components/marketplace/ProductCard";
-import { categories, getProductsByCategory, brands } from "@/data/marketplace";
+import { categories, getProductsByCategory, brands, type Product, type Category } from "@/data/marketplace";
 
 export const Route = createFileRoute("/category/$slug")({
   loader: ({ params }) => {
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/category/$slug")({
 });
 
 function CategoryPage() {
-  const { category, products: items } = Route.useLoaderData();
+  const { category, products: items } = Route.useLoaderData() as { category: Category; products: Product[] };
 
   return (
     <PageLayout>

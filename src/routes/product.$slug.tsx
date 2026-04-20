@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Star, BadgeCheck, Heart, Share2, ShoppingCart, Zap, Truck, RotateCcw, ShieldCheck, Minus, Plus, MessageCircle, Clock } from "lucide-react";
 import { PageLayout, Breadcrumbs } from "@/components/marketplace/PageLayout";
 import { ProductCard } from "@/components/marketplace/ProductCard";
-import { getProduct, getSeller, products, productReviews, storeReviews, formatPKR } from "@/data/marketplace";
+import { getProduct, getSeller, products, productReviews, storeReviews, formatPKR, type Product, type Seller } from "@/data/marketplace";
 
 export const Route = createFileRoute("/product/$slug")({
   loader: ({ params }) => {
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/product/$slug")({
 });
 
 function ProductPage() {
-  const { product, seller } = Route.useLoaderData();
+  const { product, seller } = Route.useLoaderData() as { product: Product; seller: Seller };
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState<"desc" | "specs" | "compat" | "ship">("desc");
