@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: sparekart
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.16.0
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
+      - key: SPAREKART_RUNTIME_DIR
+        value: /opt/render/project/runtime/sparekart
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB_NAME
+        value: sparekart
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: RESEND_FROM_NAME
+        value: SpareKart

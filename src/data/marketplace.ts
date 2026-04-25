@@ -27,6 +27,12 @@ export type Seller = {
   responseTime: string;
   description: string;
   policies: { returns: string; shipping: string; warranty: string };
+  socialLinks?: {
+    website?: string;
+    facebook?: string;
+    instagram?: string;
+    whatsapp?: string;
+  };
 };
 
 export type Product = {
@@ -63,6 +69,7 @@ export type ProductReview = {
   quality: number;
   value: number;
   verified: boolean;
+  imageUrls?: string[];
 };
 
 export type StoreReview = {
@@ -76,6 +83,7 @@ export type StoreReview = {
   service: number;
   delivery: number;
   communication: number;
+  imageUrls?: string[];
 };
 
 export const categories: Category[] = [

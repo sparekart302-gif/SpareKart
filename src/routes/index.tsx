@@ -1,233 +1,607 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+"use client";
+
 import { motion } from "framer-motion";
-import { Search, ArrowRight, ShieldCheck, Banknote, RotateCcw, BadgeCheck, Sparkles, TrendingUp, ChevronRight, Disc, Cog, Activity, Lightbulb, Zap, Car, Armchair, CircleDot, Store } from "lucide-react";
+import {
+  ArrowRight,
+  TrendingUp,
+  ChevronRight,
+  Store,
+  Wrench,
+} from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
+import { Link } from "@/components/navigation/Link";
 import { PageLayout } from "@/components/marketplace/PageLayout";
 import { ProductCard } from "@/components/marketplace/ProductCard";
 import { SellerCard } from "@/components/marketplace/SellerCard";
-import { categories, products, sellers, brands, vehicles, trustPillars } from "@/data/marketplace";
-import { useState } from "react";
+import {
+  type CarouselApi,
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import {
+  categories,
+  products,
+  sellers,
+  brands,
+  vehicles,
+} from "@/data/marketplace";
 
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "SpareKart — Pakistan's Premium Auto Parts Marketplace" },
-      { name: "description", content: "Shop genuine car spare parts from verified sellers across Pakistan. Brakes, engines, lighting, suspension and more — with COD, fitment guarantee and easy returns." },
-      { property: "og:title", content: "SpareKart — Pakistan's Premium Auto Parts Marketplace" },
-      { property: "og:description", content: "Genuine car parts from verified Pakistani sellers. COD nationwide. Fitment guarantee." },
-    ],
-  }),
-  component: Home,
-});
+const heroSlides = [
+  {
+    eyebrow: "Brake essentials",
+    title: "Premium braking parts from trusted marketplace sellers",
+    description: "Pads, discs, calipers, and sensors ready for fast nationwide dispatch.",
+    primaryCta: "Shop brakes",
+    primaryHref: "/category/brakes",
+    secondaryCta: "Browse sellers",
+    secondaryHref: "/sellers",
+    image: products[2].images[0],
+  },
+  {
+    eyebrow: "Engine care",
+    title: "Filters, oils, and tune-up parts that fit with confidence",
+    description: "Cleaner discovery for routine servicing, urgent replacements, and workshop demand.",
+    primaryCta: "Explore engine parts",
+    primaryHref: "/category/engine",
+    secondaryCta: "Find exact fit",
+    secondaryHref: "/compatibility",
+    image: products[7].images[0],
+  },
+  {
+    eyebrow: "Lighting upgrades",
+    title: "Headlights and electrical parts with a more professional buying flow",
+    description: "Compare verified stock, secure COD options, and clear product details in one place.",
+    primaryCta: "Shop lighting",
+    primaryHref: "/category/lighting",
+    secondaryCta: "Shop all parts",
+    secondaryHref: "/shop",
+    image: products[11].images[0],
+  },
+] as const;
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  Disc, Cog, Activity, Lightbulb, Zap, Car, Armchair, CircleDot, ShieldCheck, Banknote, RotateCcw, BadgeCheck,
-};
+const heroPromoCards = [
+  {
+    label: "Trusted sellers",
+    title: "Browse verified stores",
+    href: "/sellers",
+    image: sellers[0].banner,
+  },
+  {
+    label: "Workshop picks",
+    title: "Fast-moving service essentials",
+    href: "/category/engine",
+    image: products[7].images[1],
+  },
+] as const;
 
-function Home() {
+const desktopLeadCategory =
+  categories.find((category) => category.slug === "engine") ?? categories[0];
+const desktopSecondaryCategories = categories.filter(
+  (category) => category.slug !== desktopLeadCategory.slug,
+);
+
+function getCategoryThumbnail(categorySlug: string) {
+  return (
+    products.find((product) => product.category === categorySlug)?.images[0] ?? sellers[0].logo
+  );
+}
+
+export default function HomePage() {
   const [vBrand, setVBrand] = useState(vehicles[0].brand);
   const [vModel, setVModel] = useState(vehicles[0].models[0].name);
   const [vYear, setVYear] = useState<number>(vehicles[0].models[0].years[0]);
   const selectedBrand = vehicles.find((v) => v.brand === vBrand)!;
-  const selectedModel = selectedBrand.models.find((m) => m.name === vModel) ?? selectedBrand.models[0];
+  const selectedModel =
+    selectedBrand.models.find((m) => m.name === vModel) ?? selectedBrand.models[0];
 
   return (
     <PageLayout>
-      {/* Hero */}
       <section className="relative overflow-hidden gradient-hero text-primary-foreground">
-        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, oklch(0.72 0.19 50 / 0.4), transparent 40%), radial-gradient(circle at 80% 30%, oklch(0.55 0.18 290 / 0.3), transparent 40%)" }} />
-        <div className="container mx-auto px-4 py-16 lg:py-24 relative">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/20 text-xs font-semibold mb-6">
-                <Sparkles className="h-3.5 w-3.5 text-accent" /> Pakistan's #1 multi-vendor auto parts marketplace
-              </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.05] tracking-tight text-balance">
-                Genuine car parts.<br />
-                <span className="bg-gradient-to-r from-accent to-orange-300 bg-clip-text text-transparent">Verified sellers.</span><br />
-                Delivered nationwide.
-              </h1>
-              <p className="mt-6 text-lg opacity-85 max-w-xl text-balance">
-                Shop from thousands of OEM and performance parts across 8+ verified stores. Cash on delivery, fitment guarantee, and 7-day easy returns.
-              </p>
-
-              <form onSubmit={(e) => e.preventDefault()} className="mt-8 flex items-center bg-card text-foreground rounded-2xl shadow-[var(--shadow-premium)] p-2 max-w-xl">
-                <Search className="h-5 w-5 ml-3 text-muted-foreground" />
-                <input placeholder="Search parts, brands, or part numbers…" className="flex-1 bg-transparent px-3 py-3 text-sm focus:outline-none" />
-                <button className="px-6 h-12 rounded-xl gradient-accent text-primary font-bold text-sm hover:opacity-95 transition-opacity">Search</button>
-              </form>
-
-              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm opacity-90">
-                <div className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-accent" /> 8+ verified sellers</div>
-                <div className="flex items-center gap-1.5"><Banknote className="h-4 w-4 text-accent" /> COD all over Pakistan</div>
-                <div className="flex items-center gap-1.5"><BadgeCheck className="h-4 w-4 text-accent" /> Fitment guaranteed</div>
-              </div>
-            </motion.div>
-
-            {/* Compatibility selector card */}
-            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.15 }} className="lg:justify-self-end w-full max-w-md">
-              <div className="bg-card text-foreground rounded-3xl p-6 shadow-[var(--shadow-premium)]">
-                <div className="flex items-center justify-between mb-5">
-                  <div>
-                    <div className="text-[11px] uppercase tracking-widest text-accent font-bold">Find Parts For Your Car</div>
-                    <h3 className="text-xl font-bold mt-0.5">Garage selector</h3>
-                  </div>
-                  <div className="h-10 w-10 rounded-xl bg-accent-soft grid place-items-center"><Car className="h-5 w-5 text-accent" /></div>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground">Brand</label>
-                    <select value={vBrand} onChange={(e) => { setVBrand(e.target.value); const b = vehicles.find(v => v.brand === e.target.value)!; setVModel(b.models[0].name); setVYear(b.models[0].years[0]); }} className="w-full mt-1 h-11 rounded-lg border border-border bg-card px-3 text-sm font-medium focus:border-accent focus:outline-none">
-                      {vehicles.map((v) => <option key={v.brand}>{v.brand}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground">Model</label>
-                    <select value={vModel} onChange={(e) => { setVModel(e.target.value); const m = selectedBrand.models.find(x => x.name === e.target.value)!; setVYear(m.years[0]); }} className="w-full mt-1 h-11 rounded-lg border border-border bg-card px-3 text-sm font-medium focus:border-accent focus:outline-none">
-                      {selectedBrand.models.map((m) => <option key={m.name}>{m.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground">Year</label>
-                    <select value={vYear} onChange={(e) => setVYear(Number(e.target.value))} className="w-full mt-1 h-11 rounded-lg border border-border bg-card px-3 text-sm font-medium focus:border-accent focus:outline-none">
-                      {selectedModel.years.map((y) => <option key={y}>{y}</option>)}
-                    </select>
-                  </div>
-                  <Link to="/compatibility" className="mt-2 h-12 rounded-xl gradient-accent text-primary font-bold text-sm flex items-center justify-center gap-2 hover:opacity-95 transition-opacity">
-                    Find Parts <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
+        <div
+          className="absolute inset-0 opacity-25"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 18% 24%, oklch(0.72 0.19 50 / 0.34), transparent 34%), radial-gradient(circle at 84% 16%, oklch(0.54 0.18 292 / 0.24), transparent 30%)",
+          }}
+        />
+        <div className="container relative mx-auto px-4 py-4 sm:py-5 lg:py-7">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,4fr)_minmax(260px,1fr)] xl:gap-5">
+            <HeroSlider />
+            <HeroPromoRail />
           </div>
         </div>
       </section>
 
-      {/* Trust pillars */}
-      <section className="border-y border-border bg-surface">
-        <div className="container mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
-          {trustPillars.map((p) => {
-            const Icon = iconMap[p.icon];
-            return (
-              <div key={p.title} className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-accent-soft grid place-items-center shrink-0">
-                  <Icon className="h-6 w-6 text-accent" />
-                </div>
-                <div>
-                  <div className="font-bold text-sm">{p.title}</div>
-                  <div className="text-xs text-muted-foreground">{p.description}</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Categories */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="flex items-end justify-between mb-8">
+      <section className="container mx-auto px-4 py-10">
+        <div className="grid gap-5 rounded-[28px] bg-surface p-4 shadow-[var(--shadow-premium)] sm:gap-6 sm:p-5 md:p-7 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:gap-8">
           <div>
-            <div className="text-xs uppercase tracking-widest text-accent font-bold">Shop by category</div>
-            <h2 className="text-3xl md:text-4xl font-black mt-1 tracking-tight">Browse what you need</h2>
+            <div className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+              <Wrench className="h-3.5 w-3.5" /> Vehicle Finder
+            </div>
+            <h2 className="mt-3 text-[1.7rem] font-black tracking-tight text-balance sm:mt-4 sm:text-3xl md:text-4xl">
+              Find the exact fit for your car
+            </h2>
+            <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground sm:mt-3">
+              Keep vehicle selection separate from the hero and jump straight to parts matched to
+              your make, model, and year.
+            </p>
           </div>
-          <Link to="/shop" className="text-sm font-semibold text-accent hover:text-accent-hover flex items-center gap-1">View all <ChevronRight className="h-4 w-4" /></Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-          {categories.map((c, i) => {
-            const Icon = iconMap[c.icon];
-            return (
-              <motion.div key={c.slug} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.04 }}>
-                <Link to="/category/$slug" params={{ slug: c.slug }} className="group block p-5 rounded-2xl bg-card border border-border hover-lift text-center">
-                  <div className="h-14 w-14 mx-auto rounded-2xl gradient-surface border border-border grid place-items-center group-hover:bg-accent group-hover:text-primary group-hover:border-accent transition-all">
-                    <Icon className="h-6 w-6 text-primary group-hover:text-primary" />
-                  </div>
-                  <div className="mt-3 text-sm font-bold">{c.name}</div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">{c.productCount} items</div>
-                </Link>
-              </motion.div>
-            );
-          })}
-        </div>
-      </section>
 
-      {/* Trending products */}
-      <section className="container mx-auto px-4 py-8">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <div className="text-xs uppercase tracking-widest text-accent font-bold flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" /> Trending right now</div>
-            <h2 className="text-3xl md:text-4xl font-black mt-1 tracking-tight">Best-selling parts this week</h2>
-          </div>
-          <Link to="/shop" className="text-sm font-semibold text-accent hover:text-accent-hover flex items-center gap-1">Shop all <ChevronRight className="h-4 w-4" /></Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {products.slice(0, 10).map((p) => <ProductCard key={p.id} product={p} />)}
-        </div>
-      </section>
-
-      {/* Promo banner */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="rounded-3xl gradient-hero text-primary-foreground p-10 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-30" style={{ backgroundImage: "radial-gradient(circle at 80% 50%, oklch(0.72 0.19 50 / 0.5), transparent 50%)" }} />
-            <div className="relative">
-              <div className="text-xs uppercase tracking-widest text-accent font-bold">Service Specials</div>
-              <h3 className="text-3xl font-black mt-2 max-w-xs">Up to 30% off engine oils & filters</h3>
-              <p className="mt-3 text-sm opacity-80 max-w-sm">Genuine Mobil 1, Shell, Bosch and Denso. While stocks last.</p>
-              <Link to="/category/$slug" params={{ slug: "engine" }} className="mt-6 inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-accent text-primary font-bold text-sm hover:opacity-90 transition-opacity">Shop deals <ArrowRight className="h-4 w-4" /></Link>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground">Brand</label>
+              <select
+                value={vBrand}
+                onChange={(e) => {
+                  setVBrand(e.target.value);
+                  const brand = vehicles.find((v) => v.brand === e.target.value)!;
+                  setVModel(brand.models[0].name);
+                  setVYear(brand.models[0].years[0]);
+                }}
+                className="mt-1 h-11 w-full rounded-xl bg-card px-3 text-sm font-medium shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
+              >
+                {vehicles.map((vehicle) => (
+                  <option key={vehicle.brand}>{vehicle.brand}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground">Model</label>
+              <select
+                value={vModel}
+                onChange={(e) => {
+                  setVModel(e.target.value);
+                  const model = selectedBrand.models.find((item) => item.name === e.target.value)!;
+                  setVYear(model.years[0]);
+                }}
+                className="mt-1 h-11 w-full rounded-xl bg-card px-3 text-sm font-medium shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
+              >
+                {selectedBrand.models.map((model) => (
+                  <option key={model.name}>{model.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground">Year</label>
+              <select
+                value={vYear}
+                onChange={(e) => setVYear(Number(e.target.value))}
+                className="mt-1 h-11 w-full rounded-xl bg-card px-3 text-sm font-medium shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
+              >
+                {selectedModel.years.map((year) => (
+                  <option key={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col justify-end">
+              <Link
+                to="/compatibility"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl gradient-accent text-sm font-bold text-primary hover:opacity-95 transition-opacity"
+              >
+                Find Parts <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
-          <div className="rounded-3xl bg-accent-soft border border-accent/20 p-10 relative overflow-hidden">
-            <div className="text-xs uppercase tracking-widest text-accent font-bold">For Sellers</div>
-            <h3 className="text-3xl font-black mt-2 text-primary max-w-xs">Open your store on SpareKart</h3>
-            <p className="mt-3 text-sm text-muted-foreground max-w-sm">Reach thousands of buyers across Pakistan. Zero monthly fee — pay only when you sell.</p>
-            <Link to="/seller-onboarding" className="mt-6 inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary-hover transition-colors">
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 py-8 sm:py-10 md:py-12">
+        <div className="mb-5 flex items-end justify-between gap-3 sm:mb-8">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-widest text-accent">
+              Shop by category
+            </div>
+            <h2 className="mt-1 text-[1.7rem] font-black tracking-tight sm:text-3xl md:text-4xl">
+              Browse faster, not longer
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Quick access to the most in-demand part groups without taking too much vertical space.
+            </p>
+          </div>
+          <Link
+            to="/shop"
+            className="flex items-center gap-1 text-sm font-semibold text-accent hover:text-accent-hover"
+          >
+            View all <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
+
+        <MobileCategorySlider />
+
+        <div className="hidden lg:grid lg:auto-rows-[132px] lg:grid-cols-4 lg:gap-4 xl:auto-rows-[144px]">
+          <CategoryFeatureCard category={desktopLeadCategory} featured />
+          {desktopSecondaryCategories.map((category) => (
+            <CategoryFeatureCard key={category.slug} category={category} />
+          ))}
+        </div>
+      </section>
+
+      <ProductGridSection
+        eyebrow={
+          <>
+            <TrendingUp className="h-3.5 w-3.5" /> Trending right now
+          </>
+        }
+        title="Best-selling parts this week"
+        description="Smaller marketplace-style product tiles, with two products per row on mobile for faster scanning."
+        linkLabel="Shop all"
+        items={products.slice(0, 10)}
+      />
+
+      <section className="container mx-auto px-4 py-10 sm:py-12 md:py-16">
+        <div className="grid gap-4 md:grid-cols-2 md:gap-6">
+          <div className="relative overflow-hidden rounded-[26px] gradient-hero p-6 text-primary-foreground sm:rounded-3xl sm:p-8 md:p-10">
+            <div
+              className="absolute inset-0 opacity-30"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 80% 50%, oklch(0.72 0.19 50 / 0.5), transparent 50%)",
+              }}
+            />
+            <div className="relative">
+              <div className="text-xs font-bold uppercase tracking-widest text-accent">
+                Service Specials
+              </div>
+              <h3 className="mt-2 max-w-xs text-2xl font-black sm:text-3xl">Up to 30% off engine oils & filters</h3>
+              <p className="mt-3 max-w-sm text-sm opacity-80">
+                Genuine Mobil 1, Shell, Bosch and Denso. While stocks last.
+              </p>
+              <Link
+                to="/category/$slug"
+                params={{ slug: "engine" }}
+                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-accent px-5 text-sm font-bold text-primary hover:opacity-90 transition-opacity"
+              >
+                Shop deals <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+          <div className="relative overflow-hidden rounded-[26px] bg-accent-soft/85 p-6 shadow-[var(--shadow-soft)] sm:rounded-3xl sm:p-8 md:p-10">
+            <div className="text-xs font-bold uppercase tracking-widest text-accent">For Sellers</div>
+            <h3 className="mt-2 max-w-xs text-2xl font-black text-primary sm:text-3xl">
+              Open your store on SpareKart
+            </h3>
+            <p className="mt-3 max-w-sm text-sm text-muted-foreground">
+              Reach thousands of buyers across Pakistan. Zero monthly fee — pay only when you sell.
+            </p>
+            <Link
+              to="/seller-onboarding"
+              className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary-hover transition-colors"
+            >
               <Store className="h-4 w-4" /> Become a seller
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Top sellers */}
       <section className="container mx-auto px-4 py-8">
-        <div className="flex items-end justify-between mb-8">
+        <div className="mb-5 flex items-end justify-between gap-3 sm:mb-8">
           <div>
-            <div className="text-xs uppercase tracking-widest text-accent font-bold">Top verified sellers</div>
-            <h2 className="text-3xl md:text-4xl font-black mt-1 tracking-tight">Trusted by thousands</h2>
+            <div className="text-xs font-bold uppercase tracking-widest text-accent">
+              Top verified sellers
+            </div>
+            <h2 className="mt-1 text-[1.7rem] font-black tracking-tight sm:text-3xl md:text-4xl">
+              Trusted by thousands
+            </h2>
           </div>
-          <Link to="/sellers" className="text-sm font-semibold text-accent hover:text-accent-hover flex items-center gap-1">All sellers <ChevronRight className="h-4 w-4" /></Link>
+          <Link
+            to="/sellers"
+            className="flex items-center gap-1 text-sm font-semibold text-accent hover:text-accent-hover"
+          >
+            All sellers <ChevronRight className="h-4 w-4" />
+          </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {sellers.slice(0, 4).map((s) => <SellerCard key={s.slug} seller={s} />)}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+          {sellers.slice(0, 4).map((seller) => (
+            <SellerCard key={seller.slug} seller={seller} />
+          ))}
         </div>
       </section>
 
-      {/* Brands strip */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="text-center mb-8">
-          <div className="text-xs uppercase tracking-widest text-accent font-bold">Authentic brands</div>
-          <h2 className="text-3xl md:text-4xl font-black mt-1 tracking-tight">Shop the brands you trust</h2>
+      <section className="container mx-auto px-4 py-10 sm:py-12 md:py-16">
+        <div className="mb-5 text-center sm:mb-8">
+          <div className="text-xs font-bold uppercase tracking-widest text-accent">
+            Authentic brands
+          </div>
+          <h2 className="mt-1 text-[1.7rem] font-black tracking-tight sm:text-3xl md:text-4xl">
+            Shop the brands you trust
+          </h2>
         </div>
-        <div className="flex flex-wrap justify-center gap-3">
-          {brands.map((b) => (
-            <div key={b.slug} className="px-6 h-14 rounded-xl bg-card border border-border flex items-center justify-center font-bold text-foreground hover:border-accent hover:text-accent transition-colors cursor-pointer">
-              {b.name}
+        <div className="flex flex-wrap justify-center gap-2.5 sm:gap-3">
+          {brands.map((brand) => (
+            <div
+              key={brand.slug}
+              className="flex h-11 cursor-pointer items-center justify-center rounded-xl bg-card px-4 text-sm font-bold text-foreground shadow-[var(--shadow-soft)] transition-colors hover:text-accent sm:h-14 sm:px-6 sm:text-base"
+            >
+              {brand.name}
             </div>
           ))}
         </div>
       </section>
 
-      {/* New arrivals */}
-      <section className="container mx-auto px-4 py-8">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <div className="text-xs uppercase tracking-widest text-accent font-bold">Just landed</div>
-            <h2 className="text-3xl md:text-4xl font-black mt-1 tracking-tight">New arrivals</h2>
-          </div>
-          <Link to="/shop" className="text-sm font-semibold text-accent hover:text-accent-hover flex items-center gap-1">Browse all <ChevronRight className="h-4 w-4" /></Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {products.slice(15, 25).map((p) => <ProductCard key={p.id} product={p} />)}
-        </div>
-      </section>
+      <ProductGridSection
+        eyebrow="Just landed"
+        title="New arrivals"
+        description="Fresh inventory from trusted stores in a denser, two-per-row mobile layout that feels cleaner and more professional."
+        linkLabel="Browse all"
+        items={products.slice(15, 25)}
+      />
     </PageLayout>
+  );
+}
+
+function HeroSlider() {
+  const [heroApi, setHeroApi] = useState<CarouselApi>();
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    if (!heroApi) {
+      return;
+    }
+
+    const syncActiveSlide = () => {
+      setActiveSlide(heroApi.selectedScrollSnap());
+    };
+
+    syncActiveSlide();
+    heroApi.on("select", syncActiveSlide);
+    heroApi.on("reInit", syncActiveSlide);
+
+    const autoplayId = window.setInterval(() => {
+      heroApi.scrollNext();
+    }, 5000);
+
+    return () => {
+      heroApi.off("select", syncActiveSlide);
+      heroApi.off("reInit", syncActiveSlide);
+      window.clearInterval(autoplayId);
+    };
+  }, [heroApi]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="min-w-0"
+    >
+      <Carousel
+        setApi={setHeroApi}
+        opts={{ align: "start", loop: true }}
+        className="relative"
+      >
+        <CarouselContent className="-ml-0">
+          {heroSlides.map((slide, index) => (
+            <CarouselItem key={slide.title} className="pl-0">
+              <div className="group relative min-h-[320px] overflow-hidden rounded-[30px] shadow-[var(--shadow-premium)] sm:min-h-[390px] sm:rounded-[34px] lg:min-h-[430px] xl:min-h-[470px]">
+                <OptimizedImage
+                  src={slide.image}
+                  alt={slide.title}
+                  fill
+                  priority={index === 0}
+                  sizes="(max-width: 1024px) 100vw, 80vw"
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/88 via-primary/42 to-primary/10" />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/82 via-primary/16 to-transparent" />
+
+                <div className="relative flex min-h-[320px] h-full items-end p-5 sm:min-h-[390px] sm:p-7 lg:min-h-[430px] lg:p-8 xl:min-h-[470px] xl:p-10">
+                  <div className="max-w-2xl">
+                    <div className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-accent backdrop-blur sm:text-[11px]">
+                      {slide.eyebrow}
+                    </div>
+                    <h1 className="mt-4 max-w-2xl text-[1.9rem] font-black leading-[1.02] tracking-tight text-balance text-white sm:text-[2.5rem] lg:text-[3.2rem] xl:text-[3.55rem]">
+                      {slide.title}
+                    </h1>
+                    <p className="mt-3 max-w-xl text-sm leading-6 text-primary-foreground/82 sm:text-base sm:leading-7">
+                      {slide.description}
+                    </p>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <Link
+                        href={slide.primaryHref}
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-bold text-primary transition-opacity hover:opacity-90"
+                      >
+                        {slide.primaryCta} <ArrowRight className="h-4 w-4" />
+                      </Link>
+                      <Link
+                        href={slide.secondaryHref}
+                        className="inline-flex h-11 items-center justify-center rounded-xl border border-white/15 bg-white/10 px-5 text-sm font-semibold text-primary-foreground backdrop-blur transition-colors hover:bg-white/15"
+                      >
+                        {slide.secondaryCta}
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+
+        <CarouselPrevious className="left-4 top-auto bottom-4 translate-y-0 border-white/20 bg-white/88 text-primary hover:bg-white disabled:opacity-50 xl:left-6 xl:bottom-6" />
+        <CarouselNext className="right-4 top-auto bottom-4 translate-y-0 border-white/20 bg-white/88 text-primary hover:bg-white disabled:opacity-50 xl:right-6 xl:bottom-6" />
+      </Carousel>
+
+      <div className="mt-3 flex items-center justify-between gap-3 px-1">
+        <div className="flex items-center gap-2">
+          {heroSlides.map((slide, index) => (
+            <button
+              key={slide.title}
+              type="button"
+              aria-label={`Go to slide ${index + 1}`}
+              onClick={() => heroApi?.scrollTo(index)}
+              className={`h-2.5 rounded-full transition-all ${
+                activeSlide === index
+                  ? "w-8 bg-accent"
+                  : "w-2.5 bg-white/35 hover:bg-white/55"
+              }`}
+            />
+          ))}
+        </div>
+
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/72">
+          {String(activeSlide + 1).padStart(2, "0")} / {String(heroSlides.length).padStart(2, "0")}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function HeroPromoRail() {
+  return (
+    <div className="hidden lg:grid lg:grid-rows-2 lg:gap-4">
+      {heroPromoCards.map((card) => (
+        <Link
+          key={card.title}
+          href={card.href}
+          className="group relative min-h-[208px] overflow-hidden rounded-[28px] shadow-[var(--shadow-premium)]"
+        >
+          <OptimizedImage
+            src={card.image}
+            alt={card.title}
+            fill
+            sizes="20vw"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-primary/86 via-primary/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/40 via-transparent to-transparent" />
+          <div className="relative flex h-full flex-col justify-end p-5">
+            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent">
+              {card.label}
+            </div>
+            <div className="mt-2 text-lg font-black leading-tight text-white">
+              {card.title}
+            </div>
+            <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-foreground">
+              Explore <ArrowRight className="h-4 w-4" />
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function CategoryFeatureCard({
+  category,
+  featured = false,
+}: {
+  category: (typeof categories)[number];
+  featured?: boolean;
+}) {
+  return (
+    <Link
+      to="/category/$slug"
+      params={{ slug: category.slug }}
+      className={`group relative overflow-hidden rounded-[24px] shadow-[var(--shadow-soft)] transition-transform hover:-translate-y-0.5 hover:shadow-[var(--shadow-elevated)] ${
+        featured
+          ? "min-h-[280px] lg:col-span-2 lg:row-span-2"
+          : "min-h-[132px] xl:min-h-[144px]"
+      }`}
+    >
+      <OptimizedImage
+        src={getCategoryThumbnail(category.slug)}
+        alt={category.name}
+        fill
+        sizes={featured ? "(max-width: 1024px) 100vw, 40vw" : "(max-width: 1024px) 50vw, 20vw"}
+        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-primary/84 via-primary/28 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/36 via-transparent to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+        <div
+          className={`font-black tracking-tight text-white ${
+            featured ? "text-[1.6rem] sm:text-[1.9rem]" : "text-base xl:text-lg"
+          }`}
+        >
+          {category.name}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function MobileCategorySlider() {
+  return (
+    <div className="lg:hidden">
+      <div className="overflow-x-auto pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex min-w-max gap-2.5 pr-4">
+          {categories.map((category, index) => (
+            <motion.div
+              key={category.slug}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.04 }}
+              className="w-[122px] flex-none snap-start sm:w-[138px]"
+            >
+              <Link
+                to="/category/$slug"
+                params={{ slug: category.slug }}
+                className="group block overflow-hidden rounded-[20px] bg-card shadow-[var(--shadow-soft)] transition-transform hover:-translate-y-0.5 hover:shadow-[var(--shadow-elevated)]"
+              >
+                <div className="relative aspect-square overflow-hidden">
+                  <OptimizedImage
+                    src={getCategoryThumbnail(category.slug)}
+                    alt={category.name}
+                    fill
+                    sizes="(max-width: 640px) 122px, 138px"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/22 via-transparent to-transparent" />
+                </div>
+                <div className="px-2.5 py-2">
+                  <div className="truncate text-xs font-bold leading-4 text-foreground sm:text-sm">
+                    {category.name}
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductGridSection({
+  eyebrow,
+  title,
+  description,
+  linkLabel,
+  items,
+}: {
+  eyebrow: ReactNode;
+  title: string;
+  description: string;
+  linkLabel: string;
+  items: typeof products;
+}) {
+  return (
+    <section className="container mx-auto px-4 py-6 md:py-8">
+      <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-accent">
+            {eyebrow}
+          </div>
+          <h2 className="mt-1 text-[1.7rem] font-black tracking-tight sm:text-3xl md:text-4xl">{title}</h2>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{description}</p>
+        </div>
+        <Link
+          to="/shop"
+          className="flex items-center gap-1 text-sm font-semibold text-accent hover:text-accent-hover"
+        >
+          {linkLabel} <ChevronRight className="h-4 w-4" />
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4 xl:grid-cols-5">
+        {items.map((product) => (
+          <ProductCard key={product.id} product={product} compact />
+        ))}
+      </div>
+    </section>
   );
 }

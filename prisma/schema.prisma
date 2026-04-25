@@ -1,0 +1,406 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AppRole {
+  CUSTOMER
+  SELLER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum PaymentMethod {
+  COD
+  BANK_TRANSFER
+  EASYPAISA
+  JAZZCASH
+}
+
+enum OrderStatus {
+  PENDING
+  AWAITING_PAYMENT_PROOF
+  AWAITING_PAYMENT_VERIFICATION
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELED
+  RETURNED
+}
+
+enum PaymentStatus {
+  PENDING
+  REQUIRES_PROOF
+  PROOF_SUBMITTED
+  UNDER_REVIEW
+  PAID
+  REJECTED
+  FAILED
+  REFUNDED
+}
+
+enum CODCollectionStatus {
+  NOT_APPLICABLE
+  AWAITING_DELIVERY
+  DELIVERED_AWAITING_COLLECTION_CONFIRMATION
+  CASH_COLLECTED_BY_PARTNER
+  REMITTED_TO_MARKETPLACE
+  REMITTANCE_CONFIRMED
+  ISSUE_FLAGGED
+}
+
+enum CODRemittanceDiscrepancyStatus {
+  NONE
+  SHORT
+  OVER
+  UNRESOLVED
+}
+
+enum SellerSettlementStatus {
+  NOT_READY
+  READY_FOR_SETTLEMENT
+  IN_PAYOUT_QUEUE
+  PAYOUT_PROCESSING
+  PAID_OUT
+  ON_HOLD
+  FAILED
+}
+
+enum PayoutStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  PROCESSING
+  PAID
+  FAILED
+  CANCELED
+  HELD
+}
+
+enum PaymentAccountVerificationStatus {
+  NOT_SUBMITTED
+  PENDING_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+enum SellerPayoutMethod {
+  BANK_TRANSFER
+  EASYPAISA
+  JAZZCASH
+  PAYPAL
+  WALLET
+}
+
+enum SellerPaymentAccountType {
+  CURRENT
+  SAVINGS
+  BUSINESS
+  MOBILE_WALLET
+  DIGITAL_WALLET
+}
+
+enum CommissionRuleScope {
+  CATEGORY
+  SELLER
+  STORE
+  PRODUCT
+}
+
+enum FinancialSourceType {
+  COD
+  ONLINE
+  MANUAL_VERIFIED
+}
+
+enum AuthTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model User {
+  id                  String               @id @default(cuid())
+  role                AppRole
+  email               String               @unique
+  passwordHash        String?
+  emailVerified       Boolean              @default(false)
+  name                String
+  phone               String?
+  lastLoginAt         DateTime?
+  sellerStores        SellerStore[]
+  customerOrders      Order[]              @relation("CustomerOrders")
+  approvedPayouts     SellerPayout[]       @relation("ApprovedPayouts")
+  createdPayouts      SellerPayout[]       @relation("CreatedPayouts")
+  processedPayouts    SellerPayout[]       @relation("ProcessedPayouts")
+  verifiedAccounts    SellerPaymentAccount[] @relation("VerifiedPaymentAccounts")
+  financialAuditLogs  FinancialAuditLog[]
+  authSessions        AuthSession[]
+  authTokens          AuthToken[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+}
+
+model SellerStore {
+  id                String                @id @default(cuid())
+  slug              String                @unique
+  name              String
+  ownerUserId       String
+  owner             User                  @relation(fields: [ownerUserId], references: [id])
+  payoutHold        Boolean               @default(false)
+  paymentAccount    SellerPaymentAccount?
+  commissionRules   CommissionRule[]
+  orderItems        OrderItem[]
+  settlements       SellerSettlement[]
+  payouts           SellerPayout[]
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+}
+
+model Order {
+  id                    String             @id @default(cuid())
+  orderNumber           String             @unique
+  customerUserId        String
+  customer              User               @relation("CustomerOrders", fields: [customerUserId], references: [id])
+  customerEmail         String?
+  customerPhone         String?
+  status                OrderStatus
+  payment               Payment?
+  items                 OrderItem[]
+  codRemittance         CODRemittance?
+  settlements           SellerSettlement[]
+  customerEmailSentAt   DateTime?
+  sellerEmailSentAt     DateTime?
+  lastStatusEmailSentAt DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+}
+
+model OrderItem {
+  id                    String             @id @default(cuid())
+  orderId               String
+  order                 Order              @relation(fields: [orderId], references: [id])
+  sellerStoreId         String
+  sellerStore           SellerStore        @relation(fields: [sellerStoreId], references: [id])
+  productId             String
+  categorySlug          String
+  title                 String
+  unitPrice             Decimal            @db.Decimal(12, 2)
+  quantity              Int
+  settlements           SellerSettlement[]
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  @@index([orderId, sellerStoreId])
+}
+
+model Payment {
+  id                    String             @id @default(cuid())
+  orderId               String             @unique
+  order                 Order              @relation(fields: [orderId], references: [id])
+  method                PaymentMethod
+  status                PaymentStatus
+  amountDue             Decimal            @db.Decimal(12, 2)
+  codRemittance         CODRemittance?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+}
+
+model SellerPaymentAccount {
+  id                           String                         @id @default(cuid())
+  sellerStoreId                String                         @unique
+  sellerStore                  SellerStore                    @relation(fields: [sellerStoreId], references: [id])
+  payoutMethod                 SellerPayoutMethod
+  accountType                  SellerPaymentAccountType?
+  accountHolderName            String?
+  bankName                     String?
+  bankAccountNumberEncrypted   String?
+  ibanEncrypted                String?
+  branchCode                   String?
+  mobileWalletProvider         String?
+  mobileWalletNumberEncrypted  String?
+  paypalEmailEncrypted         String?
+  walletIdEncrypted            String?
+  verificationStatus           PaymentAccountVerificationStatus @default(NOT_SUBMITTED)
+  notes                        String?
+  verifiedByUserId             String?
+  verifiedBy                   User?                          @relation("VerifiedPaymentAccounts", fields: [verifiedByUserId], references: [id])
+  verifiedAt                   DateTime?
+  rejectedAt                   DateTime?
+  createdAt                    DateTime                       @default(now())
+  updatedAt                    DateTime                       @updatedAt
+}
+
+model CommissionRule {
+  id                    String               @id @default(cuid())
+  scope                 CommissionRuleScope
+  categorySlug          String?
+  sellerStoreId         String?
+  sellerStore           SellerStore?         @relation(fields: [sellerStoreId], references: [id])
+  productId             String?
+  percentageRate        Decimal              @db.Decimal(5, 2)
+  fixedFeeAmount        Decimal              @db.Decimal(12, 2) @default(0)
+  active                Boolean              @default(true)
+  effectiveFrom         DateTime
+  effectiveTo           DateTime?
+  notes                 String?
+  settlements           SellerSettlement[]
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  @@index([scope, active, effectiveFrom])
+  @@index([categorySlug, sellerStoreId, productId])
+}
+
+model CODRemittance {
+  id                    String                       @id @default(cuid())
+  orderId               String                       @unique
+  order                 Order                        @relation(fields: [orderId], references: [id])
+  paymentId             String                       @unique
+  payment               Payment                      @relation(fields: [paymentId], references: [id])
+  expectedAmount        Decimal                      @db.Decimal(12, 2)
+  receivedAmount        Decimal?                     @db.Decimal(12, 2)
+  deliveryPartnerName   String?
+  deliveryPartnerPhone  String?
+  cashCollectedAt       DateTime?
+  remittedAt            DateTime?
+  confirmedAt           DateTime?
+  confirmedByUserId     String?
+  remittanceReference   String?
+  receiptReference      String?
+  status                CODCollectionStatus
+  discrepancyStatus     CODRemittanceDiscrepancyStatus @default(NONE)
+  adminNote             String?
+  settlements           SellerSettlement[]
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+
+  @@index([status, updatedAt])
+}
+
+model SellerSettlement {
+  id                    String                 @id @default(cuid())
+  sellerStoreId         String
+  sellerStore           SellerStore            @relation(fields: [sellerStoreId], references: [id])
+  orderId               String
+  order                 Order                  @relation(fields: [orderId], references: [id])
+  orderItemId           String
+  orderItem             OrderItem              @relation(fields: [orderItemId], references: [id])
+  commissionRuleId      String?
+  commissionRule        CommissionRule?        @relation(fields: [commissionRuleId], references: [id])
+  codRemittanceId       String?
+  codRemittance         CODRemittance?         @relation(fields: [codRemittanceId], references: [id])
+  grossSaleAmount       Decimal                @db.Decimal(12, 2)
+  commissionRate        Decimal                @db.Decimal(5, 2)
+  commissionAmount      Decimal                @db.Decimal(12, 2)
+  feeAmount             Decimal                @db.Decimal(12, 2) @default(0)
+  netPayableAmount      Decimal                @db.Decimal(12, 2)
+  financialSourceType   FinancialSourceType
+  settlementStatus      SellerSettlementStatus @default(NOT_READY)
+  payableAt             DateTime?
+  note                  String?
+  holdReason            String?
+  payoutItems           SellerPayoutItem[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@index([sellerStoreId, settlementStatus, payableAt])
+  @@index([orderId, orderItemId])
+}
+
+model SellerPayout {
+  id                    String               @id @default(cuid())
+  sellerStoreId         String
+  sellerStore           SellerStore          @relation(fields: [sellerStoreId], references: [id])
+  payoutStatus          PayoutStatus
+  payoutMethod          SellerPayoutMethod?
+  payoutAccountSnapshot Json?
+  totalGross            Decimal              @db.Decimal(12, 2)
+  totalCommission       Decimal              @db.Decimal(12, 2)
+  totalFees             Decimal              @db.Decimal(12, 2) @default(0)
+  totalNetPayout        Decimal              @db.Decimal(12, 2)
+  currency              String               @default("PKR")
+  payoutReference       String?
+  payoutDate            DateTime?
+  createdByAdminId      String?
+  createdByAdmin        User?                @relation("CreatedPayouts", fields: [createdByAdminId], references: [id])
+  approvedByAdminId     String?
+  approvedByAdmin       User?                @relation("ApprovedPayouts", fields: [approvedByAdminId], references: [id])
+  processedByAdminId    String?
+  processedByAdmin      User?                @relation("ProcessedPayouts", fields: [processedByAdminId], references: [id])
+  failureReason         String?
+  notes                 String?
+  items                 SellerPayoutItem[]
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  @@index([sellerStoreId, payoutStatus, createdAt])
+}
+
+model SellerPayoutItem {
+  id                    String               @id @default(cuid())
+  payoutId              String
+  payout                SellerPayout         @relation(fields: [payoutId], references: [id])
+  settlementId          String
+  settlement            SellerSettlement     @relation(fields: [settlementId], references: [id])
+  createdAt             DateTime             @default(now())
+
+  @@unique([payoutId, settlementId])
+  @@index([settlementId])
+}
+
+model FinancialAuditLog {
+  id                    String               @id @default(cuid())
+  actorUserId           String?
+  actor                 User?                @relation(fields: [actorUserId], references: [id])
+  sellerStoreId         String?
+  sellerStore           SellerStore?         @relation(fields: [sellerStoreId], references: [id])
+  orderId               String?
+  order                 Order?               @relation(fields: [orderId], references: [id])
+  paymentId             String?
+  action                String
+  entityType            String
+  entityId              String
+  fromStatus            String?
+  toStatus              String?
+  reference             String?
+  note                  String?
+  metadata              Json?
+  createdAt             DateTime             @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([action, createdAt])
+}
+
+model AuthSession {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash   String   @unique
+  expiresAt   DateTime
+  lastSeenAt  DateTime
+  userAgent   String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, expiresAt])
+}
+
+model AuthToken {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        AuthTokenType
+  tokenHash   String        @unique
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([userId, type, expiresAt])
+}

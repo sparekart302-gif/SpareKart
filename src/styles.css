@@ -1,5 +1,6 @@
 @import "tailwindcss" source(none);
 @source "../src";
+@source "../app";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -63,8 +64,8 @@
   --shadow-premium: 0 24px 48px -12px oklch(0.20 0.04 260 / 0.18);
   --shadow-glow: 0 8px 32px -8px oklch(0.72 0.19 50 / 0.35);
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
@@ -159,15 +160,35 @@
 @layer base {
   * { border-color: var(--color-border); }
 
-  html { scroll-behavior: smooth; }
+  html {
+    scroll-behavior: smooth;
+    overflow-x: clip;
+  }
 
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: clip;
+  }
+
+  main :where(section, article, aside, div) {
+    min-width: 0;
+  }
+
+  main :where(p, h1, h2, h3, h4, h5, h6, span, a, td, th, button, label) {
+    overflow-wrap: break-word;
+  }
+
+  main :where(img, svg, video, canvas) {
+    max-width: 100%;
+  }
+
+  main :where(button, input, select, textarea) {
+    min-width: 0;
   }
 
   h1, h2, h3, h4, h5 {
@@ -198,4 +219,10 @@
     border: 2px solid var(--background);
   }
   ::-webkit-scrollbar-thumb:hover { background: oklch(0.72 0.02 250); }
+
+  @media (max-width: 640px) {
+    body {
+      font-size: 15px;
+    }
+  }
 }
