@@ -2,13 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { jsonAuthError } from "@/server/auth/http";
 import { jsonSuccess } from "@/server/http/responses";
 import { verifyEmailAddress } from "@/server/auth/service";
+import { getAppUrl } from "@/server/config/env";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const email = request.nextUrl.searchParams.get("email");
-  const redirectUrl = new URL("/login", request.nextUrl.origin);
+  const redirectUrl = new URL(getAppUrl("/login"));
 
   if (!code || !email) {
     redirectUrl.searchParams.set("verified", "missing");

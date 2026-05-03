@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { buildGoogleAuthorizationUrl } from "@/server/auth/service";
+import { getAppUrl } from "@/server/config/env";
 import { createOpaqueToken } from "@/server/auth/session";
 
 export const runtime = "nodejs";
@@ -19,8 +20,8 @@ function buildStateCookieOptions() {
   };
 }
 
-export async function GET(request: Request) {
-  const redirectUrl = new URL("/login", request.url);
+export async function GET() {
+  const redirectUrl = new URL(getAppUrl("/login"));
 
   try {
     const state = createOpaqueToken();

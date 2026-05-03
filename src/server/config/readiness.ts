@@ -31,8 +31,7 @@ export async function getDeploymentReadiness() {
   const runtimeProbe = await probeRuntimeDirectory();
   let marketplaceStateAvailable = false;
   const usesLocalhostSiteUrl =
-    env.NEXT_PUBLIC_SITE_URL.includes("localhost") ||
-    env.NEXT_PUBLIC_SITE_URL.includes("127.0.0.1");
+    env.publicSiteUrl.includes("localhost") || env.publicSiteUrl.includes("127.0.0.1");
 
   if (env.mongodbConfigured) {
     try {
@@ -49,8 +48,8 @@ export async function getDeploymentReadiness() {
       "Public site URL",
       env.NODE_ENV === "production" && usesLocalhostSiteUrl ? "warn" : "pass",
       env.NODE_ENV === "production" && usesLocalhostSiteUrl
-        ? `NEXT_PUBLIC_SITE_URL is still set to ${env.NEXT_PUBLIC_SITE_URL}. Replace it with your live domain before deployment.`
-        : `Using ${env.NEXT_PUBLIC_SITE_URL} for auth links, email CTAs, and metadata.`,
+        ? `Public site URL is still set to ${env.publicSiteUrl}. Replace it with your live domain before deployment.`
+        : `Using ${env.publicSiteUrl} from ${env.publicSiteUrlSource} for auth links, email CTAs, and metadata.`,
     ),
   );
 

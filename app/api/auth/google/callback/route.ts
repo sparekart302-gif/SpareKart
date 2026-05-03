@@ -3,13 +3,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { AuthApiError } from "@/server/auth/errors";
 import { getDeviceMeta } from "@/server/auth/http";
 import { getPostLoginPath, loginWithGoogleCode } from "@/server/auth/service";
+import { getAppUrl } from "@/server/config/env";
 
 export const runtime = "nodejs";
 
 const GOOGLE_STATE_COOKIE = "sparekart_google_oauth_state";
 
 export async function GET(request: NextRequest) {
-  const loginUrl = new URL("/login", request.nextUrl.origin);
+  const loginUrl = new URL(getAppUrl("/login"));
   const error = request.nextUrl.searchParams.get("error");
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
@@ -34,9 +35,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const result = await loginWithGoogleCode(code, getDeviceMeta(request));
-    return NextResponse.redirect(
-      new URL(getPostLoginPath(result.user.role), request.nextUrl.origin),
-    );
+    return NextResponse.redirect(new URL(getAppUrl(getPostLoginPath(result.user.role))));
   } catch (error) {
     if (error instanceof AuthApiError) {
       if (error.code === "GOOGLE_AUTH_NOT_CONFIGURED") {

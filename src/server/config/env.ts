@@ -22,10 +22,19 @@ const optionalEmail = z.preprocess(emptyToUndefined, z.string().email().optional
 const optionalUrl = z.preprocess(emptyToUndefined, z.string().url().optional());
 const DEFAULT_JWT_SECRET = "sparekart-local-jwt-secret-change-me-2026";
 
+function isDisallowedPublicHostname(hostname: string) {
+  return /^0(?:\.0){3}$/.test(hostname) || hostname === "::" || hostname === "[::]";
+}
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: optionalString,
-  NEXT_PUBLIC_SITE_URL: optionalUrl.default("http://localhost:3000"),
+  NEXT_PUBLIC_SITE_URL: optionalUrl,
+  NEXTAUTH_URL: optionalUrl,
+  AUTH_URL: optionalUrl,
+  APP_URL: optionalUrl,
+  BASE_URL: optionalUrl,
+  SITE_URL: optionalUrl,
   MONGODB_URI: optionalString,
   MONGODB_DB_NAME: optionalString,
   RESEND_API_KEY: optionalString,
@@ -44,6 +53,8 @@ const envSchema = z.object({
 });
 
 export type ServerEnv = z.infer<typeof envSchema> & {
+  publicSiteUrl: string;
+  publicSiteUrlSource: string;
   runtimeRoot: string;
   mongodbConfigured: boolean;
   resendConfigured: boolean;
@@ -77,30 +88,94 @@ function resolvePreferredValue(...values: Array<string | undefined>) {
   return values.find((value) => typeof value === "string" && value.trim().length > 0);
 }
 
+function readRuntimeEnv(name: string) {
+  return process.env[name];
+}
+
+function normalizePublicSiteUrl(value: string) {
+  const url = new URL(value);
+
+  if (isDisallowedPublicHostname(url.hostname)) {
+    return null;
+  }
+
+  url.hash = "";
+  url.search = "";
+
+  if (!url.pathname) {
+    url.pathname = "/";
+  } else if (!url.pathname.endsWith("/")) {
+    url.pathname = `${url.pathname}/`;
+  }
+
+  return url.toString();
+}
+
+function resolvePublicSiteUrl(parsed: z.infer<typeof envSchema>) {
+  const configuredCandidates = [
+    { source: "NEXT_PUBLIC_SITE_URL", value: parsed.NEXT_PUBLIC_SITE_URL },
+    { source: "NEXTAUTH_URL", value: parsed.NEXTAUTH_URL },
+    { source: "AUTH_URL", value: parsed.AUTH_URL },
+    { source: "APP_URL", value: parsed.APP_URL },
+    { source: "BASE_URL", value: parsed.BASE_URL },
+    { source: "SITE_URL", value: parsed.SITE_URL },
+  ];
+
+  for (const candidate of configuredCandidates) {
+    if (!candidate.value) {
+      continue;
+    }
+
+    const normalized = normalizePublicSiteUrl(candidate.value);
+
+    if (normalized) {
+      return {
+        publicSiteUrl: normalized,
+        publicSiteUrlSource: candidate.source,
+      };
+    }
+  }
+
+  const fallbackUrl =
+    parsed.NODE_ENV === "production"
+      ? "https://sparekart.live/"
+      : `http://localhost:${parsed.PORT ?? "3000"}/`;
+
+  return {
+    publicSiteUrl: fallbackUrl,
+    publicSiteUrlSource: "fallback",
+  };
+}
+
 export function getServerEnv(): ServerEnv {
   if (cachedEnv) {
     return cachedEnv;
   }
 
   const parsed = envSchema.parse({
-    NODE_ENV: process.env.NODE_ENV,
-    PORT: process.env.PORT,
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
-    MONGODB_URI: process.env.MONGODB_URI,
-    MONGODB_DB_NAME: process.env.MONGODB_DB_NAME,
-    RESEND_API_KEY: process.env.RESEND_API_KEY,
-    RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
-    RESEND_FROM_NAME: process.env.RESEND_FROM_NAME,
-    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-    JWT_SECRET: process.env.JWT_SECRET,
-    DATABASE_URL: process.env.DATABASE_URL,
-    SPAREKART_RUNTIME_DIR: process.env.SPAREKART_RUNTIME_DIR,
-    SPAREKART_SEED_PASSWORD: process.env.SPAREKART_SEED_PASSWORD,
-    SPAREKART_SUPER_ADMIN_EMAIL: process.env.SPAREKART_SUPER_ADMIN_EMAIL,
-    SPAREKART_SUPER_ADMIN_PASSWORD: process.env.SPAREKART_SUPER_ADMIN_PASSWORD,
-    SPAREKART_SUPERADMIN_EMAIL: process.env.SPAREKART_SUPERADMIN_EMAIL,
-    SPAREKART_SUPERADMIN_PASSWORD: process.env.SPAREKART_SUPERADMIN_PASSWORD,
+    NODE_ENV: readRuntimeEnv("NODE_ENV"),
+    PORT: readRuntimeEnv("PORT"),
+    NEXT_PUBLIC_SITE_URL: readRuntimeEnv("NEXT_PUBLIC_SITE_URL"),
+    NEXTAUTH_URL: readRuntimeEnv("NEXTAUTH_URL"),
+    AUTH_URL: readRuntimeEnv("AUTH_URL"),
+    APP_URL: readRuntimeEnv("APP_URL"),
+    BASE_URL: readRuntimeEnv("BASE_URL"),
+    SITE_URL: readRuntimeEnv("SITE_URL"),
+    MONGODB_URI: readRuntimeEnv("MONGODB_URI"),
+    MONGODB_DB_NAME: readRuntimeEnv("MONGODB_DB_NAME"),
+    RESEND_API_KEY: readRuntimeEnv("RESEND_API_KEY"),
+    RESEND_FROM_EMAIL: readRuntimeEnv("RESEND_FROM_EMAIL"),
+    RESEND_FROM_NAME: readRuntimeEnv("RESEND_FROM_NAME"),
+    GOOGLE_CLIENT_ID: readRuntimeEnv("GOOGLE_CLIENT_ID"),
+    GOOGLE_CLIENT_SECRET: readRuntimeEnv("GOOGLE_CLIENT_SECRET"),
+    JWT_SECRET: readRuntimeEnv("JWT_SECRET"),
+    DATABASE_URL: readRuntimeEnv("DATABASE_URL"),
+    SPAREKART_RUNTIME_DIR: readRuntimeEnv("SPAREKART_RUNTIME_DIR"),
+    SPAREKART_SEED_PASSWORD: readRuntimeEnv("SPAREKART_SEED_PASSWORD"),
+    SPAREKART_SUPER_ADMIN_EMAIL: readRuntimeEnv("SPAREKART_SUPER_ADMIN_EMAIL"),
+    SPAREKART_SUPER_ADMIN_PASSWORD: readRuntimeEnv("SPAREKART_SUPER_ADMIN_PASSWORD"),
+    SPAREKART_SUPERADMIN_EMAIL: readRuntimeEnv("SPAREKART_SUPERADMIN_EMAIL"),
+    SPAREKART_SUPERADMIN_PASSWORD: readRuntimeEnv("SPAREKART_SUPERADMIN_PASSWORD"),
   });
 
   const resolvedSuperAdminEmail = resolvePreferredValue(
@@ -111,6 +186,7 @@ export function getServerEnv(): ServerEnv {
     parsed.SPAREKART_SUPER_ADMIN_PASSWORD,
     parsed.SPAREKART_SUPERADMIN_PASSWORD,
   );
+  const { publicSiteUrl, publicSiteUrlSource } = resolvePublicSiteUrl(parsed);
   const resendKeyConfigured = hasConfiguredValue(parsed.RESEND_API_KEY);
   const resendFromConfigured = hasConfiguredValue(parsed.RESEND_FROM_EMAIL);
   const googleClientIdConfigured = hasConfiguredGoogleClientId(parsed.GOOGLE_CLIENT_ID);
@@ -118,6 +194,8 @@ export function getServerEnv(): ServerEnv {
 
   cachedEnv = {
     ...parsed,
+    publicSiteUrl,
+    publicSiteUrlSource,
     runtimeRoot: resolveRuntimeRoot(parsed.SPAREKART_RUNTIME_DIR),
     mongodbConfigured: hasConfiguredMongoUri(parsed.MONGODB_URI),
     resendConfigured: resendKeyConfigured && resendFromConfigured,
@@ -135,7 +213,11 @@ export function getServerEnv(): ServerEnv {
 }
 
 export function getAppUrl(path = "/") {
-  return new URL(path, getServerEnv().NEXT_PUBLIC_SITE_URL).toString();
+  return new URL(path, getServerEnv().publicSiteUrl).toString();
+}
+
+export function getPublicSiteUrl() {
+  return getServerEnv().publicSiteUrl;
 }
 
 export function getRuntimeRoot() {

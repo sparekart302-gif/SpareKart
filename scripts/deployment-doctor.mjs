@@ -64,6 +64,65 @@ function hasConfiguredGoogleClientId(value) {
   );
 }
 
+function isDisallowedPublicHostname(hostname) {
+  return /^0(?:\.0){3}$/.test(hostname) || hostname === "::" || hostname === "[::]";
+}
+
+function normalizePublicSiteUrl(value) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const url = new URL(value);
+
+    if (isDisallowedPublicHostname(url.hostname)) {
+      return null;
+    }
+
+    url.hash = "";
+    url.search = "";
+
+    if (!url.pathname) {
+      url.pathname = "/";
+    } else if (!url.pathname.endsWith("/")) {
+      url.pathname = `${url.pathname}/`;
+    }
+
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function resolvePublicSiteUrl(environment, port) {
+  const candidates = [
+    { source: "NEXT_PUBLIC_SITE_URL", value: readEnv("NEXT_PUBLIC_SITE_URL") },
+    { source: "NEXTAUTH_URL", value: readEnv("NEXTAUTH_URL") },
+    { source: "AUTH_URL", value: readEnv("AUTH_URL") },
+    { source: "APP_URL", value: readEnv("APP_URL") },
+    { source: "BASE_URL", value: readEnv("BASE_URL") },
+    { source: "SITE_URL", value: readEnv("SITE_URL") },
+  ];
+
+  for (const candidate of candidates) {
+    const normalized = normalizePublicSiteUrl(candidate.value);
+
+    if (normalized) {
+      return {
+        siteUrl: normalized,
+        siteUrlSource: candidate.source,
+      };
+    }
+  }
+
+  return {
+    siteUrl:
+      environment === "production" ? "https://sparekart.live/" : `http://localhost:${port}/`,
+    siteUrlSource: "fallback",
+  };
+}
+
 function readNpmVersion() {
   const userAgent = process.env.npm_config_user_agent;
   const match = userAgent?.match(/npm\/([0-9.]+)/);
@@ -117,7 +176,8 @@ const nodeVersion = process.versions.node;
 const npmVersion = readNpmVersion();
 const npmMajor = Number(npmVersion?.split(".")[0] ?? "0");
 const environment = process.env.NODE_ENV ?? "development";
-const siteUrl = readEnv("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000";
+const port = readEnv("PORT") ?? "3000";
+const { siteUrl, siteUrlSource } = resolvePublicSiteUrl(environment, port);
 const mongodbUri = readEnv("MONGODB_URI");
 const mongodbDbName = readEnv("MONGODB_DB_NAME");
 const resendApiKey = readEnv("RESEND_API_KEY");
@@ -153,7 +213,7 @@ check(
 try {
   new URL(siteUrl);
 } catch {
-  check(false, `NEXT_PUBLIC_SITE_URL is invalid: ${siteUrl}`);
+  check(false, `Resolved public site URL is invalid: ${siteUrl}`);
 }
 
 if (environment !== "production") {
@@ -206,7 +266,7 @@ if (environment === "production") {
   );
   check(
     !siteUrl.includes("localhost"),
-    "NEXT_PUBLIC_SITE_URL is still pointing to localhost. Set it to your production domain before deploying.",
+    "The resolved public site URL is still pointing to localhost. Set NEXT_PUBLIC_SITE_URL, NEXTAUTH_URL, or AUTH_URL to your production domain before deploying.",
   );
   check(
     hasConfiguredValue(seedPassword) && hasConfiguredValue(superAdminPassword),
@@ -290,7 +350,7 @@ console.log("SpareKart deployment doctor");
 console.log(`- Node: ${nodeVersion}`);
 console.log(`- npm: ${npmVersion ?? "unknown"}`);
 console.log(`- Environment: ${environment}`);
-console.log(`- Site URL: ${siteUrl}`);
+console.log(`- Site URL: ${siteUrl} (${siteUrlSource})`);
 console.log(`- Runtime root: ${runtimeProbe.path}`);
 console.log(`- Runtime writable: ${runtimeProbe.ok ? "yes" : "no"}`);
 console.log(`- Local .env present: ${localEnvExists ? "yes" : "no"}`);

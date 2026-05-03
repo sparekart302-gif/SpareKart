@@ -6,7 +6,7 @@ import { MarketplaceProvider } from "@/modules/marketplace/store";
 import { getServerEnv } from "@/server/config/env";
 import "../src/styles.css";
 
-const siteUrl = getServerEnv().NEXT_PUBLIC_SITE_URL;
+const siteUrl = getServerEnv().publicSiteUrl;
 
 export const metadata: Metadata = {
   applicationName: "SpareKart",

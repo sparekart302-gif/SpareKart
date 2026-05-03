@@ -135,13 +135,16 @@ function assertGoogleConfigured() {
 
 export function buildGoogleAuthorizationUrl(state: string) {
   const env = assertGoogleConfigured();
+  const redirectUri = getAppUrl("/api/auth/google/callback");
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.searchParams.set("client_id", env.GOOGLE_CLIENT_ID!);
-  url.searchParams.set("redirect_uri", getAppUrl("/api/auth/google/callback"));
+  url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("scope", "openid email profile");
   url.searchParams.set("state", state);
   url.searchParams.set("prompt", "select_account");
+  console.info(`[auth] Google OAuth site URL: ${env.publicSiteUrl}`);
+  console.info(`[auth] Google OAuth callback URL: ${redirectUri}`);
   return url.toString();
 }
 
