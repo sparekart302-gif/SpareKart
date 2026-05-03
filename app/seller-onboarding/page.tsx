@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import SellerOnboardingPage from "@/routes/seller-onboarding";
 import { buildPageMetadata } from "@/lib/metadata";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = buildPageMetadata({
   title: "Sell on SpareKart — Open Your Auto Parts Store",
   description:

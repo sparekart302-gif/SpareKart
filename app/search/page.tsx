@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import SearchPage from "@/routes/search";
 import { buildPageMetadata } from "@/lib/metadata";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = buildPageMetadata({
   title: "Search Results — SpareKart",
   description: "Search across thousands of car spare parts from verified Pakistani sellers.",

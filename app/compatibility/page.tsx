@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import CompatibilityPage from "@/routes/compatibility";
 import { buildPageMetadata } from "@/lib/metadata";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = buildPageMetadata({
   title: "Find Parts For Your Car — SpareKart",
   description:

@@ -17,7 +17,7 @@ export function Breadcrumbs({ items }: { items: { label: string; to?: string }[]
   return (
     <nav className="py-3 text-[11px] text-muted-foreground sm:py-4 sm:text-xs">
       {items.map((item, i) => (
-        <span key={i}>
+        <span key={`${item.label}-${i}`}>
           {item.to ? (
             <Link href={item.to} className="hover:text-foreground transition-colors">
               {item.label}

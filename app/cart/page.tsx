@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import CartPage from "@/routes/cart";
 import { buildPageMetadata } from "@/lib/metadata";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = buildPageMetadata({
   title: "Your Cart — SpareKart",
   description: "Review your selected auto parts and proceed to secure checkout.",
