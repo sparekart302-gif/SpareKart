@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 import ResetPasswordPage from "@/routes/reset-password";
 
 export const metadata: Metadata = {

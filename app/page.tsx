@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import HomePage from "@/routes/index";
 import { buildPageMetadata } from "@/lib/metadata";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = buildPageMetadata({
   title: "SpareKart — Pakistan's Premium Auto Parts Marketplace",
   description:

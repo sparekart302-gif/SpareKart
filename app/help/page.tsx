@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 import HelpPage from "@/routes/help";
 import { buildPageMetadata } from "@/lib/metadata";
 

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 import AdminReportsPage from "@/routes/admin.reports";
 import { buildPageMetadata } from "@/lib/metadata";
 

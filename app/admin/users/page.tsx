@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 import AdminUsersPage from "@/routes/admin.users";
 import { buildPageMetadata } from "@/lib/metadata";
 

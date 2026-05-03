@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import SellerPage from "@/routes/seller.$slug";
 import { buildPageMetadata } from "@/lib/metadata";
