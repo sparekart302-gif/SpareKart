@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import VerifyEmailPage from "@/routes/verify-email";
 import { buildPageMetadata } from "@/lib/metadata";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = buildPageMetadata({
   title: "Verify Email — SpareKart",
   description: "Confirm your SpareKart email address with a secure verification code.",

@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import ForgotPasswordPage from "@/routes/forgot-password";
 import { buildPageMetadata } from "@/lib/metadata";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = buildPageMetadata({
   title: "Reset Password — SpareKart",
   description: "Reset your SpareKart account password securely.",

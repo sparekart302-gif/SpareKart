@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import LoginPage from "@/routes/login";
 import { buildPageMetadata } from "@/lib/metadata";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = buildPageMetadata({
   title: "Sign In — SpareKart",
   description:
