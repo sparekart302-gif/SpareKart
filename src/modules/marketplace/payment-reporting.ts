@@ -141,7 +141,10 @@ function matchesRange(dateString: string, range: PaymentDashboardRange) {
   return target >= now - days * 24 * 60 * 60 * 1000;
 }
 
-function getVerificationState(paymentStatus: PaymentStatus, proofStatus?: PaymentProofStatus): PaymentVerificationState {
+function getVerificationState(
+  paymentStatus: PaymentStatus,
+  proofStatus?: PaymentProofStatus,
+): PaymentVerificationState {
   if (paymentStatus === "PAID") {
     return "VERIFIED";
   }
@@ -150,7 +153,11 @@ function getVerificationState(paymentStatus: PaymentStatus, proofStatus?: Paymen
     return "REJECTED";
   }
 
-  if (paymentStatus === "UNDER_REVIEW" || proofStatus === "SUBMITTED" || paymentStatus === "PROOF_SUBMITTED") {
+  if (
+    paymentStatus === "UNDER_REVIEW" ||
+    proofStatus === "SUBMITTED" ||
+    paymentStatus === "PROOF_SUBMITTED"
+  ) {
     return "UNDER_REVIEW";
   }
 
@@ -235,11 +242,7 @@ function getFundsState(
   return "READY_FOR_PAYOUT";
 }
 
-function getLinkedPayout(
-  state: MarketplaceState,
-  sellerSlug: string,
-  orderId: string,
-) {
+function getLinkedPayout(state: MarketplaceState, sellerSlug: string, orderId: string) {
   return state.sellerPayouts.find(
     (payout) =>
       payout.sellerSlug === sellerSlug &&
@@ -266,18 +269,20 @@ export function getSellerPaymentDashboardData(
     const order = state.orders.find((item) => item.id === settlement.orderId);
     const payment = order ? getPaymentById(state, order.paymentId) : undefined;
     const latestProof = order ? getLatestProofForOrder(state, order.id) : undefined;
-    const linkedPayout = state.sellerPayouts.find(
-      (payout) =>
-        payout.sellerSlug === sellerSlug &&
-        payout.settlementIds?.includes(settlement.id),
-    ) ?? getLinkedPayout(state, sellerSlug, settlement.orderId);
+    const linkedPayout =
+      state.sellerPayouts.find(
+        (payout) =>
+          payout.sellerSlug === sellerSlug && payout.settlementIds?.includes(settlement.id),
+      ) ?? getLinkedPayout(state, sellerSlug, settlement.orderId);
     const payoutStatus = linkedPayout?.status ?? "UNSCHEDULED";
 
     if (!order || !payment) {
       return;
     }
 
-    const orderSettlements = effectiveSettlementRows.filter((entry) => entry.orderId === settlement.orderId);
+    const orderSettlements = effectiveSettlementRows.filter(
+      (entry) => entry.orderId === settlement.orderId,
+    );
     const settlementStatuses = orderSettlements.map((entry) => entry.settlementStatus);
     const existing = orderRowMap.get(settlement.orderId);
     const grossAmount = (existing?.grossAmount ?? 0) + settlement.grossSaleAmount;
@@ -303,7 +308,8 @@ export function getSellerPaymentDashboardData(
       payoutId: linkedPayout?.id,
       payoutDate: linkedPayout?.paidAt ?? linkedPayout?.processedAt ?? linkedPayout?.periodEndDate,
       grossAmount,
-      commissionRate: grossAmount > 0 ? Number(((commissionAmount / grossAmount) * 100).toFixed(2)) : 0,
+      commissionRate:
+        grossAmount > 0 ? Number(((commissionAmount / grossAmount) * 100).toFixed(2)) : 0,
       commissionAmount,
       sellerNetAmount,
     });
@@ -340,16 +346,22 @@ export function getSellerPaymentDashboardData(
     manualAwaitingVerificationCount: orderRows.filter(
       (row) => row.paymentMethod !== "COD" && row.verificationState !== "VERIFIED",
     ).length,
-    rejectedVerificationCount: orderRows.filter(
-      (row) => row.verificationState === "REJECTED",
-    ).length,
+    rejectedVerificationCount: orderRows.filter((row) => row.verificationState === "REJECTED")
+      .length,
     nextPayoutDate: payouts
       .filter((payout) =>
-        ["DRAFT", "PENDING_APPROVAL", "APPROVED", "PROCESSING", "HELD", "PENDING", "SCHEDULED"].includes(
-          payout.status,
-        ),
+        [
+          "DRAFT",
+          "PENDING_APPROVAL",
+          "APPROVED",
+          "PROCESSING",
+          "HELD",
+          "PENDING",
+          "SCHEDULED",
+        ].includes(payout.status),
       )
-      .sort((left, right) => left.periodEndDate.localeCompare(right.periodEndDate))[0]?.periodEndDate,
+      .sort((left, right) => left.periodEndDate.localeCompare(right.periodEndDate))[0]
+      ?.periodEndDate,
   };
 
   const categoryMap = new Map<string, SellerPaymentCategoryRow>();
@@ -429,11 +441,14 @@ export function getAdminPaymentDashboardData(
         right.readyForPayout +
         right.scheduledPayouts +
         right.processingPayouts -
-        (left.awaitingVerification + left.readyForPayout + left.scheduledPayouts + left.processingPayouts),
+        (left.awaitingVerification +
+          left.readyForPayout +
+          left.scheduledPayouts +
+          left.processingPayouts),
     );
 
-  const allOrderRows = sellerRows.flatMap((row) =>
-    getSellerPaymentDashboardData(state, row.sellerSlug, range).orderRows,
+  const allOrderRows = sellerRows.flatMap(
+    (row) => getSellerPaymentDashboardData(state, row.sellerSlug, range).orderRows,
   );
 
   const methods: PaymentMethod[] = ["COD", "BANK_TRANSFER", "EASYPAISA", "JAZZCASH"];
@@ -496,10 +511,16 @@ export function getAdminPaymentDashboardData(
         (proof) => proof.paymentMethod !== "COD" && proof.status === "SUBMITTED",
       ).length,
       codProofQueue:
-        state.payments.filter((payment) => payment.method === "COD" && payment.status === "UNDER_REVIEW").length +
+        state.payments.filter(
+          (payment) => payment.method === "COD" && payment.status === "UNDER_REVIEW",
+        ).length +
         state.orders.filter((order) => {
           const payment = getPaymentById(state, order.paymentId);
-          return payment?.method === "COD" && payment.status === "PENDING" && order.status === "DELIVERED";
+          return (
+            payment?.method === "COD" &&
+            payment.status === "PENDING" &&
+            order.status === "DELIVERED"
+          );
         }).length,
     },
   );

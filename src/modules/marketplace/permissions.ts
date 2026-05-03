@@ -50,32 +50,28 @@ export function getAdminScopes(user: MarketplaceUser | undefined) {
     ] as AdminScope[];
   }
 
-  return user.adminScopes ?? [
-    "dashboard",
-    "users",
-    "sellers",
-    "products",
-    "payments",
-    "orders",
-    "inventory",
-    "reviews",
-    "coupons",
-    "reports",
-    "audit",
-  ];
+  return (
+    user.adminScopes ?? [
+      "dashboard",
+      "users",
+      "sellers",
+      "products",
+      "payments",
+      "orders",
+      "inventory",
+      "reviews",
+      "coupons",
+      "reports",
+      "audit",
+    ]
+  );
 }
 
-export function canAccessAdminScope(
-  user: MarketplaceUser | undefined,
-  scope: AdminScope,
-) {
+export function canAccessAdminScope(user: MarketplaceUser | undefined, scope: AdminScope) {
   return getAdminScopes(user).includes(scope);
 }
 
-export function canViewOrder(
-  user: MarketplaceUser | undefined,
-  order: MarketplaceOrder,
-) {
+export function canViewOrder(user: MarketplaceUser | undefined, order: MarketplaceOrder) {
   if (!user) {
     return false;
   }
@@ -115,10 +111,7 @@ export function canUploadProof(
   return payment.status === "REQUIRES_PROOF" || payment.status === "REJECTED";
 }
 
-export function canViewProof(
-  user: MarketplaceUser | undefined,
-  order: MarketplaceOrder,
-) {
+export function canViewProof(user: MarketplaceUser | undefined, order: MarketplaceOrder) {
   if (!user) {
     return false;
   }

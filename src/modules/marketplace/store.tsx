@@ -10,62 +10,21 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getEmailSessionUser, logoutFromEmailSession, type AuthenticatedUser } from "@/modules/auth/client";
-import { syncAuthenticatedMarketplaceUser } from "./auth-bridge";
 import {
-  queueOrderCreatedEmails,
-  queueOrderStatusEmail,
-  queuePaymentProofReceivedEmail,
-} from "./email-client";
+  getEmailSessionUser,
+  logoutFromEmailSession,
+  type AuthenticatedUser,
+} from "@/modules/auth/client";
 import { getCurrentUser } from "./permissions";
+import { fetchMarketplaceState, runMarketplaceCommand } from "./client";
 import {
-  adjustInventoryRecord,
-  deleteCouponRecord,
-  deleteManagedCategoryRecord,
-  deleteManagedProductRecord,
-  deleteUserRecord,
-  moderateManagedReview,
-  reviewCODRemittanceRecord,
-  reviewSellerPayoutAccountRecord,
-  saveCouponRecord,
-  createSellerPayoutBatchRecord,
-  saveManagedCategoryRecord,
-  saveManagedProductRecord,
-  saveSellerRecord,
-  saveUserRecord,
-  updateSellerPayoutRecord,
-  updateSystemSettingsRecord,
-} from "./admin-workflows";
-import {
-  approvePaymentProof,
   addItemToCart,
   applyCouponCodeToCart,
-  adjustSellerOwnedInventory,
-  advanceOrderStatus,
-  deleteCustomerAddress,
-  deleteCustomerVehicle,
   logoutSession,
-  markAllNotificationsRead,
-  placeOrderFromCheckout,
-  rejectPaymentProof,
   removeCartLine,
   removeCouponCodeFromCart,
-  saveCustomerAddress,
-  saveCustomerVehicle,
-  saveSellerOwnedProduct,
-  requestSellerPayout,
-  submitProductReview,
-  submitPaymentProofByLookup,
-  submitStoreReview,
-  submitCODCollectionProof,
-  submitPaymentProof,
   switchSessionUser,
-  toggleWishlistProduct,
-  updateSellerPayoutAccount,
-  updateSellerStoreProfile,
   updateCartLineQuantity,
-  updateCustomerPreferences,
-  updateCustomerProfile,
 } from "./workflows";
 import type {
   AdminUserInput,
@@ -96,8 +55,11 @@ import type {
   StoreReviewSubmissionInput,
   SystemSettings,
 } from "./types";
-import { buildInitialMarketplaceState, normalizeMarketplaceState } from "./seed";
-const STORAGE_KEY = "sparekart.marketplace.state.v1";
+import { buildEmptyMarketplaceState } from "./seed";
+
+const GUEST_CART_USER_ID = "guest-session";
+const GUEST_CART_STORAGE_KEY = "sparekart.guest-cart.v1";
+const GUEST_COUPON_STORAGE_KEY = "sparekart.guest-coupon.v1";
 
 type MarketplaceContextValue = {
   state: MarketplaceState;
@@ -106,91 +68,187 @@ type MarketplaceContextValue = {
   refreshAuthSession: () => Promise<AuthenticatedUser | null>;
   switchUser: (userId: string) => void;
   logout: () => void;
-  saveUserRecord: (input: AdminUserInput) => void;
-  deleteUserRecord: (userId: string) => void;
-  saveSellerRecord: (input: SellerRecordInput) => void;
-  saveCategoryRecord: (input: ManagedCategoryInput) => void;
-  deleteCategoryRecord: (slug: string) => void;
-  saveProductRecord: (input: ManagedProductInput) => void;
-  deleteProductRecord: (productId: string) => void;
-  moderateReviewRecord: (input: ReviewModerationInput) => void;
-  saveCouponRecord: (input: CouponInput) => void;
-  deleteCouponRecord: (couponId: string) => void;
-  adjustInventoryRecord: (input: InventoryAdjustmentInput) => void;
-  updateSystemSettings: (input: SystemSettings) => void;
-  applyCouponCode: (code: string) => void;
-  removeCouponCode: () => void;
-  addToCart: (productId: string, qty?: number) => void;
-  updateCartQty: (productId: string, qty: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateProfile: (input: CustomerProfileUpdate) => void;
-  updateSellerStoreProfile: (input: SellerStoreProfileInput) => void;
-  updateSellerPayoutAccount: (input: SellerPayoutAccountInput) => void;
-  saveSellerProduct: (input: ManagedProductInput) => void;
-  adjustSellerInventory: (input: InventoryAdjustmentInput) => void;
-  requestPayout: (input?: SellerPayoutRequestInput) => void;
-  submitProductReview: (input: ProductReviewSubmissionInput) => void;
-  submitStoreReview: (input: StoreReviewSubmissionInput) => void;
-  saveAddress: (input: CustomerAddressInput) => void;
-  deleteAddress: (addressId: string) => void;
-  saveVehicle: (input: SavedVehicleInput) => void;
-  deleteVehicle: (vehicleId: string) => void;
-  toggleWishlist: (productId: string) => void;
-  updatePreferences: (input: CustomerPreferencesUpdate) => void;
-  markNotificationsRead: () => void;
-  placeOrder: (input: CheckoutSubmission) => string;
-  submitProof: (orderId: string, proof: PaymentProofSubmission) => string;
-  submitProofByLookup: (lookup: GuestOrderLookupInput, proof: PaymentProofSubmission) => string;
-  submitCODProof: (orderId: string, proof: CODPaymentProofSubmission) => string;
-  approveProof: (input: PaymentProofReview) => void;
-  rejectProof: (input: PaymentProofReview) => void;
-  updateOrderStatus: (orderId: string, nextStatus: MarketplaceState["orders"][number]["status"]) => void;
+  saveUserRecord: (input: AdminUserInput) => Promise<void>;
+  deleteUserRecord: (userId: string) => Promise<void>;
+  saveSellerRecord: (input: SellerRecordInput) => Promise<void>;
+  saveCategoryRecord: (input: ManagedCategoryInput) => Promise<void>;
+  deleteCategoryRecord: (slug: string) => Promise<void>;
+  saveProductRecord: (input: ManagedProductInput) => Promise<void>;
+  deleteProductRecord: (productId: string) => Promise<void>;
+  moderateReviewRecord: (input: ReviewModerationInput) => Promise<void>;
+  saveCouponRecord: (input: CouponInput) => Promise<void>;
+  deleteCouponRecord: (couponId: string) => Promise<void>;
+  adjustInventoryRecord: (input: InventoryAdjustmentInput) => Promise<void>;
+  updateSystemSettings: (input: SystemSettings) => Promise<void>;
+  applyCouponCode: (code: string) => Promise<void>;
+  removeCouponCode: () => Promise<void>;
+  addToCart: (productId: string, qty?: number) => Promise<void>;
+  updateCartQty: (productId: string, qty: number) => Promise<void>;
+  removeFromCart: (productId: string) => Promise<void>;
+  updateProfile: (input: CustomerProfileUpdate) => Promise<void>;
+  updateSellerStoreProfile: (input: SellerStoreProfileInput) => Promise<void>;
+  updateSellerPayoutAccount: (input: SellerPayoutAccountInput) => Promise<void>;
+  saveSellerProduct: (input: ManagedProductInput) => Promise<void>;
+  adjustSellerInventory: (input: InventoryAdjustmentInput) => Promise<void>;
+  requestPayout: (input?: SellerPayoutRequestInput) => Promise<void>;
+  submitProductReview: (input: ProductReviewSubmissionInput) => Promise<void>;
+  submitStoreReview: (input: StoreReviewSubmissionInput) => Promise<void>;
+  saveAddress: (input: CustomerAddressInput) => Promise<void>;
+  deleteAddress: (addressId: string) => Promise<void>;
+  saveVehicle: (input: SavedVehicleInput) => Promise<void>;
+  deleteVehicle: (vehicleId: string) => Promise<void>;
+  toggleWishlist: (productId: string) => Promise<void>;
+  updatePreferences: (input: CustomerPreferencesUpdate) => Promise<void>;
+  markNotificationsRead: () => Promise<void>;
+  placeOrder: (input: CheckoutSubmission) => Promise<string>;
+  submitProof: (orderId: string, proof: PaymentProofSubmission) => Promise<string>;
+  submitProofByLookup: (
+    lookup: GuestOrderLookupInput,
+    proof: PaymentProofSubmission,
+  ) => Promise<string>;
+  submitCODProof: (orderId: string, proof: CODPaymentProofSubmission) => Promise<string>;
+  approveProof: (input: PaymentProofReview) => Promise<void>;
+  rejectProof: (input: PaymentProofReview) => Promise<void>;
+  updateOrderStatus: (
+    orderId: string,
+    nextStatus: MarketplaceState["orders"][number]["status"],
+  ) => Promise<void>;
   updatePayoutRecord: (input: {
     payoutId: string;
     status: PayoutStatus;
     adminNotes?: string;
     transactionReference?: string;
-  }) => void;
-  createPayoutBatch: (input: SellerSettlementBatchInput) => void;
-  reviewCODRemittance: (input: CODRemittanceReviewInput) => void;
-  reviewSellerPayoutAccount: (input: SellerPayoutAccountReviewInput) => void;
+  }) => Promise<void>;
+  createPayoutBatch: (input: SellerSettlementBatchInput) => Promise<void>;
+  reviewCODRemittance: (input: CODRemittanceReviewInput) => Promise<void>;
+  reviewSellerPayoutAccount: (input: SellerPayoutAccountReviewInput) => Promise<void>;
 };
 
 const MarketplaceContext = createContext<MarketplaceContextValue | null>(null);
 
-function loadStoredState() {
+function loadStoredGuestCart() {
   if (typeof window === "undefined") {
-    return null;
+    return [];
   }
 
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  const raw = window.localStorage.getItem(GUEST_CART_STORAGE_KEY);
 
   if (!raw) {
-    return null;
+    return [];
   }
 
   try {
-    return normalizeMarketplaceState(JSON.parse(raw) as Partial<MarketplaceState>);
+    const parsed = JSON.parse(raw) as { productId?: string; qty?: number }[];
+    return parsed
+      .filter(
+        (line): line is { productId: string; qty: number } =>
+          typeof line.productId === "string" &&
+          line.productId.length > 0 &&
+          typeof line.qty === "number" &&
+          Number.isFinite(line.qty) &&
+          line.qty > 0,
+      )
+      .map((line) => ({
+        productId: line.productId,
+        qty: Math.min(Math.max(Math.floor(line.qty), 1), 99),
+      }));
   } catch {
-    return null;
+    return [];
   }
 }
 
+function loadStoredGuestCoupon() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return window.localStorage.getItem(GUEST_COUPON_STORAGE_KEY) ?? "";
+}
+
+function persistGuestSessionState(state: MarketplaceState) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const guestCart = state.cartsByUserId[GUEST_CART_USER_ID] ?? [];
+  const guestCouponCode = state.appliedCouponCodesByUserId[GUEST_CART_USER_ID] ?? "";
+
+  if (guestCart.length > 0) {
+    window.localStorage.setItem(GUEST_CART_STORAGE_KEY, JSON.stringify(guestCart));
+  } else {
+    window.localStorage.removeItem(GUEST_CART_STORAGE_KEY);
+  }
+
+  if (guestCouponCode) {
+    window.localStorage.setItem(GUEST_COUPON_STORAGE_KEY, guestCouponCode);
+  } else {
+    window.localStorage.removeItem(GUEST_COUPON_STORAGE_KEY);
+  }
+}
+
+function withGuestSessionState(
+  state: MarketplaceState,
+  guestCart: MarketplaceState["cartsByUserId"][string],
+  guestCouponCode: string,
+) {
+  return {
+    ...state,
+    cartsByUserId: {
+      ...state.cartsByUserId,
+      [GUEST_CART_USER_ID]: guestCart,
+    },
+    appliedCouponCodesByUserId: {
+      ...state.appliedCouponCodesByUserId,
+      [GUEST_CART_USER_ID]: guestCouponCode,
+    },
+  };
+}
+
 export function MarketplaceProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<MarketplaceState>(() => buildInitialMarketplaceState());
+  const [state, setState] = useState<MarketplaceState>(() => buildEmptyMarketplaceState());
   const [hydrated, setHydrated] = useState(false);
   const stateRef = useRef(state);
+  const guestCartRef = useRef<MarketplaceState["cartsByUserId"][string]>([]);
+  const guestCouponRef = useRef("");
+
+  const commitState = useCallback((nextState: MarketplaceState) => {
+    stateRef.current = nextState;
+    guestCartRef.current = nextState.cartsByUserId[GUEST_CART_USER_ID] ?? [];
+    guestCouponRef.current = nextState.appliedCouponCodesByUserId[GUEST_CART_USER_ID] ?? "";
+    persistGuestSessionState(nextState);
+    setState(nextState);
+    return nextState;
+  }, []);
+
+  const hydrateMarketplaceState = useCallback(
+    async (authUser?: AuthenticatedUser | null) => {
+      const response = await fetchMarketplaceState();
+      const guestCart = guestCartRef.current;
+      const guestCouponCode = guestCouponRef.current;
+      const nextState = withGuestSessionState(response.state, guestCart, guestCouponCode);
+      commitState(nextState);
+      return authUser ?? null;
+    },
+    [commitState],
+  );
 
   useEffect(() => {
-    const stored = loadStoredState();
+    guestCartRef.current = loadStoredGuestCart();
+    guestCouponRef.current = loadStoredGuestCoupon();
 
-    if (stored) {
-      stateRef.current = stored;
-      setState(stored);
-    }
+    const bootstrapState = withGuestSessionState(
+      buildEmptyMarketplaceState(),
+      guestCartRef.current,
+      guestCouponRef.current,
+    );
+    commitState(bootstrapState);
 
-    setHydrated(true);
-  }, []);
+    void hydrateMarketplaceState()
+      .catch(() => undefined)
+      .finally(() => {
+        setHydrated(true);
+      });
+  }, [commitState, hydrateMarketplaceState]);
 
   useEffect(() => {
     stateRef.current = state;
@@ -199,569 +257,279 @@ export function MarketplaceProvider({ children }: { children: ReactNode }) {
   const refreshAuthSession = useCallback(async () => {
     try {
       const authUser = await getEmailSessionUser();
-      const nextState = syncAuthenticatedMarketplaceUser(stateRef.current, authUser);
-
-      if (nextState !== stateRef.current) {
-        stateRef.current = nextState;
-        setState(nextState);
-      }
-
+      await hydrateMarketplaceState(authUser);
       return authUser;
     } catch {
+      await hydrateMarketplaceState(null).catch(() => undefined);
       return null;
     }
-  }, []);
+  }, [hydrateMarketplaceState]);
 
-  useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
+  const runGuestLocalUpdate = useCallback(
+    (updater: (previous: MarketplaceState) => MarketplaceState) => {
+      const nextState = updater(stateRef.current);
+      commitState(nextState);
+      return nextState;
+    },
+    [commitState],
+  );
 
-    void refreshAuthSession();
-  }, [hydrated, refreshAuthSession]);
-
-  useEffect(() => {
-    if (!hydrated || typeof window === "undefined") {
-      return;
-    }
-
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [hydrated, state]);
-
-  const runUpdate = useCallback((updater: (previous: MarketplaceState) => MarketplaceState) => {
-    const nextState = updater(stateRef.current);
-    stateRef.current = nextState;
-    setState(nextState);
-  }, []);
+  const runRemoteCommand = useCallback(
+    async (command: string, payload?: unknown) => {
+      const response = await runMarketplaceCommand({
+        command,
+        payload,
+        guestCart: guestCartRef.current,
+        guestCouponCode: guestCouponRef.current,
+      });
+      commitState(response.state);
+      return response.result;
+    },
+    [commitState],
+  );
 
   const switchUser = useCallback(
     (userId: string) => {
-      runUpdate((previous) => switchSessionUser(previous, userId));
+      runGuestLocalUpdate((previous) => switchSessionUser(previous, userId));
     },
-    [runUpdate],
+    [runGuestLocalUpdate],
   );
 
   const logout = useCallback(() => {
     void logoutFromEmailSession().catch(() => undefined);
-    runUpdate((previous) => logoutSession(previous));
-  }, [runUpdate]);
+    runGuestLocalUpdate((previous) => logoutSession(previous));
+    void hydrateMarketplaceState(null).catch(() => undefined);
+  }, [hydrateMarketplaceState, runGuestLocalUpdate]);
 
   const addToCart = useCallback(
-    (productId: string, qty = 1) => {
-      runUpdate((previous) => addItemToCart(previous, previous.currentUserId, productId, qty));
-    },
-    [runUpdate],
-  );
+    async (productId: string, qty = 1) => {
+      if (!stateRef.current.currentUserId) {
+        runGuestLocalUpdate((previous) => addItemToCart(previous, previous.currentUserId, productId, qty));
+        return;
+      }
 
-  const saveUser = useCallback(
-    (input: AdminUserInput) => {
-      runUpdate((previous) => saveUserRecord(previous, previous.currentUserId, input));
+      await runRemoteCommand("ADD_TO_CART", { productId, qty });
     },
-    [runUpdate],
-  );
-
-  const deleteUser = useCallback(
-    (userId: string) => {
-      runUpdate((previous) => deleteUserRecord(previous, previous.currentUserId, userId));
-    },
-    [runUpdate],
-  );
-
-  const saveSeller = useCallback(
-    (input: SellerRecordInput) => {
-      runUpdate((previous) => saveSellerRecord(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const saveCategory = useCallback(
-    (input: ManagedCategoryInput) => {
-      runUpdate((previous) => saveManagedCategoryRecord(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const deleteCategory = useCallback(
-    (slug: string) => {
-      runUpdate((previous) => deleteManagedCategoryRecord(previous, previous.currentUserId, slug));
-    },
-    [runUpdate],
-  );
-
-  const saveProduct = useCallback(
-    (input: ManagedProductInput) => {
-      runUpdate((previous) => saveManagedProductRecord(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const deleteProduct = useCallback(
-    (productId: string) => {
-      runUpdate((previous) => deleteManagedProductRecord(previous, previous.currentUserId, productId));
-    },
-    [runUpdate],
-  );
-
-  const moderateReview = useCallback(
-    (input: ReviewModerationInput) => {
-      runUpdate((previous) => moderateManagedReview(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const saveCoupon = useCallback(
-    (input: CouponInput) => {
-      runUpdate((previous) => saveCouponRecord(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const deleteCoupon = useCallback(
-    (couponId: string) => {
-      runUpdate((previous) => deleteCouponRecord(previous, previous.currentUserId, couponId));
-    },
-    [runUpdate],
-  );
-
-  const adjustInventory = useCallback(
-    (input: InventoryAdjustmentInput) => {
-      runUpdate((previous) => adjustInventoryRecord(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const updateSettings = useCallback(
-    (input: SystemSettings) => {
-      runUpdate((previous) => updateSystemSettingsRecord(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
+    [runGuestLocalUpdate, runRemoteCommand],
   );
 
   const applyCouponCode = useCallback(
-    (code: string) => {
-      runUpdate((previous) => applyCouponCodeToCart(previous, previous.currentUserId, code));
+    async (code: string) => {
+      if (!stateRef.current.currentUserId) {
+        runGuestLocalUpdate((previous) =>
+          applyCouponCodeToCart(previous, previous.currentUserId, code),
+        );
+        return;
+      }
+
+      await runRemoteCommand("APPLY_COUPON", { code });
     },
-    [runUpdate],
+    [runGuestLocalUpdate, runRemoteCommand],
   );
 
-  const removeCouponCode = useCallback(() => {
-    runUpdate((previous) => removeCouponCodeFromCart(previous, previous.currentUserId));
-  }, [runUpdate]);
+  const removeCouponCode = useCallback(async () => {
+    if (!stateRef.current.currentUserId) {
+      runGuestLocalUpdate((previous) => removeCouponCodeFromCart(previous, previous.currentUserId));
+      return;
+    }
+
+    await runRemoteCommand("REMOVE_COUPON");
+  }, [runGuestLocalUpdate, runRemoteCommand]);
 
   const updateCartQty = useCallback(
-    (productId: string, qty: number) => {
-      runUpdate((previous) => updateCartLineQuantity(previous, previous.currentUserId, productId, qty));
+    async (productId: string, qty: number) => {
+      if (!stateRef.current.currentUserId) {
+        runGuestLocalUpdate((previous) =>
+          updateCartLineQuantity(previous, previous.currentUserId, productId, qty),
+        );
+        return;
+      }
+
+      await runRemoteCommand("UPDATE_CART_QTY", { productId, qty });
     },
-    [runUpdate],
+    [runGuestLocalUpdate, runRemoteCommand],
   );
 
   const removeFromCart = useCallback(
-    (productId: string) => {
-      runUpdate((previous) => removeCartLine(previous, previous.currentUserId, productId));
-    },
-    [runUpdate],
-  );
-
-  const updateProfile = useCallback(
-    (input: CustomerProfileUpdate) => {
-      runUpdate((previous) => updateCustomerProfile(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const updateSellerProfile = useCallback(
-    (input: SellerStoreProfileInput) => {
-      runUpdate((previous) => updateSellerStoreProfile(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const saveSellerPayoutAccount = useCallback(
-    (input: SellerPayoutAccountInput) => {
-      runUpdate((previous) => updateSellerPayoutAccount(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const saveSellerProduct = useCallback(
-    (input: ManagedProductInput) => {
-      runUpdate((previous) => saveSellerOwnedProduct(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const adjustSellerInventory = useCallback(
-    (input: InventoryAdjustmentInput) => {
-      runUpdate((previous) => adjustSellerOwnedInventory(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const requestPayout = useCallback(
-    (input: SellerPayoutRequestInput = {}) => {
-      runUpdate((previous) => requestSellerPayout(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const submitCustomerProductReview = useCallback(
-    (input: ProductReviewSubmissionInput) => {
-      runUpdate((previous) => submitProductReview(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const submitSellerStoreReview = useCallback(
-    (input: StoreReviewSubmissionInput) => {
-      runUpdate((previous) => submitStoreReview(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const saveAddress = useCallback(
-    (input: CustomerAddressInput) => {
-      runUpdate((previous) => saveCustomerAddress(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const deleteAddress = useCallback(
-    (addressId: string) => {
-      runUpdate((previous) => deleteCustomerAddress(previous, previous.currentUserId, addressId));
-    },
-    [runUpdate],
-  );
-
-  const saveVehicle = useCallback(
-    (input: SavedVehicleInput) => {
-      runUpdate((previous) => saveCustomerVehicle(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const deleteVehicle = useCallback(
-    (vehicleId: string) => {
-      runUpdate((previous) => deleteCustomerVehicle(previous, previous.currentUserId, vehicleId));
-    },
-    [runUpdate],
-  );
-
-  const toggleWishlist = useCallback(
-    (productId: string) => {
-      runUpdate((previous) => toggleWishlistProduct(previous, previous.currentUserId, productId));
-    },
-    [runUpdate],
-  );
-
-  const updatePreferences = useCallback(
-    (input: CustomerPreferencesUpdate) => {
-      runUpdate((previous) => updateCustomerPreferences(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const markNotificationsRead = useCallback(() => {
-    runUpdate((previous) => markAllNotificationsRead(previous, previous.currentUserId));
-  }, [runUpdate]);
-
-  const placeOrder = useCallback(
-    (input: CheckoutSubmission) => {
-      let createdOrderId = "";
-      let nextStateForEmail: MarketplaceState | null = null;
-      runUpdate((previous) => {
-        const result = placeOrderFromCheckout(previous, previous.currentUserId, input);
-        createdOrderId = result.orderId;
-        nextStateForEmail = result.state;
-        return result.state;
-      });
-
-      const emailState = nextStateForEmail as MarketplaceState | null;
-
-      if (emailState && createdOrderId) {
-        queueOrderCreatedEmails(emailState, createdOrderId);
-
-        if (input.paymentMethod !== "COD") {
-          const createdOrder = emailState.orders.find((order) => order.id === createdOrderId);
-          const activeProofId = createdOrder
-            ? emailState.payments.find((payment) => payment.id === createdOrder.paymentId)?.activeProofId
-            : null;
-
-          if (activeProofId) {
-            queuePaymentProofReceivedEmail(emailState, createdOrderId, activeProofId);
-          }
-        }
+    async (productId: string) => {
+      if (!stateRef.current.currentUserId) {
+        runGuestLocalUpdate((previous) => removeCartLine(previous, previous.currentUserId, productId));
+        return;
       }
 
-      return createdOrderId;
+      await runRemoteCommand("REMOVE_FROM_CART", { productId });
     },
-    [runUpdate],
+    [runGuestLocalUpdate, runRemoteCommand],
+  );
+
+  const placeOrder = useCallback(
+    async (input: CheckoutSubmission) => {
+      const result = await runRemoteCommand("PLACE_ORDER", input);
+      return String(result.orderId ?? "");
+    },
+    [runRemoteCommand],
   );
 
   const submitProof = useCallback(
-    (orderId: string, proof: PaymentProofSubmission) => {
-      let createdProofId = "";
-      let nextStateForEmail: MarketplaceState | null = null;
-      runUpdate((previous) => {
-        const result = submitPaymentProof(previous, previous.currentUserId, orderId, proof);
-        createdProofId = result.proofId;
-        nextStateForEmail = result.state;
-        return result.state;
-      });
-
-      if (nextStateForEmail && createdProofId) {
-        queuePaymentProofReceivedEmail(nextStateForEmail, orderId, createdProofId);
-      }
-
-      return createdProofId;
+    async (orderId: string, proof: PaymentProofSubmission) => {
+      const result = await runRemoteCommand("SUBMIT_PROOF", { orderId, proof });
+      return String(result.proofId ?? "");
     },
-    [runUpdate],
+    [runRemoteCommand],
   );
 
   const submitProofByLookup = useCallback(
-    (lookup: GuestOrderLookupInput, proof: PaymentProofSubmission) => {
-      let createdProofId = "";
-      let orderId = "";
-      let nextStateForEmail: MarketplaceState | null = null;
-      runUpdate((previous) => {
-        const result = submitPaymentProofByLookup(previous, lookup, proof);
-        createdProofId = result.proofId;
-        nextStateForEmail = result.state;
-        orderId = result.state.paymentProofs.find((candidate) => candidate.id === result.proofId)?.orderId ?? "";
-        return result.state;
-      });
-
-      if (nextStateForEmail && createdProofId && orderId) {
-        queuePaymentProofReceivedEmail(nextStateForEmail, orderId, createdProofId);
-      }
-
-      return createdProofId;
+    async (lookup: GuestOrderLookupInput, proof: PaymentProofSubmission) => {
+      const result = await runRemoteCommand("SUBMIT_PROOF_BY_LOOKUP", { lookup, proof });
+      return String(result.proofId ?? "");
     },
-    [runUpdate],
+    [runRemoteCommand],
   );
 
   const submitCODProof = useCallback(
-    (orderId: string, proof: CODPaymentProofSubmission) => {
-      let createdProofId = "";
-      let nextStateForEmail: MarketplaceState | null = null;
-      runUpdate((previous) => {
-        const result = submitCODCollectionProof(previous, previous.currentUserId, orderId, proof);
-        createdProofId = result.proofId;
-        nextStateForEmail = result.state;
-        return result.state;
-      });
-
-      if (nextStateForEmail && createdProofId) {
-        queuePaymentProofReceivedEmail(nextStateForEmail, orderId, createdProofId);
-      }
-
-      return createdProofId;
+    async (orderId: string, proof: CODPaymentProofSubmission) => {
+      const result = await runRemoteCommand("SUBMIT_COD_PROOF", { orderId, proof });
+      return String(result.proofId ?? "");
     },
-    [runUpdate],
+    [runRemoteCommand],
   );
-
-  const approveProof = useCallback(
-    (input: PaymentProofReview) => {
-      let orderId = "";
-      let nextStateForEmail: MarketplaceState | null = null;
-      let nextStatus: MarketplaceState["orders"][number]["status"] | null = null;
-
-      runUpdate((previous) => {
-        const proof = previous.paymentProofs.find((candidate) => candidate.id === input.proofId);
-        orderId = proof?.orderId ?? "";
-        const result = approvePaymentProof(previous, previous.currentUserId, input);
-        nextStateForEmail = result.state;
-        nextStatus = orderId
-          ? result.state.orders.find((candidate) => candidate.id === orderId)?.status ?? null
-          : null;
-        return result.state;
-      });
-
-      if (nextStateForEmail && orderId && nextStatus) {
-        queueOrderStatusEmail(nextStateForEmail, orderId, nextStatus);
-      }
-    },
-    [runUpdate],
-  );
-
-  const rejectProof = useCallback(
-    (input: PaymentProofReview) => {
-      let orderId = "";
-      let nextStateForEmail: MarketplaceState | null = null;
-      let nextStatus: MarketplaceState["orders"][number]["status"] | null = null;
-
-      runUpdate((previous) => {
-        const proof = previous.paymentProofs.find((candidate) => candidate.id === input.proofId);
-        orderId = proof?.orderId ?? "";
-        const result = rejectPaymentProof(previous, previous.currentUserId, input);
-        nextStateForEmail = result.state;
-        nextStatus = orderId
-          ? result.state.orders.find((candidate) => candidate.id === orderId)?.status ?? null
-          : null;
-        return result.state;
-      });
-
-      if (nextStateForEmail && orderId && nextStatus) {
-        queueOrderStatusEmail(nextStateForEmail, orderId, nextStatus);
-      }
-    },
-    [runUpdate],
-  );
-
-  const updateOrderStatus = useCallback(
-    (orderId: string, nextStatus: MarketplaceState["orders"][number]["status"]) => {
-      let nextStateForEmail: MarketplaceState | null = null;
-      runUpdate((previous) => {
-        const result = advanceOrderStatus(previous, previous.currentUserId, orderId, nextStatus);
-        nextStateForEmail = result.state;
-        return result.state;
-      });
-
-      if (nextStateForEmail) {
-        queueOrderStatusEmail(nextStateForEmail, orderId, nextStatus);
-      }
-    },
-    [runUpdate],
-  );
-
-  const updatePayoutRecord = useCallback(
-    (input: {
-      payoutId: string;
-      status: PayoutStatus;
-      adminNotes?: string;
-      transactionReference?: string;
-    }) => {
-      runUpdate((previous) => updateSellerPayoutRecord(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const createPayoutBatch = useCallback(
-    (input: SellerSettlementBatchInput) => {
-      runUpdate((previous) => createSellerPayoutBatchRecord(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const reviewCODRemittance = useCallback(
-    (input: CODRemittanceReviewInput) => {
-      runUpdate((previous) => reviewCODRemittanceRecord(previous, previous.currentUserId, input));
-    },
-    [runUpdate],
-  );
-
-  const reviewSellerPayoutAccount = useCallback(
-    (input: SellerPayoutAccountReviewInput) => {
-      runUpdate((previous) =>
-        reviewSellerPayoutAccountRecord(previous, previous.currentUserId, input),
-      );
-    },
-    [runUpdate],
-  );
-
-  const currentUser = useMemo(() => getCurrentUser(state), [state]);
 
   const value = useMemo<MarketplaceContextValue>(
     () => ({
       state,
       hydrated,
-      currentUser,
+      currentUser: getCurrentUser(state),
       refreshAuthSession,
       switchUser,
       logout,
-      saveUserRecord: saveUser,
-      deleteUserRecord: deleteUser,
-      saveSellerRecord: saveSeller,
-      saveCategoryRecord: saveCategory,
-      deleteCategoryRecord: deleteCategory,
-      saveProductRecord: saveProduct,
-      deleteProductRecord: deleteProduct,
-      moderateReviewRecord: moderateReview,
-      saveCouponRecord: saveCoupon,
-      deleteCouponRecord: deleteCoupon,
-      adjustInventoryRecord: adjustInventory,
-      updateSystemSettings: updateSettings,
+      saveUserRecord: async (input) => {
+        await runRemoteCommand("SAVE_USER", input);
+      },
+      deleteUserRecord: async (userId) => {
+        await runRemoteCommand("DELETE_USER", { userId });
+      },
+      saveSellerRecord: async (input) => {
+        await runRemoteCommand("SAVE_SELLER", input);
+      },
+      saveCategoryRecord: async (input) => {
+        await runRemoteCommand("SAVE_CATEGORY", input);
+      },
+      deleteCategoryRecord: async (slug) => {
+        await runRemoteCommand("DELETE_CATEGORY", { slug });
+      },
+      saveProductRecord: async (input) => {
+        await runRemoteCommand("SAVE_PRODUCT", input);
+      },
+      deleteProductRecord: async (productId) => {
+        await runRemoteCommand("DELETE_PRODUCT", { productId });
+      },
+      moderateReviewRecord: async (input) => {
+        await runRemoteCommand("MODERATE_REVIEW", input);
+      },
+      saveCouponRecord: async (input) => {
+        await runRemoteCommand("SAVE_COUPON", input);
+      },
+      deleteCouponRecord: async (couponId) => {
+        await runRemoteCommand("DELETE_COUPON", { couponId });
+      },
+      adjustInventoryRecord: async (input) => {
+        await runRemoteCommand("ADJUST_INVENTORY", input);
+      },
+      updateSystemSettings: async (input) => {
+        await runRemoteCommand("UPDATE_SYSTEM_SETTINGS", input);
+      },
       applyCouponCode,
       removeCouponCode,
       addToCart,
       updateCartQty,
       removeFromCart,
-      updateProfile,
-      updateSellerStoreProfile: updateSellerProfile,
-      updateSellerPayoutAccount: saveSellerPayoutAccount,
-      saveSellerProduct,
-      adjustSellerInventory,
-      requestPayout,
-      submitProductReview: submitCustomerProductReview,
-      submitStoreReview: submitSellerStoreReview,
-      saveAddress,
-      deleteAddress,
-      saveVehicle,
-      deleteVehicle,
-      toggleWishlist,
-      updatePreferences,
-      markNotificationsRead,
+      updateProfile: async (input) => {
+        await runRemoteCommand("UPDATE_PROFILE", input);
+      },
+      updateSellerStoreProfile: async (input) => {
+        await runRemoteCommand("UPDATE_SELLER_PROFILE", input);
+      },
+      updateSellerPayoutAccount: async (input) => {
+        await runRemoteCommand("UPDATE_SELLER_PAYOUT_ACCOUNT", input);
+      },
+      saveSellerProduct: async (input) => {
+        await runRemoteCommand("SAVE_SELLER_PRODUCT", input);
+      },
+      adjustSellerInventory: async (input) => {
+        await runRemoteCommand("ADJUST_SELLER_INVENTORY", input);
+      },
+      requestPayout: async (input = {}) => {
+        await runRemoteCommand("REQUEST_PAYOUT", input);
+      },
+      submitProductReview: async (input) => {
+        await runRemoteCommand("SUBMIT_PRODUCT_REVIEW", input);
+      },
+      submitStoreReview: async (input) => {
+        await runRemoteCommand("SUBMIT_STORE_REVIEW", input);
+      },
+      saveAddress: async (input) => {
+        await runRemoteCommand("SAVE_ADDRESS", input);
+      },
+      deleteAddress: async (addressId) => {
+        await runRemoteCommand("DELETE_ADDRESS", { addressId });
+      },
+      saveVehicle: async (input) => {
+        await runRemoteCommand("SAVE_VEHICLE", input);
+      },
+      deleteVehicle: async (vehicleId) => {
+        await runRemoteCommand("DELETE_VEHICLE", { vehicleId });
+      },
+      toggleWishlist: async (productId) => {
+        await runRemoteCommand("TOGGLE_WISHLIST", { productId });
+      },
+      updatePreferences: async (input) => {
+        await runRemoteCommand("UPDATE_PREFERENCES", input);
+      },
+      markNotificationsRead: async () => {
+        await runRemoteCommand("MARK_NOTIFICATIONS_READ");
+      },
       placeOrder,
       submitProof,
       submitProofByLookup,
       submitCODProof,
-      approveProof,
-      rejectProof,
-      updateOrderStatus,
-      updatePayoutRecord,
-      createPayoutBatch,
-      reviewCODRemittance,
-      reviewSellerPayoutAccount,
+      approveProof: async (input) => {
+        await runRemoteCommand("APPROVE_PROOF", input);
+      },
+      rejectProof: async (input) => {
+        await runRemoteCommand("REJECT_PROOF", input);
+      },
+      updateOrderStatus: async (orderId, nextStatus) => {
+        await runRemoteCommand("UPDATE_ORDER_STATUS", { orderId, nextStatus });
+      },
+      updatePayoutRecord: async (input) => {
+        await runRemoteCommand("UPDATE_PAYOUT_RECORD", input);
+      },
+      createPayoutBatch: async (input) => {
+        await runRemoteCommand("CREATE_PAYOUT_BATCH", input);
+      },
+      reviewCODRemittance: async (input) => {
+        await runRemoteCommand("REVIEW_COD_REMITTANCE", input);
+      },
+      reviewSellerPayoutAccount: async (input) => {
+        await runRemoteCommand("REVIEW_SELLER_PAYOUT_ACCOUNT", input);
+      },
     }),
     [
       state,
       hydrated,
-      currentUser,
       refreshAuthSession,
       switchUser,
       logout,
-      saveUser,
-      deleteUser,
-      saveSeller,
-      saveCategory,
-      deleteCategory,
-      saveProduct,
-      deleteProduct,
-      moderateReview,
-      saveCoupon,
-      deleteCoupon,
-      adjustInventory,
-      updateSettings,
+      runRemoteCommand,
       applyCouponCode,
       removeCouponCode,
       addToCart,
       updateCartQty,
       removeFromCart,
-      updateProfile,
-      updateSellerProfile,
-      saveSellerPayoutAccount,
-      saveSellerProduct,
-      adjustSellerInventory,
-      requestPayout,
-      submitCustomerProductReview,
-      submitSellerStoreReview,
-      saveAddress,
-      deleteAddress,
-      saveVehicle,
-      deleteVehicle,
-      toggleWishlist,
-      updatePreferences,
-      markNotificationsRead,
       placeOrder,
       submitProof,
       submitProofByLookup,
       submitCODProof,
-      approveProof,
-      rejectProof,
-      updateOrderStatus,
-      updatePayoutRecord,
-      createPayoutBatch,
-      reviewCODRemittance,
-      reviewSellerPayoutAccount,
     ],
   );
 

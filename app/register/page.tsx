@@ -4,8 +4,7 @@ import { buildPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Create Account — SpareKart",
-  description:
-    "Create a free SpareKart account as a customer or open your own seller store.",
+  description: "Create a free SpareKart account as a customer or open your own seller store.",
   openGraphDescription: "Join SpareKart as a customer or seller.",
 });
 

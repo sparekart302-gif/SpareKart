@@ -88,9 +88,7 @@ export function UserManagementDialog({
           <DialogTitle className="text-xl font-black tracking-tight">
             {draft.id ? "Edit user" : "Create user"}
           </DialogTitle>
-          <DialogDescription>
-            Update account role, access, and lifecycle state.
-          </DialogDescription>
+          <DialogDescription>Update account role, access, and lifecycle state.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 px-5 py-5 sm:px-6">
@@ -139,10 +137,7 @@ export function UserManagementDialog({
                   setDraft((prev) => ({
                     ...prev,
                     role: event.target.value as AppRole,
-                    adminScopes:
-                      event.target.value === "ADMIN"
-                        ? prev.adminScopes ?? []
-                        : [],
+                    adminScopes: event.target.value === "ADMIN" ? (prev.adminScopes ?? []) : [],
                   }))
                 }
                 className="mt-1.5 h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"

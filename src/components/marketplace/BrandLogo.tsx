@@ -1,10 +1,4 @@
-import { Cormorant_Garamond } from "next/font/google";
 import { cn } from "@/lib/utils";
-
-const brandFont = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-});
 
 type BrandLogoProps = {
   variant?: "full" | "mark";
@@ -22,8 +16,8 @@ export function BrandLogo({
   return (
     <span
       aria-label={alt}
+      style={{ fontFamily: '"Georgia", "Times New Roman", serif' }}
       className={cn(
-        brandFont.className,
         "inline-flex items-center justify-center whitespace-nowrap font-semibold uppercase leading-none",
         variant === "mark"
           ? "text-[1.15rem] tracking-[0.18em]"

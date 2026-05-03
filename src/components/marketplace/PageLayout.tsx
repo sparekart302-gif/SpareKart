@@ -18,7 +18,13 @@ export function Breadcrumbs({ items }: { items: { label: string; to?: string }[]
     <nav className="py-3 text-[11px] text-muted-foreground sm:py-4 sm:text-xs">
       {items.map((item, i) => (
         <span key={i}>
-          {item.to ? <Link href={item.to} className="hover:text-foreground transition-colors">{item.label}</Link> : <span className="text-foreground font-medium">{item.label}</span>}
+          {item.to ? (
+            <Link href={item.to} className="hover:text-foreground transition-colors">
+              {item.label}
+            </Link>
+          ) : (
+            <span className="text-foreground font-medium">{item.label}</span>
+          )}
           {i < items.length - 1 && <span className="mx-2 opacity-50">/</span>}
         </span>
       ))}

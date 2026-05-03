@@ -1,4 +1,3 @@
-import { getSeller } from "@/data/marketplace";
 import { buildCommissionRecordsForOrder } from "./commission-management";
 import { getAdminScopes } from "./permissions";
 import { getOrderById, getPaymentById, getUserById } from "./selectors";
@@ -64,8 +63,12 @@ export function getLowStockManagedProducts(state: MarketplaceState, threshold = 
 
 export function getAdminDashboardSummary(state: MarketplaceState) {
   const totalRevenue = state.orders.reduce((sum, order) => sum + order.totals.total, 0);
-  const activeSellers = state.sellersDirectory.filter((seller) => seller.status === "ACTIVE").length;
-  const pendingPayments = state.paymentProofs.filter((proof) => proof.status === "SUBMITTED").length;
+  const activeSellers = state.sellersDirectory.filter(
+    (seller) => seller.status === "ACTIVE",
+  ).length;
+  const pendingPayments = state.paymentProofs.filter(
+    (proof) => proof.status === "SUBMITTED",
+  ).length;
   const commissionSummary = getCommissionSummary(state);
   const flaggedReviews =
     state.managedProductReviews.filter((review) => review.moderationStatus === "FLAGGED").length +
@@ -249,8 +252,12 @@ export function getUserPaymentHistory(state: MarketplaceState, userId: string) {
 
 export function getUserReviewHistory(state: MarketplaceState, userName: string) {
   return {
-    product: state.managedProductReviews.filter((review) => review.author.startsWith(userName.split(" ")[0])),
-    store: state.managedStoreReviews.filter((review) => review.author.startsWith(userName.split(" ")[0])),
+    product: state.managedProductReviews.filter((review) =>
+      review.author.startsWith(userName.split(" ")[0]),
+    ),
+    store: state.managedStoreReviews.filter((review) =>
+      review.author.startsWith(userName.split(" ")[0]),
+    ),
   };
 }
 
@@ -259,7 +266,9 @@ export function getOrdersForSellerRecord(state: MarketplaceState, sellerSlug: st
 }
 
 export function getProductsForSellerRecord(state: MarketplaceState, sellerSlug: string) {
-  return state.managedProducts.filter((product) => product.sellerSlug === sellerSlug && !product.deletedAt);
+  return state.managedProducts.filter(
+    (product) => product.sellerSlug === sellerSlug && !product.deletedAt,
+  );
 }
 
 export function getSellerRevenue(state: MarketplaceState, sellerSlug: string) {
@@ -292,7 +301,8 @@ export function getAdminQuickActions(state: MarketplaceState) {
       label: "Moderate reviews",
       href: "/admin/reviews",
       count:
-        state.managedProductReviews.filter((review) => review.moderationStatus !== "APPROVED").length +
+        state.managedProductReviews.filter((review) => review.moderationStatus !== "APPROVED")
+          .length +
         state.managedStoreReviews.filter((review) => review.moderationStatus !== "APPROVED").length,
     },
   ];
@@ -331,10 +341,7 @@ function deriveCommissionStatus(
     return paymentStatus === "PAID" ? "READY" : "PENDING";
   }
 
-  if (
-    paymentStatus === "PAID" ||
-    ["CONFIRMED", "PROCESSING", "SHIPPED"].includes(orderStatus)
-  ) {
+  if (paymentStatus === "PAID" || ["CONFIRMED", "PROCESSING", "SHIPPED"].includes(orderStatus)) {
     return "READY";
   }
 
@@ -363,7 +370,7 @@ export function getCommissionRows(state: MarketplaceState) {
         orderId: order.id,
         orderNumber: order.orderNumber,
         sellerSlug,
-        sellerName: seller?.name ?? getSeller(sellerSlug)?.name ?? sellerSlug,
+        sellerName: seller?.name ?? sellerSlug,
         customerName: customer?.name ?? "Unknown customer",
         createdAt: order.createdAt,
         productCategory: commission.productCategory,
@@ -395,7 +402,9 @@ export function getCommissionRowsForOrder(state: MarketplaceState, orderId: stri
 }
 
 export function getCommissionSummary(state: MarketplaceState, sellerSlug?: string) {
-  const rows = sellerSlug ? getCommissionRowsForSeller(state, sellerSlug) : getCommissionRows(state);
+  const rows = sellerSlug
+    ? getCommissionRowsForSeller(state, sellerSlug)
+    : getCommissionRows(state);
 
   return rows.reduce(
     (summary, row) => {
@@ -431,10 +440,10 @@ export function getCommissionSummary(state: MarketplaceState, sellerSlug?: strin
 export function getReviewInsights(state: MarketplaceState) {
   const averageProductRating =
     state.managedProductReviews.reduce((sum, review) => sum + review.rating, 0) /
-      (state.managedProductReviews.length || 1);
+    (state.managedProductReviews.length || 1);
   const averageStoreRating =
     state.managedStoreReviews.reduce((sum, review) => sum + review.rating, 0) /
-      (state.managedStoreReviews.length || 1);
+    (state.managedStoreReviews.length || 1);
 
   return {
     averageProductRating,
@@ -481,7 +490,15 @@ export function getOrderInvoiceDetails(state: MarketplaceState, orderId: string)
     order,
     payment,
     customer,
-    sellerNames: Array.from(new Set(order.items.map((item) => getSeller(item.sellerSlug).name))),
+    sellerNames: Array.from(
+      new Set(
+        order.items.map(
+          (item) =>
+            state.sellersDirectory.find((seller) => seller.slug === item.sellerSlug)?.name ??
+            item.sellerSlug,
+        ),
+      ),
+    ),
   };
 }
 
@@ -491,8 +508,9 @@ export function getManagedInventoryRows(state: MarketplaceState) {
       product,
       inventory: state.inventory[product.id],
     }))
-    .filter((row): row is { product: ManagedProduct; inventory: MarketplaceState["inventory"][string] } =>
-      !!row.inventory,
+    .filter(
+      (row): row is { product: ManagedProduct; inventory: MarketplaceState["inventory"][string] } =>
+        !!row.inventory,
     )
     .sort((left, right) => (left.inventory.available ?? 0) - (right.inventory.available ?? 0));
 }

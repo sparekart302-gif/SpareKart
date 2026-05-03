@@ -44,7 +44,9 @@ function formatStatus(value: string) {
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
   return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${orderStatusClasses[status]}`}>
+    <span
+      className={`inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${orderStatusClasses[status]}`}
+    >
       {formatStatus(status)}
     </span>
   );
@@ -52,7 +54,9 @@ export function OrderStatusBadge({ status }: { status: OrderStatus }) {
 
 export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
   return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${paymentStatusClasses[status]}`}>
+    <span
+      className={`inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${paymentStatusClasses[status]}`}
+    >
       {formatStatus(status)}
     </span>
   );
@@ -60,7 +64,9 @@ export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
 
 export function ProofStatusBadge({ status }: { status: PaymentProofStatus }) {
   return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${proofStatusClasses[status]}`}>
+    <span
+      className={`inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${proofStatusClasses[status]}`}
+    >
       {formatStatus(status)}
     </span>
   );

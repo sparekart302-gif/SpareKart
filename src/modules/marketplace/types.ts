@@ -1,10 +1,4 @@
-import type {
-  Category,
-  Product,
-  ProductReview,
-  Seller,
-  StoreReview,
-} from "@/data/marketplace";
+import type { Category, Product, ProductReview, Seller, StoreReview } from "@/data/marketplace";
 
 export type AppRole = "CUSTOMER" | "SELLER" | "ADMIN" | "SUPER_ADMIN";
 
@@ -25,11 +19,7 @@ export type AdminScope =
   | "settings"
   | "admins";
 
-export type PaymentMethod =
-  | "COD"
-  | "BANK_TRANSFER"
-  | "EASYPAISA"
-  | "JAZZCASH";
+export type PaymentMethod = "COD" | "BANK_TRANSFER" | "EASYPAISA" | "JAZZCASH";
 
 export type ManualPaymentMethod = Exclude<PaymentMethod, "COD">;
 
@@ -71,12 +61,7 @@ export type PayoutStatus =
 
 export type PayoutPeriod = "WEEKLY" | "MONTHLY" | "CUSTOM";
 
-export type SellerPayoutMethod =
-  | "BANK_TRANSFER"
-  | "EASYPAISA"
-  | "JAZZCASH"
-  | "PAYPAL"
-  | "WALLET";
+export type SellerPayoutMethod = "BANK_TRANSFER" | "EASYPAISA" | "JAZZCASH" | "PAYPAL" | "WALLET";
 
 export type SellerPayoutAccountStatus =
   | "NOT_SUBMITTED"
@@ -105,11 +90,7 @@ export type CODCollectionStatus =
   | "REMITTANCE_CONFIRMED"
   | "ISSUE_FLAGGED";
 
-export type CODRemittanceDiscrepancyStatus =
-  | "NONE"
-  | "SHORT"
-  | "OVER"
-  | "UNRESOLVED";
+export type CODRemittanceDiscrepancyStatus = "NONE" | "SHORT" | "OVER" | "UNRESOLVED";
 
 export type SellerSettlementStatus =
   | "NOT_READY"
@@ -120,10 +101,7 @@ export type SellerSettlementStatus =
   | "ON_HOLD"
   | "FAILED";
 
-export type SellerPayoutSchedulePreference =
-  | "MANUAL_REQUEST"
-  | "WEEKLY"
-  | "MONTHLY";
+export type SellerPayoutSchedulePreference = "MANUAL_REQUEST" | "WEEKLY" | "MONTHLY";
 
 export type NotificationType =
   | "PAYMENT_PROOF_SUBMITTED"
@@ -202,10 +180,7 @@ export type AuditAction =
   | "SELLER_PAYOUT_ACCOUNT_UPDATED"
   | "SELLER_PAYOUT_ACCOUNT_REVIEWED";
 
-export type InventoryMovementReason =
-  | "ORDER_CONFIRMED"
-  | "ORDER_CANCELED"
-  | "MANUAL_ADJUSTMENT";
+export type InventoryMovementReason = "ORDER_CONFIRMED" | "ORDER_CANCELED" | "MANUAL_ADJUSTMENT";
 
 export type ShippingOptionId = "STANDARD" | "EXPRESS";
 
@@ -230,12 +205,7 @@ export type MarketplaceUser = {
   adminScopes?: AdminScope[];
 };
 
-export type SellerStatus =
-  | "ACTIVE"
-  | "PENDING_APPROVAL"
-  | "SUSPENDED"
-  | "REJECTED"
-  | "FLAGGED";
+export type SellerStatus = "ACTIVE" | "PENDING_APPROVAL" | "SUSPENDED" | "REJECTED" | "FLAGGED";
 
 export type SellerTier = "STANDARD" | "PRO" | "ENTERPRISE";
 
@@ -939,10 +909,7 @@ export type AdminUserInput = Omit<MarketplaceUser, "id" | "createdAt"> & {
   createdAt?: string;
 };
 
-export type SellerRecordInput = Omit<
-  SellerRecord,
-  "createdAt" | "updatedAt" | "approvedAt"
-> & {
+export type SellerRecordInput = Omit<SellerRecord, "createdAt" | "updatedAt" | "approvedAt"> & {
   createdAt?: string;
   approvedAt?: string;
 };
@@ -966,7 +933,10 @@ export type ReviewModerationInput = {
   moderatorNote?: string;
 };
 
-export type CouponInput = Omit<CouponRecord, "id" | "createdAt" | "usageCount" | "usedByUserIds"> & {
+export type CouponInput = Omit<
+  CouponRecord,
+  "id" | "createdAt" | "usageCount" | "usedByUserIds"
+> & {
   id?: string;
   createdAt?: string;
   usageCount?: number;
@@ -1020,7 +990,10 @@ export type SellerPayoutRequestInput = {
 
 export type CODRemittanceReviewInput = {
   remittanceId: string;
-  status: Extract<CODCollectionStatus, "REMITTED_TO_MARKETPLACE" | "REMITTANCE_CONFIRMED" | "ISSUE_FLAGGED">;
+  status: Extract<
+    CODCollectionStatus,
+    "REMITTED_TO_MARKETPLACE" | "REMITTANCE_CONFIRMED" | "ISSUE_FLAGGED"
+  >;
   receivedAmount?: number;
   remittanceReference?: string;
   receiptReference?: string;

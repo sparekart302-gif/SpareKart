@@ -5,11 +5,11 @@ type Params = Record<string, string | number>;
 
 type LinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> &
   Pick<NextLinkProps, "prefetch" | "replace" | "scroll"> & {
-  children: ReactNode;
-  href?: string;
-  params?: Params;
-  to?: string;
-};
+    children: ReactNode;
+    href?: string;
+    params?: Params;
+    to?: string;
+  };
 
 function resolveHref(path: string, params?: Params) {
   if (!params) {

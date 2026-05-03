@@ -60,9 +60,13 @@ export default function VerifyEmailPage() {
     <PageLayout>
       <section className="container mx-auto max-w-md px-4 py-10 sm:py-12 md:py-14">
         <div className="mb-5 text-center sm:mb-6">
-          <div className="text-xs font-bold uppercase tracking-[0.22em] text-accent">Verification</div>
+          <div className="text-xs font-bold uppercase tracking-[0.22em] text-accent">
+            Verification
+          </div>
           <h1 className="text-[2rem] font-black tracking-tight sm:text-3xl">Verify your email</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Enter the 6-digit code sent to your inbox to activate your account.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Enter the 6-digit code sent to your inbox to activate your account.
+          </p>
         </div>
         <div className="rounded-[26px] bg-card p-5 shadow-[var(--shadow-premium)] sm:rounded-[30px] sm:p-8">
           <div className="mb-5 flex items-center justify-center">
@@ -85,7 +89,9 @@ export default function VerifyEmailPage() {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-muted-foreground">Verification code</label>
+              <label className="text-xs font-semibold text-muted-foreground">
+                Verification code
+              </label>
               <div className="mt-2 flex justify-center">
                 <InputOTP maxLength={6} value={code} onChange={setCode}>
                   <InputOTPGroup>
@@ -106,7 +112,11 @@ export default function VerifyEmailPage() {
                 onClick={async () => {
                   try {
                     const result = await resendVerificationCode(email.trim());
-                    toast.success(result.alreadyVerified ? "This email is already verified." : "A fresh verification code has been sent.");
+                    toast.success(
+                      result.alreadyVerified
+                        ? "This email is already verified."
+                        : "A fresh verification code has been sent.",
+                    );
                   } catch (error) {
                     toast.error(error instanceof Error ? error.message : "Unable to resend code.");
                   }
@@ -133,4 +143,3 @@ export default function VerifyEmailPage() {
     </PageLayout>
   );
 }
-

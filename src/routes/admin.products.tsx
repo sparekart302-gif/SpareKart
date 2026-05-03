@@ -6,12 +6,15 @@ import { toast } from "sonner";
 import { CategoryManagementDialog } from "@/components/admin/CategoryManagementDialog";
 import { ProductModerationDialog } from "@/components/admin/ProductModerationDialog";
 import { AdminCompactStat, AdminField, AdminScopeGate } from "@/components/admin/AdminCommon";
-import { AdminEmptyState, AdminPageHeader, AdminPanel, AdminPill } from "@/components/admin/AdminUI";
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+  AdminPill,
+} from "@/components/admin/AdminUI";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Link } from "@/components/navigation/Link";
-import {
-  getSellerRecordBySlug,
-} from "@/modules/marketplace/admin-selectors";
+import { getSellerRecordBySlug } from "@/modules/marketplace/admin-selectors";
 import { useMarketplace } from "@/modules/marketplace/store";
 import type {
   ManagedCategoryInput,
@@ -37,7 +40,8 @@ export default function AdminProductsPage() {
   const filteredProducts = useMemo(() => {
     return state.managedProducts
       .filter((product) => {
-        const searchable = `${product.title} ${product.sku} ${product.brand} ${product.sellerSlug}`.toLowerCase();
+        const searchable =
+          `${product.title} ${product.sku} ${product.brand} ${product.sellerSlug}`.toLowerCase();
         return (
           !product.deletedAt &&
           (!query.trim() || searchable.includes(query.trim().toLowerCase())) &&
@@ -52,11 +56,10 @@ export default function AdminProductsPage() {
       });
   }, [categoryFilter, query, state.managedProducts, statusFilter]);
 
-
-
   const editingProduct =
-    state.managedProducts.find((product) => product.id === editingProductId && !product.deletedAt) ??
-    null;
+    state.managedProducts.find(
+      (product) => product.id === editingProductId && !product.deletedAt,
+    ) ?? null;
   const editingSeller = editingProduct
     ? getSellerRecordBySlug(state, editingProduct.sellerSlug)
     : undefined;
@@ -70,8 +73,9 @@ export default function AdminProductsPage() {
     activeProducts: state.managedProducts.filter(
       (product) => product.moderationStatus === "ACTIVE" && !product.deletedAt,
     ).length,
-    flaggedProducts: state.managedProducts.filter((product) => product.moderationStatus === "FLAGGED")
-      .length,
+    flaggedProducts: state.managedProducts.filter(
+      (product) => product.moderationStatus === "FLAGGED",
+    ).length,
     reviewRequired: state.managedProducts.filter((product) => product.reviewRequired).length,
     sellerOwnedCatalogs: new Set(state.managedProducts.map((product) => product.sellerSlug)).size,
   };
@@ -102,9 +106,7 @@ export default function AdminProductsPage() {
       handleCloseModeration();
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Unable to update product moderation settings.",
+        error instanceof Error ? error.message : "Unable to update product moderation settings.",
       );
     }
   };
@@ -146,10 +148,28 @@ export default function AdminProductsPage() {
         />
 
         <section className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
-          <AdminCompactStat label="Live listings" value={String(stats.activeProducts)} helper="Visible seller products" />
-          <AdminCompactStat label="Flagged" value={String(stats.flaggedProducts)} helper="Need moderation action" tone="danger" />
-          <AdminCompactStat label="Review required" value={String(stats.reviewRequired)} helper="Seller fixes pending" tone="warning" />
-          <AdminCompactStat label="Seller catalogs" value={String(stats.sellerOwnedCatalogs)} helper="Distinct seller feeds" />
+          <AdminCompactStat
+            label="Live listings"
+            value={String(stats.activeProducts)}
+            helper="Visible seller products"
+          />
+          <AdminCompactStat
+            label="Flagged"
+            value={String(stats.flaggedProducts)}
+            helper="Need moderation action"
+            tone="danger"
+          />
+          <AdminCompactStat
+            label="Review required"
+            value={String(stats.reviewRequired)}
+            helper="Seller fixes pending"
+            tone="warning"
+          />
+          <AdminCompactStat
+            label="Seller catalogs"
+            value={String(stats.sellerOwnedCatalogs)}
+            helper="Distinct seller feeds"
+          />
         </section>
 
         <AdminPanel
@@ -167,7 +187,9 @@ export default function AdminProductsPage() {
         >
           <div className="flex flex-wrap gap-2">
             {state.managedCategories.length === 0 ? (
-              <div className="text-sm text-muted-foreground">No categories yet. Create one to get started.</div>
+              <div className="text-sm text-muted-foreground">
+                No categories yet. Create one to get started.
+              </div>
             ) : (
               state.managedCategories.map((category) => (
                 <div
@@ -212,7 +234,9 @@ export default function AdminProductsPage() {
             </select>
             <select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as ProductModerationStatus | "ALL")}
+              onChange={(event) =>
+                setStatusFilter(event.target.value as ProductModerationStatus | "ALL")
+              }
               className="h-11 rounded-xl border border-border/60 bg-background px-3 text-sm focus:outline-none"
             >
               <option value="ALL">All states</option>
@@ -315,9 +339,7 @@ function ProductAdminCard({
         <div className="line-clamp-2 text-[13px] font-black text-foreground sm:text-sm">
           {product.title}
         </div>
-        <div className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">
-          {sellerName}
-        </div>
+        <div className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">{sellerName}</div>
       </div>
 
       <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -388,12 +410,7 @@ function InlineChip({
 }
 
 function StatusPill({ status }: { status: ProductModerationStatus }) {
-  const tone =
-    status === "ACTIVE"
-      ? "success"
-      : status === "FLAGGED"
-        ? "danger"
-        : "warning";
+  const tone = status === "ACTIVE" ? "success" : status === "FLAGGED" ? "danger" : "warning";
 
   return <AdminPill tone={tone}>{status}</AdminPill>;
 }

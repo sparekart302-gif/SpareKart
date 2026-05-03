@@ -1,21 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import {
-  AlertCircle,
-  Clock3,
-  Landmark,
-  ShieldCheck,
-  Wallet,
-} from "lucide-react";
+import { AlertCircle, Clock3, Landmark, ShieldCheck, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { AdminCompactStat, AdminField } from "@/components/admin/AdminCommon";
-import {
-  AdminMiniBars,
-  AdminPageHeader,
-  AdminPanel,
-  AdminPill,
-} from "@/components/admin/AdminUI";
+import { AdminMiniBars, AdminPageHeader, AdminPanel, AdminPill } from "@/components/admin/AdminUI";
 import { SellerPayoutAccountDialog } from "@/components/marketplace/SellerPayoutAccountDialog";
 import { formatPKR } from "@/data/marketplace";
 import { cn } from "@/lib/utils";
@@ -27,14 +16,9 @@ import {
 } from "@/modules/marketplace/payout-display";
 import { getEffectiveSettlementStatus } from "@/modules/marketplace/settlements";
 import { useMarketplace } from "@/modules/marketplace/store";
-import type {
-  SellerPayoutAccount,
-  SellerPayoutAccountInput,
-} from "@/modules/marketplace/types";
+import type { SellerPayoutAccount, SellerPayoutAccountInput } from "@/modules/marketplace/types";
 
-function createPayoutAccountDraft(
-  account?: SellerPayoutAccount,
-): SellerPayoutAccountInput {
+function createPayoutAccountDraft(account?: SellerPayoutAccount): SellerPayoutAccountInput {
   return {
     method: account?.method ?? "BANK_TRANSFER",
     schedulePreference: account?.schedulePreference ?? "MANUAL_REQUEST",
@@ -53,30 +37,19 @@ function createPayoutAccountDraft(
   };
 }
 
-export function SellerCommissionDashboard({
-  embedded = false,
-}: {
-  embedded?: boolean;
-}) {
-  const {
-    currentUser,
-    state,
-    updateSellerPayoutAccount,
-    requestPayout,
-  } = useMarketplace();
+export function SellerCommissionDashboard({ embedded = false }: { embedded?: boolean }) {
+  const { currentUser, state, updateSellerPayoutAccount, requestPayout } = useMarketplace();
 
   const sellerSlug = currentUser?.sellerSlug;
   const sellerRecord = useMemo(
     () =>
-      sellerSlug
-        ? state.sellersDirectory.find((seller) => seller.slug === sellerSlug)
-        : undefined,
+      sellerSlug ? state.sellersDirectory.find((seller) => seller.slug === sellerSlug) : undefined,
     [sellerSlug, state.sellersDirectory],
   );
 
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
-  const [accountDraft, setAccountDraft] = useState<SellerPayoutAccountInput>(
-    () => createPayoutAccountDraft(sellerRecord?.payoutAccount),
+  const [accountDraft, setAccountDraft] = useState<SellerPayoutAccountInput>(() =>
+    createPayoutAccountDraft(sellerRecord?.payoutAccount),
   );
   const [requestNote, setRequestNote] = useState("");
 
@@ -102,21 +75,23 @@ export function SellerCommissionDashboard({
     .filter((row) => row.verificationState !== "VERIFIED")
     .slice(0, 6);
   const openPayout = dashboard.payouts.find((payout) =>
-    ["DRAFT", "PENDING_APPROVAL", "APPROVED", "PROCESSING", "HELD", "PENDING", "SCHEDULED"].includes(
-      payout.status,
-    ),
+    [
+      "DRAFT",
+      "PENDING_APPROVAL",
+      "APPROVED",
+      "PROCESSING",
+      "HELD",
+      "PENDING",
+      "SCHEDULED",
+    ].includes(payout.status),
   );
-  const settlementRows = useMemo(
-    () =>
-      state.sellerSettlements
-        .filter((settlement) => settlement.sellerSlug === sellerSlug)
-        .map((settlement) => ({
-          ...settlement,
-          settlementStatus: getEffectiveSettlementStatus(state, settlement),
-        }))
-        .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)),
-    [sellerSlug, state],
-  );
+  const settlementRows = state.sellerSettlements
+    .filter((settlement) => settlement.sellerSlug === sellerSlug)
+    .map((settlement) => ({
+      ...settlement,
+      settlementStatus: getEffectiveSettlementStatus(state, settlement),
+    }))
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
   const requestableAmount =
     openPayout &&
     openPayout.requestType !== "SELLER_REQUEST" &&
@@ -124,7 +99,7 @@ export function SellerCommissionDashboard({
       ? openPayout.netAmount
       : dashboard.summary.readyForPayout;
 
-  const payoutBlocker = useMemo(() => {
+  const payoutBlocker = (() => {
     if (!payoutAccount) {
       return "Add payout account details before requesting a settlement.";
     }
@@ -150,37 +125,27 @@ export function SellerCommissionDashboard({
     }
 
     return null;
-  }, [
-    requestableAmount,
-    openPayout,
-    payoutAccount,
-    sellerRecord.payoutHold,
-    state.payoutCycleConfig.minimumPayoutAmount,
-  ]);
+  })();
 
   const canRequestPayout = !payoutBlocker;
 
-  const handleSavePayoutAccount = () => {
+  const handleSavePayoutAccount = async () => {
     try {
-      updateSellerPayoutAccount(accountDraft);
+      await updateSellerPayoutAccount(accountDraft);
       setAccountDialogOpen(false);
       toast.success("Payout details saved and sent for admin review.");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to save payout account.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to save payout account.");
     }
   };
 
-  const handleRequestPayout = () => {
+  const handleRequestPayout = async () => {
     try {
-      requestPayout({ note: requestNote.trim() || undefined });
+      await requestPayout({ note: requestNote.trim() || undefined });
       setRequestNote("");
       toast.success("Payout request submitted for admin approval.");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to request payout.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to request payout.");
     }
   };
 
@@ -291,9 +256,7 @@ export function SellerCommissionDashboard({
                 ) : null}
 
                 {payoutAccount.rejectionReason ? (
-                  <StatusNotice tone="danger">
-                    {payoutAccount.rejectionReason}
-                  </StatusNotice>
+                  <StatusNotice tone="danger">{payoutAccount.rejectionReason}</StatusNotice>
                 ) : null}
 
                 <div className="rounded-[16px] border border-dashed border-border/70 px-4 py-3 text-xs text-muted-foreground">
@@ -363,9 +326,7 @@ export function SellerCommissionDashboard({
                     </div>
                     <div className="mt-1 text-xs leading-5 text-muted-foreground">
                       {payoutBlocker ??
-                        `You can now request ${formatPKR(
-                          requestableAmount,
-                        )} for manual release.`}
+                        `You can now request ${formatPKR(requestableAmount)} for manual release.`}
                     </div>
                   </div>
                 </div>
@@ -528,14 +489,8 @@ export function SellerCommissionDashboard({
                       </div>
                       <div className="mt-2 grid gap-2 sm:grid-cols-4">
                         <LedgerChip label="Commission" value={formatPKR(row.commissionAmount)} />
-                        <LedgerChip
-                          label="Rate"
-                          value={`${row.commissionRate.toFixed(1)}%`}
-                        />
-                        <LedgerChip
-                          label="Payment"
-                          value={formatPayoutLabel(row.paymentStatus)}
-                        />
+                        <LedgerChip label="Rate" value={`${row.commissionRate.toFixed(1)}%`} />
+                        <LedgerChip label="Payment" value={formatPayoutLabel(row.paymentStatus)} />
                         <LedgerChip
                           label="Payout"
                           value={
@@ -585,7 +540,10 @@ export function SellerCommissionDashboard({
                       </div>
                       <div className="mt-2 grid gap-2 sm:grid-cols-3">
                         <LedgerChip label="Gross" value={formatPKR(settlement.grossSaleAmount)} />
-                        <LedgerChip label="Commission" value={formatPKR(settlement.commissionAmount)} />
+                        <LedgerChip
+                          label="Commission"
+                          value={formatPKR(settlement.commissionAmount)}
+                        />
                         <LedgerChip label="Net" value={formatPKR(settlement.netPayableAmount)} />
                       </div>
                     </div>
@@ -694,15 +652,7 @@ function FlowBox({
   );
 }
 
-function InfoTile({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
+function InfoTile({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-[16px] border border-border/60 bg-surface px-3 py-3">
       <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
@@ -714,13 +664,7 @@ function InfoTile({
   );
 }
 
-function StatusNotice({
-  children,
-  tone = "info",
-}: {
-  children: string;
-  tone?: "info" | "danger";
-}) {
+function StatusNotice({ children, tone = "info" }: { children: string; tone?: "info" | "danger" }) {
   return (
     <div
       className={cn(

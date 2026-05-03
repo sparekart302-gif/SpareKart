@@ -62,7 +62,13 @@ export default function ForgotPasswordPage() {
 
       await refreshAuthSession();
       toast.success("Password updated successfully.");
-      router.push(user.role === "CUSTOMER" ? "/account" : user.role === "SELLER" ? "/seller/orders" : "/admin");
+      router.push(
+        user.role === "CUSTOMER"
+          ? "/account"
+          : user.role === "SELLER"
+            ? "/seller/orders"
+            : "/admin",
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to reset password.");
     } finally {
@@ -76,7 +82,9 @@ export default function ForgotPasswordPage() {
         <div className="mb-5 text-center sm:mb-6">
           <div className="text-xs font-bold uppercase tracking-[0.22em] text-accent">Recovery</div>
           <h1 className="text-[2rem] font-black tracking-tight sm:text-3xl">Reset password</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Request an OTP, then confirm it with your new password.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Request an OTP, then confirm it with your new password.
+          </p>
         </div>
         <div className="rounded-[26px] bg-card p-5 shadow-[var(--shadow-premium)] sm:rounded-[30px] sm:p-8">
           <div className="mb-5 grid grid-cols-2 gap-2 rounded-2xl bg-surface p-1.5 shadow-[var(--shadow-soft)]">
@@ -159,7 +167,9 @@ export default function ForgotPasswordPage() {
                         await requestPasswordResetEmail(email.trim());
                         toast.success("A fresh OTP has been sent.");
                       } catch (error) {
-                        toast.error(error instanceof Error ? error.message : "Unable to resend OTP.");
+                        toast.error(
+                          error instanceof Error ? error.message : "Unable to resend OTP.",
+                        );
                       }
                     }}
                     className="font-semibold text-accent hover:underline"
@@ -188,13 +198,17 @@ export default function ForgotPasswordPage() {
                 disabled={submitting || !canSubmitOtp}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-xl gradient-accent text-sm font-bold text-primary hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70 sm:h-12"
               >
-                {submitting ? "Resetting password..." : "Confirm reset"} <ArrowRight className="h-4 w-4" />
+                {submitting ? "Resetting password..." : "Confirm reset"}{" "}
+                <ArrowRight className="h-4 w-4" />
               </button>
             </form>
           )}
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            Remembered it? <Link to="/login" className="font-bold text-accent hover:underline">Back to sign in</Link>
+            Remembered it?{" "}
+            <Link to="/login" className="font-bold text-accent hover:underline">
+              Back to sign in
+            </Link>
           </div>
         </div>
       </section>
@@ -233,4 +247,3 @@ function Field({
     </div>
   );
 }
-

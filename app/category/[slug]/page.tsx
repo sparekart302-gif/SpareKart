@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import CategoryPage from "@/routes/category.$slug";
-import { categories, getProductsByCategory } from "@/data/marketplace";
 import { buildPageMetadata } from "@/lib/metadata";
+import {
+  findMarketplaceCategoryBySlug,
+  listMarketplaceProducts,
+} from "@/server/marketplace/persistence";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const category = categories.find((item) => item.slug === slug);
+  const category = await findMarketplaceCategoryBySlug(slug);
 
   if (!category) {
     return buildPageMetadata({
@@ -31,11 +32,13 @@ export async function generateMetadata({
 
 export default async function Page({ params }: PageProps) {
   const { slug } = await params;
-  const category = categories.find((item) => item.slug === slug);
+  const category = await findMarketplaceCategoryBySlug(slug);
 
   if (!category) {
     notFound();
   }
 
-  return <CategoryPage category={category} items={getProductsByCategory(slug)} />;
+  const products = (await listMarketplaceProducts()).filter((product) => product.category === slug);
+
+  return <CategoryPage category={category} items={products} />;
 }

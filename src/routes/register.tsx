@@ -46,9 +46,7 @@ export default function RegisterPage() {
       toast.success("Verification code sent to your email.");
       router.push(`/verify-email?email=${encodeURIComponent(result.user.email)}`);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not create account."
-      );
+      toast.error(error instanceof Error ? error.message : "Could not create account.");
     } finally {
       setSubmitting(false);
     }
@@ -62,9 +60,7 @@ export default function RegisterPage() {
             Create Account
           </div>
 
-          <h1 className="text-[2rem] font-black tracking-tight sm:text-3xl">
-            Join SpareKart
-          </h1>
+          <h1 className="text-[2rem] font-black tracking-tight sm:text-3xl">Join SpareKart</h1>
 
           <p className="mt-2 text-sm text-muted-foreground">
             Create your account, then verify your email before signing in.
@@ -115,9 +111,8 @@ export default function RegisterPage() {
             </>
           ) : (
             <div className="mt-5 rounded-2xl border border-border/70 bg-surface px-4 py-3 text-sm text-muted-foreground">
-              Seller onboarding uses email and password so we can collect store
-              details first. After setup, you can use the same verified email
-              for sign-in.
+              Seller onboarding uses email and password so we can collect store details first. After
+              setup, you can use the same verified email for sign-in.
             </div>
           )}
 
@@ -236,18 +231,10 @@ export default function RegisterPage() {
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <label className="text-xs font-semibold text-muted-foreground">
-        {label}
-      </label>
+      <label className="text-xs font-semibold text-muted-foreground">{label}</label>
       <div className="mt-1">{children}</div>
     </div>
   );

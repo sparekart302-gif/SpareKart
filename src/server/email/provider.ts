@@ -16,8 +16,7 @@ function hasResendConfig() {
 }
 
 function hasPartialResendConfig() {
-  const env = getServerEnv();
-  return Boolean(env.RESEND_API_KEY || env.RESEND_FROM_EMAIL) && !env.resendConfigured;
+  return getServerEnv().resendPartiallyConfigured;
 }
 
 async function deliverViaResend(job: EmailJobRecord): Promise<DeliveryResult> {
@@ -38,6 +37,7 @@ async function deliverViaResend(job: EmailJobRecord): Promise<DeliveryResult> {
     throw new Error(response.error.message);
   }
 
+  console.info(`[email] Delivered ${job.template} via Resend to ${job.to.email}.`);
   return { provider: "resend" };
 }
 
@@ -51,6 +51,7 @@ async function deliverViaLocalPreview(job: EmailJobRecord): Promise<DeliveryResu
   await writeFile(htmlPath, job.html, "utf8");
   await writeFile(textPath, job.text, "utf8");
 
+  console.info(`[email] Wrote ${job.template} preview for ${job.to.email} to ${previewDir}.`);
   return { provider: "local-preview" };
 }
 
@@ -65,5 +66,8 @@ export async function deliverEmail(job: EmailJobRecord) {
     return deliverViaResend(job);
   }
 
+  console.warn(
+    `[email] Resend is not fully configured. Falling back to local preview delivery for ${job.template}.`,
+  );
   return deliverViaLocalPreview(job);
 }

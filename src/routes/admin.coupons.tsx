@@ -4,7 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { BadgePercent, Search, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import { AdminCompactStat, AdminField, AdminScopeGate } from "@/components/admin/AdminCommon";
-import { AdminEmptyState, AdminPageHeader, AdminPanel, AdminPill } from "@/components/admin/AdminUI";
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+  AdminPill,
+} from "@/components/admin/AdminUI";
 import { getCouponUsageRows } from "@/modules/marketplace/admin-selectors";
 import { useMarketplace } from "@/modules/marketplace/store";
 import type { CouponInput, CouponScope, CouponType } from "@/modules/marketplace/types";
@@ -70,7 +75,9 @@ export default function AdminCouponsPage() {
   }, [selectedCoupon]);
 
   const activeCount = state.coupons.filter((coupon) => coupon.active).length;
-  const expiredCount = state.coupons.filter((coupon) => new Date(coupon.expiresAt) < new Date()).length;
+  const expiredCount = state.coupons.filter(
+    (coupon) => new Date(coupon.expiresAt) < new Date(),
+  ).length;
   const usageCount = state.coupons.reduce((sum, coupon) => sum + coupon.usageCount, 0);
 
   return (
@@ -95,10 +102,28 @@ export default function AdminCouponsPage() {
         />
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <AdminCompactStat label="Active coupons" value={String(activeCount)} helper="Currently enabled" tone="success" />
-          <AdminCompactStat label="Expired" value={String(expiredCount)} helper="Past expiry date" tone="warning" />
-          <AdminCompactStat label="Total redemptions" value={String(usageCount)} helper="Recorded coupon uses" />
-          <AdminCompactStat label="Campaigns" value={String(state.coupons.length)} helper="Stored discount codes" />
+          <AdminCompactStat
+            label="Active coupons"
+            value={String(activeCount)}
+            helper="Currently enabled"
+            tone="success"
+          />
+          <AdminCompactStat
+            label="Expired"
+            value={String(expiredCount)}
+            helper="Past expiry date"
+            tone="warning"
+          />
+          <AdminCompactStat
+            label="Total redemptions"
+            value={String(usageCount)}
+            helper="Recorded coupon uses"
+          />
+          <AdminCompactStat
+            label="Campaigns"
+            value={String(state.coupons.length)}
+            helper="Stored discount codes"
+          />
         </section>
 
         <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
@@ -120,7 +145,9 @@ export default function AdminCouponsPage() {
                   type="button"
                   onClick={() => setSelectedCouponId(coupon.id)}
                   className={`w-full rounded-[22px] p-4 text-left shadow-[var(--shadow-soft)] transition-colors ${
-                    selectedCouponId === coupon.id ? "bg-accent-soft" : "bg-surface hover:bg-accent-soft/40"
+                    selectedCouponId === coupon.id
+                      ? "bg-accent-soft"
+                      : "bg-surface hover:bg-accent-soft/40"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -135,7 +162,9 @@ export default function AdminCouponsPage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <AdminPill>{coupon.type}</AdminPill>
                     <AdminPill tone="info">{coupon.scope}</AdminPill>
-                    <AdminPill tone="info">{coupon.usageCount}/{coupon.usageLimit} used</AdminPill>
+                    <AdminPill tone="info">
+                      {coupon.usageCount}/{coupon.usageLimit} used
+                    </AdminPill>
                   </div>
                 </button>
               ))}
@@ -148,14 +177,21 @@ export default function AdminCouponsPage() {
                 <AdminField label="Code">
                   <input
                     value={draft.code}
-                    onChange={(event) => setDraft((previous) => ({ ...previous, code: event.target.value.toUpperCase() }))}
+                    onChange={(event) =>
+                      setDraft((previous) => ({
+                        ...previous,
+                        code: event.target.value.toUpperCase(),
+                      }))
+                    }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                   />
                 </AdminField>
                 <AdminField label="Description">
                   <input
                     value={draft.description}
-                    onChange={(event) => setDraft((previous) => ({ ...previous, description: event.target.value }))}
+                    onChange={(event) =>
+                      setDraft((previous) => ({ ...previous, description: event.target.value }))
+                    }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                   />
                 </AdminField>
@@ -163,7 +199,12 @@ export default function AdminCouponsPage() {
                   <AdminField label="Type">
                     <select
                       value={draft.type}
-                      onChange={(event) => setDraft((previous) => ({ ...previous, type: event.target.value as CouponType }))}
+                      onChange={(event) =>
+                        setDraft((previous) => ({
+                          ...previous,
+                          type: event.target.value as CouponType,
+                        }))
+                      }
                       className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                     >
                       {couponTypes.map((type) => (
@@ -182,7 +223,7 @@ export default function AdminCouponsPage() {
                           scope: event.target.value as CouponScope,
                           eligibleCategorySlugs:
                             event.target.value === "CATEGORY"
-                              ? previous.eligibleCategorySlugs ?? []
+                              ? (previous.eligibleCategorySlugs ?? [])
                               : [],
                         }))
                       }
@@ -201,7 +242,12 @@ export default function AdminCouponsPage() {
                     <input
                       type="number"
                       value={draft.value}
-                      onChange={(event) => setDraft((previous) => ({ ...previous, value: Number(event.target.value) || 0 }))}
+                      onChange={(event) =>
+                        setDraft((previous) => ({
+                          ...previous,
+                          value: Number(event.target.value) || 0,
+                        }))
+                      }
                       className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                     />
                   </AdminField>
@@ -227,7 +273,12 @@ export default function AdminCouponsPage() {
                     <input
                       type="number"
                       value={draft.minOrderAmount}
-                      onChange={(event) => setDraft((previous) => ({ ...previous, minOrderAmount: Number(event.target.value) || 0 }))}
+                      onChange={(event) =>
+                        setDraft((previous) => ({
+                          ...previous,
+                          minOrderAmount: Number(event.target.value) || 0,
+                        }))
+                      }
                       className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                     />
                   </AdminField>
@@ -235,7 +286,12 @@ export default function AdminCouponsPage() {
                     <input
                       type="number"
                       value={draft.usageLimit}
-                      onChange={(event) => setDraft((previous) => ({ ...previous, usageLimit: Number(event.target.value) || 0 }))}
+                      onChange={(event) =>
+                        setDraft((previous) => ({
+                          ...previous,
+                          usageLimit: Number(event.target.value) || 0,
+                        }))
+                      }
                       className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                     />
                   </AdminField>
@@ -246,7 +302,9 @@ export default function AdminCouponsPage() {
                       {state.managedCategories
                         .filter((category) => category.active)
                         .map((category) => {
-                          const isSelected = (draft.eligibleCategorySlugs ?? []).includes(category.slug);
+                          const isSelected = (draft.eligibleCategorySlugs ?? []).includes(
+                            category.slug,
+                          );
 
                           return (
                             <button
@@ -283,14 +341,21 @@ export default function AdminCouponsPage() {
                     <input
                       type="date"
                       value={draft.expiresAt}
-                      onChange={(event) => setDraft((previous) => ({ ...previous, expiresAt: event.target.value }))}
+                      onChange={(event) =>
+                        setDraft((previous) => ({ ...previous, expiresAt: event.target.value }))
+                      }
                       className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                     />
                   </AdminField>
                   <AdminField label="Status">
                     <select
                       value={draft.active ? "active" : "disabled"}
-                      onChange={(event) => setDraft((previous) => ({ ...previous, active: event.target.value === "active" }))}
+                      onChange={(event) =>
+                        setDraft((previous) => ({
+                          ...previous,
+                          active: event.target.value === "active",
+                        }))
+                      }
                       className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                     >
                       <option value="active">Active</option>
@@ -306,7 +371,9 @@ export default function AdminCouponsPage() {
                         saveCouponRecord(draft);
                         toast.success(draft.id ? "Coupon updated." : "Coupon created.");
                       } catch (error) {
-                        toast.error(error instanceof Error ? error.message : "Unable to save coupon.");
+                        toast.error(
+                          error instanceof Error ? error.message : "Unable to save coupon.",
+                        );
                       }
                     }}
                     className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground"
@@ -322,7 +389,9 @@ export default function AdminCouponsPage() {
                           toast.success("Coupon deleted.");
                           setSelectedCouponId("");
                         } catch (error) {
-                          toast.error(error instanceof Error ? error.message : "Unable to delete coupon.");
+                          toast.error(
+                            error instanceof Error ? error.message : "Unable to delete coupon.",
+                          );
                         }
                       }}
                       className="inline-flex h-11 items-center justify-center rounded-xl bg-destructive/10 px-5 text-sm font-semibold text-destructive"
@@ -336,22 +405,48 @@ export default function AdminCouponsPage() {
 
             <AdminPanel title="Usage visibility">
               {!selectedCoupon ? (
-                <AdminEmptyState title="Choose a coupon" body="Select a campaign to inspect who redeemed it and how often." />
+                <AdminEmptyState
+                  title="Choose a coupon"
+                  body="Select a campaign to inspect who redeemed it and how often."
+                />
               ) : (
                 <div className="space-y-4">
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <UsageMetric label="Redemptions" value={String(selectedCoupon.usageCount)} Icon={Ticket} />
-                    <UsageMetric label="Usage limit" value={String(selectedCoupon.usageLimit)} Icon={BadgePercent} />
-                    <UsageMetric label="Discount" value={selectedCoupon.type === "PERCENTAGE" ? `${selectedCoupon.value}%` : formatPKR(selectedCoupon.value)} Icon={Ticket} />
+                    <UsageMetric
+                      label="Redemptions"
+                      value={String(selectedCoupon.usageCount)}
+                      Icon={Ticket}
+                    />
+                    <UsageMetric
+                      label="Usage limit"
+                      value={String(selectedCoupon.usageLimit)}
+                      Icon={BadgePercent}
+                    />
+                    <UsageMetric
+                      label="Discount"
+                      value={
+                        selectedCoupon.type === "PERCENTAGE"
+                          ? `${selectedCoupon.value}%`
+                          : formatPKR(selectedCoupon.value)
+                      }
+                      Icon={Ticket}
+                    />
                   </div>
                   <div className="rounded-[22px] bg-surface px-4 py-4 shadow-[var(--shadow-soft)]">
-                    <div className="text-sm font-bold text-foreground">Customers who used this code</div>
+                    <div className="text-sm font-bold text-foreground">
+                      Customers who used this code
+                    </div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {selectedCoupon.customers.length === 0 ? (
-                        <div className="text-sm text-muted-foreground">No customer redemptions yet.</div>
+                        <div className="text-sm text-muted-foreground">
+                          No customer redemptions yet.
+                        </div>
                       ) : (
                         selectedCoupon.customers.map((customer) => (
-                          <span key={customer!.id} className="rounded-full bg-card px-3 py-1 text-xs font-semibold text-foreground shadow-[var(--shadow-soft)]">
+                          <span
+                            key={customer!.id}
+                            className="rounded-full bg-card px-3 py-1 text-xs font-semibold text-foreground shadow-[var(--shadow-soft)]"
+                          >
                             {customer!.name}
                           </span>
                         ))

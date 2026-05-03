@@ -8,7 +8,7 @@ import { Link } from "@/components/navigation/Link";
 import { Breadcrumbs, PageLayout } from "@/components/marketplace/PageLayout";
 import { OrderStatusBadge, PaymentStatusBadge } from "@/components/marketplace/StatusBadge";
 import { PaymentProofForm } from "@/components/payments/PaymentProofForm";
-import { formatPKR, getSeller } from "@/data/marketplace";
+import { formatPKR } from "@/data/marketplace";
 import {
   getLatestProofForOrder,
   getOrderTimeline,
@@ -58,10 +58,15 @@ export default function OrderTrackingPage() {
         <div className="mx-auto max-w-5xl space-y-6">
           <div className="rounded-[28px] bg-card p-5 shadow-[var(--shadow-premium)] sm:p-6">
             <div className="max-w-2xl">
-              <div className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Guest order tracking</div>
-              <h1 className="mt-2 text-[2rem] font-black tracking-tight sm:text-3xl">Track an order without logging in</h1>
+              <div className="text-xs font-bold uppercase tracking-[0.2em] text-accent">
+                Guest order tracking
+              </div>
+              <h1 className="mt-2 text-[2rem] font-black tracking-tight sm:text-3xl">
+                Track an order without logging in
+              </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Use your SpareKart order number and the phone or email used at checkout to view delivery progress, upload payment proof, and unlock review access after delivery.
+                Use your SpareKart order number and the phone or email used at checkout to view
+                delivery progress, upload payment proof, and unlock review access after delivery.
               </p>
             </div>
 
@@ -95,7 +100,8 @@ export default function OrderTrackingPage() {
 
           {submittedLookup && !order ? (
             <div className="rounded-[26px] bg-card p-6 text-center text-sm text-muted-foreground shadow-[var(--shadow-soft)]">
-              We could not match that order. Double-check the order number and the phone or email used during checkout.
+              We could not match that order. Double-check the order number and the phone or email
+              used during checkout.
             </div>
           ) : null}
 
@@ -105,8 +111,12 @@ export default function OrderTrackingPage() {
                 <div className="rounded-[26px] bg-card p-5 shadow-[var(--shadow-premium)]">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                      <div className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Order reference</div>
-                      <div className="mt-1 text-2xl font-black text-foreground">{order.orderNumber}</div>
+                      <div className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                        Order reference
+                      </div>
+                      <div className="mt-1 text-2xl font-black text-foreground">
+                        {order.orderNumber}
+                      </div>
                       <div className="mt-1 text-sm text-muted-foreground">
                         Placed on {new Date(order.createdAt).toLocaleString("en-PK")}
                       </div>
@@ -119,7 +129,10 @@ export default function OrderTrackingPage() {
 
                   <div className="mt-5 grid gap-3 sm:grid-cols-3">
                     <StatCard label="Items" value={String(order.items.length)} />
-                    <StatCard label="Sellers" value={String(new Set(order.items.map((item) => item.sellerSlug)).size)} />
+                    <StatCard
+                      label="Sellers"
+                      value={String(new Set(order.items.map((item) => item.sellerSlug)).size)}
+                    />
                     <StatCard label="Total" value={formatPKR(order.totals.total)} />
                   </div>
 
@@ -129,10 +142,13 @@ export default function OrderTrackingPage() {
                       {order.shippingAddress.fullName} · {order.shippingAddress.phone}
                     </div>
                     <div className="mt-1 text-sm text-muted-foreground">
-                      {order.shippingAddress.addressLine}, {order.shippingAddress.city} {order.shippingAddress.postalCode}, {order.shippingAddress.province}
+                      {order.shippingAddress.addressLine}, {order.shippingAddress.city}{" "}
+                      {order.shippingAddress.postalCode}, {order.shippingAddress.province}
                     </div>
                     {order.customerEmail ? (
-                      <div className="mt-1 text-sm text-muted-foreground">{order.customerEmail}</div>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        {order.customerEmail}
+                      </div>
                     ) : null}
                   </div>
                 </div>
@@ -144,10 +160,17 @@ export default function OrderTrackingPage() {
                   </div>
                   <div className="mt-4 space-y-3">
                     {order.items.map((item) => {
-                      const product = state.managedProducts.find((entry) => entry.id === item.productId);
-                      const seller = getSeller(item.sellerSlug);
+                      const product = state.managedProducts.find(
+                        (entry) => entry.id === item.productId,
+                      );
+                      const seller = state.sellersDirectory.find(
+                        (candidate) => candidate.slug === item.sellerSlug,
+                      );
                       return (
-                        <div key={item.id} className="flex gap-3 rounded-[20px] bg-surface p-3 shadow-[var(--shadow-soft)]">
+                        <div
+                          key={item.id}
+                          className="flex gap-3 rounded-[20px] bg-surface p-3 shadow-[var(--shadow-soft)]"
+                        >
                           <OptimizedImage
                             src={item.image}
                             alt={item.title}
@@ -157,18 +180,28 @@ export default function OrderTrackingPage() {
                           />
                           <div className="min-w-0 flex-1">
                             {product ? (
-                              <Link to="/product/$slug" params={{ slug: product.slug }} className="line-clamp-2 text-sm font-semibold text-foreground hover:text-accent">
+                              <Link
+                                to="/product/$slug"
+                                params={{ slug: product.slug }}
+                                className="line-clamp-2 text-sm font-semibold text-foreground hover:text-accent"
+                              >
                                 {item.title}
                               </Link>
                             ) : (
-                              <div className="line-clamp-2 text-sm font-semibold text-foreground">{item.title}</div>
+                              <div className="line-clamp-2 text-sm font-semibold text-foreground">
+                                {item.title}
+                              </div>
                             )}
                             <div className="mt-1 text-xs text-muted-foreground">
-                              Qty {item.quantity} · {seller.name}
+                              Qty {item.quantity} · {seller?.name ?? item.sellerSlug}
                             </div>
                             {order.status === "DELIVERED" && product ? (
                               <div className="mt-2">
-                                <Link to="/product/$slug" params={{ slug: product.slug }} className="text-xs font-semibold text-accent hover:underline">
+                                <Link
+                                  to="/product/$slug"
+                                  params={{ slug: product.slug }}
+                                  className="text-xs font-semibold text-accent hover:underline"
+                                >
                                   Leave product review
                                 </Link>
                               </div>
@@ -184,7 +217,8 @@ export default function OrderTrackingPage() {
 
                   {order.status === "DELIVERED" ? (
                     <div className="mt-4 rounded-[20px] bg-accent-soft/70 px-4 py-3 text-sm text-muted-foreground shadow-[var(--shadow-soft)]">
-                      Delivered orders can now be reviewed. You can leave a store review from the seller page and product reviews from each product page.
+                      Delivered orders can now be reviewed. You can leave a store review from the
+                      seller page and product reviews from each product page.
                     </div>
                   ) : null}
                 </div>
@@ -198,7 +232,10 @@ export default function OrderTrackingPage() {
                   </div>
                   <div className="mt-4 space-y-3">
                     {timeline.map((entry) => (
-                      <div key={entry.id} className="rounded-[20px] bg-surface p-3 shadow-[var(--shadow-soft)]">
+                      <div
+                        key={entry.id}
+                        className="rounded-[20px] bg-surface p-3 shadow-[var(--shadow-soft)]"
+                      >
                         <div className="text-sm font-semibold text-foreground">{entry.title}</div>
                         <div className="mt-1 text-xs text-muted-foreground">{entry.detail}</div>
                         <div className="mt-2 text-[11px] text-muted-foreground">
@@ -215,20 +252,50 @@ export default function OrderTrackingPage() {
                     Payment details
                   </div>
                   <div className="mt-4 space-y-2 text-sm">
-                    <InfoRow label="Method" value={payment.instructionsSnapshot?.label ?? payment.method.replaceAll("_", " ")} />
+                    <InfoRow
+                      label="Method"
+                      value={
+                        payment.instructionsSnapshot?.label ?? payment.method.replaceAll("_", " ")
+                      }
+                    />
                     <InfoRow label="Amount due" value={formatPKR(payment.amountDue)} />
                     <InfoRow label="Current status" value={payment.status.replaceAll("_", " ")} />
                   </div>
 
                   {payment.instructionsSnapshot ? (
                     <div className="mt-4 rounded-[20px] bg-surface p-4 text-sm shadow-[var(--shadow-soft)]">
-                      <div className="font-bold text-foreground">{payment.instructionsSnapshot.label} instructions</div>
+                      <div className="font-bold text-foreground">
+                        {payment.instructionsSnapshot.label} instructions
+                      </div>
                       <div className="mt-2 space-y-2 text-sm text-muted-foreground">
-                        <InfoRow label="Account title" value={payment.instructionsSnapshot.accountTitle} />
-                        {payment.instructionsSnapshot.bankName ? <InfoRow label="Bank" value={payment.instructionsSnapshot.bankName} /> : null}
-                        {payment.instructionsSnapshot.accountNumber ? <InfoRow label="Account no." value={payment.instructionsSnapshot.accountNumber} monospace /> : null}
-                        {payment.instructionsSnapshot.iban ? <InfoRow label="IBAN" value={payment.instructionsSnapshot.iban} monospace /> : null}
-                        {payment.instructionsSnapshot.walletNumber ? <InfoRow label="Wallet" value={payment.instructionsSnapshot.walletNumber} monospace /> : null}
+                        <InfoRow
+                          label="Account title"
+                          value={payment.instructionsSnapshot.accountTitle}
+                        />
+                        {payment.instructionsSnapshot.bankName ? (
+                          <InfoRow label="Bank" value={payment.instructionsSnapshot.bankName} />
+                        ) : null}
+                        {payment.instructionsSnapshot.accountNumber ? (
+                          <InfoRow
+                            label="Account no."
+                            value={payment.instructionsSnapshot.accountNumber}
+                            monospace
+                          />
+                        ) : null}
+                        {payment.instructionsSnapshot.iban ? (
+                          <InfoRow
+                            label="IBAN"
+                            value={payment.instructionsSnapshot.iban}
+                            monospace
+                          />
+                        ) : null}
+                        {payment.instructionsSnapshot.walletNumber ? (
+                          <InfoRow
+                            label="Wallet"
+                            value={payment.instructionsSnapshot.walletNumber}
+                            monospace
+                          />
+                        ) : null}
                       </div>
                     </div>
                   ) : null}
@@ -259,14 +326,24 @@ export default function OrderTrackingPage() {
                       </div>
                       <PaymentProofForm
                         maxSizeBytes={state.paymentSettings.proofMaxSizeBytes}
-                        submitLabel={payment.status === "REJECTED" ? "Resubmit payment proof" : "Submit payment proof"}
+                        submitLabel={
+                          payment.status === "REJECTED"
+                            ? "Resubmit payment proof"
+                            : "Submit payment proof"
+                        }
                         onSubmit={(proof) => {
-                          try {
-                            submitProofByLookup(submittedLookup, proof);
-                            toast.success("Payment proof submitted successfully.");
-                          } catch (error) {
-                            toast.error(error instanceof Error ? error.message : "Unable to submit payment proof.");
-                          }
+                          void (async () => {
+                            try {
+                              await submitProofByLookup(submittedLookup, proof);
+                              toast.success("Payment proof submitted successfully.");
+                            } catch (error) {
+                              toast.error(
+                                error instanceof Error
+                                  ? error.message
+                                  : "Unable to submit payment proof.",
+                              );
+                            }
+                          })();
                         }}
                       />
                     </div>
@@ -279,9 +356,16 @@ export default function OrderTrackingPage() {
                     Next actions
                   </div>
                   <div className="mt-4 space-y-3 text-sm text-muted-foreground">
-                    <div>Keep your order number saved for future tracking and review verification.</div>
-                    <div>If the order uses manual payment, upload proof here whenever it is requested.</div>
-                    <div>After delivery, use the linked product and store pages to leave verified reviews.</div>
+                    <div>
+                      Keep your order number saved for future tracking and review verification.
+                    </div>
+                    <div>
+                      If the order uses manual payment, upload proof here whenever it is requested.
+                    </div>
+                    <div>
+                      After delivery, use the linked product and store pages to leave verified
+                      reviews.
+                    </div>
                   </div>
                 </div>
               </aside>
@@ -296,7 +380,9 @@ export default function OrderTrackingPage() {
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[18px] bg-surface px-4 py-3 shadow-[var(--shadow-soft)]">
-      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
+      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+        {label}
+      </div>
       <div className="mt-1 text-lg font-black text-foreground">{value}</div>
     </div>
   );
@@ -314,7 +400,9 @@ function InfoRow({
   return (
     <div className="flex items-center justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
-      <span className={monospace ? "font-mono text-foreground" : "font-semibold text-foreground"}>{value}</span>
+      <span className={monospace ? "font-mono text-foreground" : "font-semibold text-foreground"}>
+        {value}
+      </span>
     </div>
   );
 }

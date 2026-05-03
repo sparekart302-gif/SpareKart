@@ -31,12 +31,15 @@ export function StoreModal({
 
   const handleChange = <K extends keyof SellerStoreProfileInput>(
     field: K,
-    value: SellerStoreProfileInput[K]
+    value: SellerStoreProfileInput[K],
   ) => {
     onDraftChange({ ...storeDraft, [field]: value });
   };
 
-  const handleSocialChange = (field: keyof NonNullable<SellerStoreProfileInput["socialLinks"]>, value: string) => {
+  const handleSocialChange = (
+    field: keyof NonNullable<SellerStoreProfileInput["socialLinks"]>,
+    value: string,
+  ) => {
     onDraftChange({
       ...storeDraft,
       socialLinks: {

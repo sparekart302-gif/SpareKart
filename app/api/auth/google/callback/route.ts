@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
+import { AuthApiError } from "@/server/auth/errors";
 import { getDeviceMeta } from "@/server/auth/http";
 import { getPostLoginPath, loginWithGoogleCode } from "@/server/auth/service";
 
@@ -21,15 +22,34 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (!code || !state || !savedState || state !== savedState) {
-    loginUrl.searchParams.set("oauth", "failed");
+  if (!code) {
+    loginUrl.searchParams.set("oauth", "missing_code");
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (!state || !savedState || state !== savedState) {
+    loginUrl.searchParams.set("oauth", "invalid_state");
     return NextResponse.redirect(loginUrl);
   }
 
   try {
     const result = await loginWithGoogleCode(code, getDeviceMeta(request));
-    return NextResponse.redirect(new URL(getPostLoginPath(result.user.role), request.nextUrl.origin));
-  } catch {
+    return NextResponse.redirect(
+      new URL(getPostLoginPath(result.user.role), request.nextUrl.origin),
+    );
+  } catch (error) {
+    if (error instanceof AuthApiError) {
+      if (error.code === "GOOGLE_AUTH_NOT_CONFIGURED") {
+        loginUrl.searchParams.set("oauth", "unavailable");
+        return NextResponse.redirect(loginUrl);
+      }
+
+      if (error.code === "GOOGLE_EMAIL_NOT_VERIFIED") {
+        loginUrl.searchParams.set("oauth", "not_verified");
+        return NextResponse.redirect(loginUrl);
+      }
+    }
+
     loginUrl.searchParams.set("oauth", "failed");
     return NextResponse.redirect(loginUrl);
   }

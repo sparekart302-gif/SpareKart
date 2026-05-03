@@ -8,11 +8,7 @@ export function formatPayoutLabel(value?: string) {
   return value.replaceAll("_", " ").replaceAll("-", " ");
 }
 
-export function maskSensitiveValue(
-  value?: string,
-  keepStart = 2,
-  keepEnd = 4,
-) {
+export function maskSensitiveValue(value?: string, keepStart = 2, keepEnd = 4) {
   if (!value) {
     return "Not provided";
   }
@@ -52,7 +48,12 @@ export function describePayoutAccountDestination(account?: SellerPayoutAccount) 
 export function describePayoutRecordDestination(
   payout: Pick<
     SellerPayout,
-    "payoutMethod" | "bankDetails" | "easyPaisaNumber" | "jazzCashNumber" | "paypalEmail" | "walletId"
+    | "payoutMethod"
+    | "bankDetails"
+    | "easyPaisaNumber"
+    | "jazzCashNumber"
+    | "paypalEmail"
+    | "walletId"
   >,
 ) {
   switch (payout.payoutMethod) {

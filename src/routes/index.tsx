@@ -1,14 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  TrendingUp,
-  ChevronRight,
-  Store,
-  Wrench,
-} from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { ArrowRight, TrendingUp, ChevronRight, Store, Wrench } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Link } from "@/components/navigation/Link";
 import { PageLayout } from "@/components/marketplace/PageLayout";
@@ -22,75 +16,97 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { vehicles } from "@/data/marketplace";
 import {
-  categories,
-  products,
-  sellers,
-  brands,
-  vehicles,
-} from "@/data/marketplace";
+  getActiveMarketplaceCategories,
+  getActiveMarketplaceProducts,
+  getActiveMarketplaceSellers,
+  getMarketplaceBrands,
+} from "@/modules/marketplace/selectors";
+import { useMarketplace } from "@/modules/marketplace/store";
 
-const heroSlides = [
-  {
-    eyebrow: "Brake essentials",
-    title: "Premium braking parts from trusted marketplace sellers",
-    description: "Pads, discs, calipers, and sensors ready for fast nationwide dispatch.",
-    primaryCta: "Shop brakes",
-    primaryHref: "/category/brakes",
-    secondaryCta: "Browse sellers",
-    secondaryHref: "/sellers",
-    image: products[2].images[0],
-  },
-  {
-    eyebrow: "Engine care",
-    title: "Filters, oils, and tune-up parts that fit with confidence",
-    description: "Cleaner discovery for routine servicing, urgent replacements, and workshop demand.",
-    primaryCta: "Explore engine parts",
-    primaryHref: "/category/engine",
-    secondaryCta: "Find exact fit",
-    secondaryHref: "/compatibility",
-    image: products[7].images[0],
-  },
-  {
-    eyebrow: "Lighting upgrades",
-    title: "Headlights and electrical parts with a more professional buying flow",
-    description: "Compare verified stock, secure COD options, and clear product details in one place.",
-    primaryCta: "Shop lighting",
-    primaryHref: "/category/lighting",
-    secondaryCta: "Shop all parts",
-    secondaryHref: "/shop",
-    image: products[11].images[0],
-  },
-] as const;
-
-const heroPromoCards = [
-  {
-    label: "Trusted sellers",
-    title: "Browse verified stores",
-    href: "/sellers",
-    image: sellers[0].banner,
-  },
-  {
-    label: "Workshop picks",
-    title: "Fast-moving service essentials",
-    href: "/category/engine",
-    image: products[7].images[1],
-  },
-] as const;
-
-const desktopLeadCategory =
-  categories.find((category) => category.slug === "engine") ?? categories[0];
-const desktopSecondaryCategories = categories.filter(
-  (category) => category.slug !== desktopLeadCategory.slug,
-);
-
-function getCategoryThumbnail(categorySlug: string) {
+function getCategoryThumbnail(
+  categorySlug: string,
+  products: ReturnType<typeof getActiveMarketplaceProducts>,
+  sellers: ReturnType<typeof getActiveMarketplaceSellers>,
+) {
   return (
-    products.find((product) => product.category === categorySlug)?.images[0] ?? sellers[0].logo
+    products.find((product) => product.category === categorySlug)?.images[0] ??
+    sellers[0]?.logo ??
+    "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&h=1200&q=80"
   );
 }
 
 export default function HomePage() {
+  const { state } = useMarketplace();
+  const products = getActiveMarketplaceProducts(state);
+  const categories = getActiveMarketplaceCategories(state);
+  const sellers = getActiveMarketplaceSellers(state);
+  const brands = getMarketplaceBrands(state);
+  const fallbackVisual =
+    products[0]?.images[0] ??
+    sellers[0]?.banner ??
+    "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1600&h=900&q=80";
+  const heroSlides = useMemo(
+    () => [
+      {
+        eyebrow: "Brake essentials",
+        title: "Premium braking parts from trusted marketplace sellers",
+        description: "Pads, discs, calipers, and sensors ready for fast nationwide dispatch.",
+        primaryCta: "Shop brakes",
+        primaryHref: "/category/brakes",
+        secondaryCta: "Browse sellers",
+        secondaryHref: "/sellers",
+        image: products.find((product) => product.category === "brakes")?.images[0] ?? fallbackVisual,
+      },
+      {
+        eyebrow: "Engine care",
+        title: "Filters, oils, and tune-up parts that fit with confidence",
+        description:
+          "Cleaner discovery for routine servicing, urgent replacements, and workshop demand.",
+        primaryCta: "Explore engine parts",
+        primaryHref: "/category/engine",
+        secondaryCta: "Find exact fit",
+        secondaryHref: "/compatibility",
+        image: products.find((product) => product.category === "engine")?.images[0] ?? fallbackVisual,
+      },
+      {
+        eyebrow: "Lighting upgrades",
+        title: "Headlights and electrical parts with a more professional buying flow",
+        description:
+          "Compare verified stock, secure COD options, and clear product details in one place.",
+        primaryCta: "Shop lighting",
+        primaryHref: "/category/lighting",
+        secondaryCta: "Shop all parts",
+        secondaryHref: "/shop",
+        image:
+          products.find((product) => product.category === "lighting")?.images[0] ?? fallbackVisual,
+      },
+    ],
+    [fallbackVisual, products],
+  );
+  const heroPromoCards = useMemo(
+    () => [
+      {
+        label: "Trusted sellers",
+        title: "Browse verified stores",
+        href: "/sellers",
+        image: sellers[0]?.banner ?? fallbackVisual,
+      },
+      {
+        label: "Workshop picks",
+        title: "Fast-moving service essentials",
+        href: "/category/engine",
+        image:
+          products.find((product) => product.category === "engine")?.images[0] ?? fallbackVisual,
+      },
+    ],
+    [fallbackVisual, products, sellers],
+  );
+  const desktopLeadCategory = categories.find((category) => category.slug === "engine") ?? categories[0];
+  const desktopSecondaryCategories = categories.filter(
+    (category) => category.slug !== desktopLeadCategory?.slug,
+  );
   const [vBrand, setVBrand] = useState(vehicles[0].brand);
   const [vModel, setVModel] = useState(vehicles[0].models[0].name);
   const [vYear, setVYear] = useState<number>(vehicles[0].models[0].years[0]);
@@ -110,8 +126,8 @@ export default function HomePage() {
         />
         <div className="container relative mx-auto px-4 py-4 sm:py-5 lg:py-7">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,4fr)_minmax(260px,1fr)] xl:gap-5">
-            <HeroSlider />
-            <HeroPromoRail />
+            <HeroSlider slides={heroSlides} />
+            <HeroPromoRail cards={heroPromoCards} />
           </div>
         </div>
       </section>
@@ -210,12 +226,28 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <MobileCategorySlider />
+        <MobileCategorySlider
+          categories={categories}
+          products={products}
+          sellers={sellers}
+        />
 
         <div className="hidden lg:grid lg:auto-rows-[132px] lg:grid-cols-4 lg:gap-4 xl:auto-rows-[144px]">
-          <CategoryFeatureCard category={desktopLeadCategory} featured />
+          {desktopLeadCategory ? (
+            <CategoryFeatureCard
+              category={desktopLeadCategory}
+              products={products}
+              sellers={sellers}
+              featured
+            />
+          ) : null}
           {desktopSecondaryCategories.map((category) => (
-            <CategoryFeatureCard key={category.slug} category={category} />
+            <CategoryFeatureCard
+              key={category.slug}
+              category={category}
+              products={products}
+              sellers={sellers}
+            />
           ))}
         </div>
       </section>
@@ -246,7 +278,9 @@ export default function HomePage() {
               <div className="text-xs font-bold uppercase tracking-widest text-accent">
                 Service Specials
               </div>
-              <h3 className="mt-2 max-w-xs text-2xl font-black sm:text-3xl">Up to 30% off engine oils & filters</h3>
+              <h3 className="mt-2 max-w-xs text-2xl font-black sm:text-3xl">
+                Up to 30% off engine oils & filters
+              </h3>
               <p className="mt-3 max-w-sm text-sm opacity-80">
                 Genuine Mobil 1, Shell, Bosch and Denso. While stocks last.
               </p>
@@ -260,7 +294,9 @@ export default function HomePage() {
             </div>
           </div>
           <div className="relative overflow-hidden rounded-[26px] bg-accent-soft/85 p-6 shadow-[var(--shadow-soft)] sm:rounded-3xl sm:p-8 md:p-10">
-            <div className="text-xs font-bold uppercase tracking-widest text-accent">For Sellers</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-accent">
+              For Sellers
+            </div>
             <h3 className="mt-2 max-w-xs text-2xl font-black text-primary sm:text-3xl">
               Open your store on SpareKart
             </h3>
@@ -327,13 +363,26 @@ export default function HomePage() {
         title="New arrivals"
         description="Fresh inventory from trusted stores in a denser, two-per-row mobile layout that feels cleaner and more professional."
         linkLabel="Browse all"
-        items={products.slice(15, 25)}
+        items={products.slice(10, 20)}
       />
     </PageLayout>
   );
 }
 
-function HeroSlider() {
+function HeroSlider({
+  slides,
+}: {
+  slides: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    primaryCta: string;
+    primaryHref: string;
+    secondaryCta: string;
+    secondaryHref: string;
+    image: string;
+  }[];
+}) {
   const [heroApi, setHeroApi] = useState<CarouselApi>();
   const [activeSlide, setActiveSlide] = useState(0);
 
@@ -368,13 +417,9 @@ function HeroSlider() {
       transition={{ duration: 0.6 }}
       className="min-w-0"
     >
-      <Carousel
-        setApi={setHeroApi}
-        opts={{ align: "start", loop: true }}
-        className="relative"
-      >
+      <Carousel setApi={setHeroApi} opts={{ align: "start", loop: true }} className="relative">
         <CarouselContent className="-ml-0">
-          {heroSlides.map((slide, index) => (
+          {slides.map((slide, index) => (
             <CarouselItem key={slide.title} className="pl-0">
               <div className="group relative min-h-[320px] overflow-hidden rounded-[30px] shadow-[var(--shadow-premium)] sm:min-h-[390px] sm:rounded-[34px] lg:min-h-[430px] xl:min-h-[470px]">
                 <OptimizedImage
@@ -426,33 +471,40 @@ function HeroSlider() {
 
       <div className="mt-3 flex items-center justify-between gap-3 px-1">
         <div className="flex items-center gap-2">
-          {heroSlides.map((slide, index) => (
+          {slides.map((slide, index) => (
             <button
               key={slide.title}
               type="button"
               aria-label={`Go to slide ${index + 1}`}
               onClick={() => heroApi?.scrollTo(index)}
               className={`h-2.5 rounded-full transition-all ${
-                activeSlide === index
-                  ? "w-8 bg-accent"
-                  : "w-2.5 bg-white/35 hover:bg-white/55"
+                activeSlide === index ? "w-8 bg-accent" : "w-2.5 bg-white/35 hover:bg-white/55"
               }`}
             />
           ))}
         </div>
 
         <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/72">
-          {String(activeSlide + 1).padStart(2, "0")} / {String(heroSlides.length).padStart(2, "0")}
+          {String(activeSlide + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
         </div>
       </div>
     </motion.div>
   );
 }
 
-function HeroPromoRail() {
+function HeroPromoRail({
+  cards,
+}: {
+  cards: {
+    label: string;
+    title: string;
+    href: string;
+    image: string;
+  }[];
+}) {
   return (
     <div className="hidden lg:grid lg:grid-rows-2 lg:gap-4">
-      {heroPromoCards.map((card) => (
+      {cards.map((card) => (
         <Link
           key={card.title}
           href={card.href}
@@ -471,9 +523,7 @@ function HeroPromoRail() {
             <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent">
               {card.label}
             </div>
-            <div className="mt-2 text-lg font-black leading-tight text-white">
-              {card.title}
-            </div>
+            <div className="mt-2 text-lg font-black leading-tight text-white">{card.title}</div>
             <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-foreground">
               Explore <ArrowRight className="h-4 w-4" />
             </div>
@@ -487,8 +537,12 @@ function HeroPromoRail() {
 function CategoryFeatureCard({
   category,
   featured = false,
+  products,
+  sellers,
 }: {
-  category: (typeof categories)[number];
+  category: ReturnType<typeof getActiveMarketplaceCategories>[number];
+  products: ReturnType<typeof getActiveMarketplaceProducts>;
+  sellers: ReturnType<typeof getActiveMarketplaceSellers>;
   featured?: boolean;
 }) {
   return (
@@ -496,13 +550,11 @@ function CategoryFeatureCard({
       to="/category/$slug"
       params={{ slug: category.slug }}
       className={`group relative overflow-hidden rounded-[24px] shadow-[var(--shadow-soft)] transition-transform hover:-translate-y-0.5 hover:shadow-[var(--shadow-elevated)] ${
-        featured
-          ? "min-h-[280px] lg:col-span-2 lg:row-span-2"
-          : "min-h-[132px] xl:min-h-[144px]"
+        featured ? "min-h-[280px] lg:col-span-2 lg:row-span-2" : "min-h-[132px] xl:min-h-[144px]"
       }`}
     >
       <OptimizedImage
-        src={getCategoryThumbnail(category.slug)}
+        src={getCategoryThumbnail(category.slug, products, sellers)}
         alt={category.name}
         fill
         sizes={featured ? "(max-width: 1024px) 100vw, 40vw" : "(max-width: 1024px) 50vw, 20vw"}
@@ -523,7 +575,15 @@ function CategoryFeatureCard({
   );
 }
 
-function MobileCategorySlider() {
+function MobileCategorySlider({
+  categories,
+  products,
+  sellers,
+}: {
+  categories: ReturnType<typeof getActiveMarketplaceCategories>;
+  products: ReturnType<typeof getActiveMarketplaceProducts>;
+  sellers: ReturnType<typeof getActiveMarketplaceSellers>;
+}) {
   return (
     <div className="lg:hidden">
       <div className="overflow-x-auto pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -544,7 +604,7 @@ function MobileCategorySlider() {
               >
                 <div className="relative aspect-square overflow-hidden">
                   <OptimizedImage
-                    src={getCategoryThumbnail(category.slug)}
+                    src={getCategoryThumbnail(category.slug, products, sellers)}
                     alt={category.name}
                     fill
                     sizes="(max-width: 640px) 122px, 138px"
@@ -577,7 +637,7 @@ function ProductGridSection({
   title: string;
   description: string;
   linkLabel: string;
-  items: typeof products;
+  items: ReturnType<typeof getActiveMarketplaceProducts>;
 }) {
   return (
     <section className="container mx-auto px-4 py-6 md:py-8">
@@ -586,7 +646,9 @@ function ProductGridSection({
           <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-accent">
             {eyebrow}
           </div>
-          <h2 className="mt-1 text-[1.7rem] font-black tracking-tight sm:text-3xl md:text-4xl">{title}</h2>
+          <h2 className="mt-1 text-[1.7rem] font-black tracking-tight sm:text-3xl md:text-4xl">
+            {title}
+          </h2>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{description}</p>
         </div>
         <Link

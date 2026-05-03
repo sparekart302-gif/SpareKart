@@ -36,7 +36,9 @@ export default function AdminSettingsPage() {
                 <AdminField label="Currency">
                   <input
                     value={draft.currency}
-                    onChange={(event) => setDraft((previous) => ({ ...previous, currency: event.target.value }))}
+                    onChange={(event) =>
+                      setDraft((previous) => ({ ...previous, currency: event.target.value }))
+                    }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                   />
                 </AdminField>
@@ -44,7 +46,12 @@ export default function AdminSettingsPage() {
                   <input
                     type="number"
                     value={draft.taxRate}
-                    onChange={(event) => setDraft((previous) => ({ ...previous, taxRate: Number(event.target.value) || 0 }))}
+                    onChange={(event) =>
+                      setDraft((previous) => ({
+                        ...previous,
+                        taxRate: Number(event.target.value) || 0,
+                      }))
+                    }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                   />
                 </AdminField>
@@ -58,7 +65,10 @@ export default function AdminSettingsPage() {
                     onChange={(event) =>
                       setDraft((previous) => ({
                         ...previous,
-                        shipping: { ...previous.shipping, standardRate: Number(event.target.value) || 0 },
+                        shipping: {
+                          ...previous.shipping,
+                          standardRate: Number(event.target.value) || 0,
+                        },
                       }))
                     }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
@@ -71,7 +81,10 @@ export default function AdminSettingsPage() {
                     onChange={(event) =>
                       setDraft((previous) => ({
                         ...previous,
-                        shipping: { ...previous.shipping, expressRate: Number(event.target.value) || 0 },
+                        shipping: {
+                          ...previous.shipping,
+                          expressRate: Number(event.target.value) || 0,
+                        },
                       }))
                     }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
@@ -84,7 +97,10 @@ export default function AdminSettingsPage() {
                     onChange={(event) =>
                       setDraft((previous) => ({
                         ...previous,
-                        shipping: { ...previous.shipping, freeShippingThreshold: Number(event.target.value) || 0 },
+                        shipping: {
+                          ...previous.shipping,
+                          freeShippingThreshold: Number(event.target.value) || 0,
+                        },
                       }))
                     }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
@@ -103,7 +119,10 @@ export default function AdminSettingsPage() {
                     onChange={(event) =>
                       setDraft((previous) => ({
                         ...previous,
-                        sellerPlatform: { ...previous.sellerPlatform, allowSelfRegistration: event.target.value === "yes" },
+                        sellerPlatform: {
+                          ...previous.sellerPlatform,
+                          allowSelfRegistration: event.target.value === "yes",
+                        },
                       }))
                     }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
@@ -118,7 +137,10 @@ export default function AdminSettingsPage() {
                     onChange={(event) =>
                       setDraft((previous) => ({
                         ...previous,
-                        sellerPlatform: { ...previous.sellerPlatform, autoApproveSellers: event.target.value === "yes" },
+                        sellerPlatform: {
+                          ...previous.sellerPlatform,
+                          autoApproveSellers: event.target.value === "yes",
+                        },
                       }))
                     }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
@@ -153,7 +175,10 @@ export default function AdminSettingsPage() {
           <AdminPanel title="Payment method availability">
             <div className="grid gap-3 md:grid-cols-2">
               {Object.entries(draft.payments).map(([method, config]) => (
-                <div key={method} className="rounded-[22px] bg-surface px-4 py-4 shadow-[var(--shadow-soft)]">
+                <div
+                  key={method}
+                  className="rounded-[22px] bg-surface px-4 py-4 shadow-[var(--shadow-soft)]"
+                >
                   <div className="text-sm font-bold text-foreground">{config.label}</div>
                   <div className="mt-3 space-y-3">
                     <AdminField label="Enabled">
@@ -182,7 +207,10 @@ export default function AdminSettingsPage() {
                             ...previous,
                             payments: {
                               ...previous.payments,
-                              [method]: { ...config, requiresManualReview: event.target.value === "yes" },
+                              [method]: {
+                                ...config,
+                                requiresManualReview: event.target.value === "yes",
+                              },
                             },
                           }))
                         }
@@ -228,7 +256,10 @@ export default function AdminSettingsPage() {
                     onChange={(event) =>
                       setDraft((previous) => ({
                         ...previous,
-                        integrations: { ...previous.integrations, analyticsEnabled: event.target.value === "yes" },
+                        integrations: {
+                          ...previous.integrations,
+                          analyticsEnabled: event.target.value === "yes",
+                        },
                       }))
                     }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
@@ -243,7 +274,10 @@ export default function AdminSettingsPage() {
                     onChange={(event) =>
                       setDraft((previous) => ({
                         ...previous,
-                        integrations: { ...previous.integrations, emailProviderEnabled: event.target.value === "yes" },
+                        integrations: {
+                          ...previous.integrations,
+                          emailProviderEnabled: event.target.value === "yes",
+                        },
                       }))
                     }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
@@ -294,9 +328,21 @@ export default function AdminSettingsPage() {
 function notificationRows(draft: ReturnType<typeof getDraftShape>) {
   return [
     { label: "Order emails", value: draft.notifications.orderEmails, key: "orderEmails" as const },
-    { label: "Payment queue alerts", value: draft.notifications.paymentQueueAlerts, key: "paymentQueueAlerts" as const },
-    { label: "Seller approval alerts", value: draft.notifications.sellerApprovalAlerts, key: "sellerApprovalAlerts" as const },
-    { label: "Low stock alerts", value: draft.notifications.lowStockAlerts, key: "lowStockAlerts" as const },
+    {
+      label: "Payment queue alerts",
+      value: draft.notifications.paymentQueueAlerts,
+      key: "paymentQueueAlerts" as const,
+    },
+    {
+      label: "Seller approval alerts",
+      value: draft.notifications.sellerApprovalAlerts,
+      key: "sellerApprovalAlerts" as const,
+    },
+    {
+      label: "Low stock alerts",
+      value: draft.notifications.lowStockAlerts,
+      key: "lowStockAlerts" as const,
+    },
   ];
 }
 

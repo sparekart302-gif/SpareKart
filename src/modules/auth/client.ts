@@ -25,6 +25,8 @@ export type AuthenticatedUser = {
 
 type JsonResponse<T> = {
   ok: boolean;
+  success?: boolean;
+  message?: string;
   error?: string;
   code?: string;
 } & T;
@@ -60,8 +62,8 @@ async function requestJson<T>(input: RequestInfo, init?: RequestInit) {
   });
   const payload = (await response.json()) as JsonResponse<T>;
 
-  if (!response.ok || !payload.ok) {
-    throw new ApiRequestError(payload.error ?? "Request failed.", {
+  if (!response.ok || !payload.ok || payload.success === false) {
+    throw new ApiRequestError(payload.error ?? payload.message ?? "Request failed.", {
       status: response.status,
       code: payload.code,
       payload,
@@ -148,10 +150,13 @@ export async function confirmPasswordResetCode(input: {
   code: string;
   password: string;
 }) {
-  const payload = await requestJson<{ user: AuthenticatedUser }>("/api/auth/password-reset/confirm", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+  const payload = await requestJson<{ user: AuthenticatedUser }>(
+    "/api/auth/password-reset/confirm",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
 
   return payload.user;
 }

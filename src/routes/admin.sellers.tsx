@@ -5,7 +5,12 @@ import { ExternalLink, PencilLine, Search } from "lucide-react";
 import { toast } from "sonner";
 import { SellerEditDialog } from "@/components/admin/SellerEditDialog";
 import { AdminCompactStat, AdminScopeGate } from "@/components/admin/AdminCommon";
-import { AdminEmptyState, AdminPageHeader, AdminPanel, AdminPill } from "@/components/admin/AdminUI";
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+  AdminPill,
+} from "@/components/admin/AdminUI";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Link } from "@/components/navigation/Link";
 import {
@@ -38,12 +43,16 @@ export default function AdminSellersPage() {
     return state.sellersDirectory
       .filter((seller) => {
         const searchable = `${seller.name} ${seller.city} ${seller.slug}`.toLowerCase();
-        return (!query.trim() || searchable.includes(query.trim().toLowerCase())) &&
-          (statusFilter === "ALL" || seller.status === statusFilter);
+        return (
+          (!query.trim() || searchable.includes(query.trim().toLowerCase())) &&
+          (statusFilter === "ALL" || seller.status === statusFilter)
+        );
       })
       .sort((left, right) => {
-        const leftWeight = left.status === "PENDING_APPROVAL" ? 0 : left.status === "FLAGGED" ? 1 : 2;
-        const rightWeight = right.status === "PENDING_APPROVAL" ? 0 : right.status === "FLAGGED" ? 1 : 2;
+        const leftWeight =
+          left.status === "PENDING_APPROVAL" ? 0 : left.status === "FLAGGED" ? 1 : 2;
+        const rightWeight =
+          right.status === "PENDING_APPROVAL" ? 0 : right.status === "FLAGGED" ? 1 : 2;
         return leftWeight - rightWeight || left.name.localeCompare(right.name);
       });
   }, [query, state.sellersDirectory, statusFilter]);
@@ -68,7 +77,8 @@ export default function AdminSellersPage() {
     );
   }, [filteredSellers, state]);
 
-  const editingSeller = state.sellersDirectory.find((seller) => seller.slug === editingSlug) ?? null;
+  const editingSeller =
+    state.sellersDirectory.find((seller) => seller.slug === editingSlug) ?? null;
 
   useEffect(() => {
     setDraft(editingSeller);
@@ -129,13 +139,35 @@ export default function AdminSellersPage() {
         />
 
         <section className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
-          <AdminCompactStat label="Seller accounts" value={String(summary.total)} helper="All store records" />
-          <AdminCompactStat label="Pending" value={String(summary.pending)} helper="Awaiting review" tone="warning" />
-          <AdminCompactStat label="Flagged" value={String(summary.flagged)} helper="Need intervention" tone="danger" />
-          <AdminCompactStat label="Platform commission" value={formatPKR(summary.platformCommission)} helper="Marketplace share" tone="success" />
+          <AdminCompactStat
+            label="Seller accounts"
+            value={String(summary.total)}
+            helper="All store records"
+          />
+          <AdminCompactStat
+            label="Pending"
+            value={String(summary.pending)}
+            helper="Awaiting review"
+            tone="warning"
+          />
+          <AdminCompactStat
+            label="Flagged"
+            value={String(summary.flagged)}
+            helper="Need intervention"
+            tone="danger"
+          />
+          <AdminCompactStat
+            label="Platform commission"
+            value={formatPKR(summary.platformCommission)}
+            helper="Marketplace share"
+            tone="success"
+          />
         </section>
 
-        <AdminPanel title="Seller directory" description="Store cards with direct edit, detail, and storefront actions.">
+        <AdminPanel
+          title="Seller directory"
+          description="Store cards with direct edit, detail, and storefront actions."
+        >
           <div className="grid gap-3 lg:grid-cols-[1.1fr_220px]">
             <div className="flex items-center gap-2 rounded-xl border border-border/60 px-3">
               <Search className="h-4 w-4 text-muted-foreground" />
@@ -240,9 +272,7 @@ function SellerAdminCard({
         <div className="line-clamp-2 text-[13px] font-black text-foreground sm:text-sm">
           {seller.name}
         </div>
-        <div className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">
-          {seller.city}
-        </div>
+        <div className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">{seller.city}</div>
       </div>
 
       <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -320,7 +350,11 @@ function InlineChip({
           ? "bg-destructive/10 text-destructive"
           : "border border-border/60 text-muted-foreground";
 
-  return <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${classes}`}>{children}</span>;
+  return (
+    <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${classes}`}>
+      {children}
+    </span>
+  );
 }
 
 function StatusPill({ status }: { status: SellerStatus }) {

@@ -10,7 +10,10 @@ export type Category = {
 
 export type Brand = { slug: string; name: string };
 
-export type Vehicle = { brand: string; models: { name: string; years: number[]; engines: string[] }[] };
+export type Vehicle = {
+  brand: string;
+  models: { name: string; years: number[]; engines: string[] }[];
+};
 
 export type Seller = {
   slug: string;
@@ -87,14 +90,62 @@ export type StoreReview = {
 };
 
 export const categories: Category[] = [
-  { slug: "brakes", name: "Brakes", icon: "Disc", description: "Pads, rotors, calipers & brake fluids", productCount: 412 },
-  { slug: "engine", name: "Engine", icon: "Cog", description: "Filters, belts, gaskets & engine parts", productCount: 638 },
-  { slug: "suspension", name: "Suspension", icon: "Activity", description: "Shocks, struts, bushings & control arms", productCount: 287 },
-  { slug: "lighting", name: "Lighting", icon: "Lightbulb", description: "Headlights, tail lamps, LED bulbs & fog", productCount: 354 },
-  { slug: "electrical", name: "Electrical", icon: "Zap", description: "Batteries, alternators, starters & wiring", productCount: 521 },
-  { slug: "body", name: "Body & Exterior", icon: "Car", description: "Bumpers, mirrors, panels & trims", productCount: 198 },
-  { slug: "interior", name: "Interior", icon: "Armchair", description: "Floor mats, seat covers & dashboard", productCount: 246 },
-  { slug: "tyres-wheels", name: "Tyres & Wheels", icon: "CircleDot", description: "Tyres, alloy wheels & accessories", productCount: 312 },
+  {
+    slug: "brakes",
+    name: "Brakes",
+    icon: "Disc",
+    description: "Pads, rotors, calipers & brake fluids",
+    productCount: 412,
+  },
+  {
+    slug: "engine",
+    name: "Engine",
+    icon: "Cog",
+    description: "Filters, belts, gaskets & engine parts",
+    productCount: 638,
+  },
+  {
+    slug: "suspension",
+    name: "Suspension",
+    icon: "Activity",
+    description: "Shocks, struts, bushings & control arms",
+    productCount: 287,
+  },
+  {
+    slug: "lighting",
+    name: "Lighting",
+    icon: "Lightbulb",
+    description: "Headlights, tail lamps, LED bulbs & fog",
+    productCount: 354,
+  },
+  {
+    slug: "electrical",
+    name: "Electrical",
+    icon: "Zap",
+    description: "Batteries, alternators, starters & wiring",
+    productCount: 521,
+  },
+  {
+    slug: "body",
+    name: "Body & Exterior",
+    icon: "Car",
+    description: "Bumpers, mirrors, panels & trims",
+    productCount: 198,
+  },
+  {
+    slug: "interior",
+    name: "Interior",
+    icon: "Armchair",
+    description: "Floor mats, seat covers & dashboard",
+    productCount: 246,
+  },
+  {
+    slug: "tyres-wheels",
+    name: "Tyres & Wheels",
+    icon: "CircleDot",
+    description: "Tyres, alloy wheels & accessories",
+    productCount: 312,
+  },
 ];
 
 export const brands: Brand[] = [
@@ -114,7 +165,11 @@ export const vehicles: Vehicle[] = [
   {
     brand: "Toyota",
     models: [
-      { name: "Corolla", years: [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024], engines: ["1.3L", "1.6L", "1.8L"] },
+      {
+        name: "Corolla",
+        years: [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024],
+        engines: ["1.3L", "1.6L", "1.8L"],
+      },
       { name: "Yaris", years: [2020, 2021, 2022, 2023, 2024], engines: ["1.3L", "1.5L"] },
       { name: "Hilux", years: [2016, 2018, 2020, 2022, 2024], engines: ["2.8L Diesel"] },
       { name: "Fortuner", years: [2018, 2020, 2022, 2024], engines: ["2.7L", "2.8L Diesel"] },
@@ -201,10 +256,20 @@ export const sellers: Seller[] = [
     tagline: "Genuine OEM parts since 2008",
     logo: placeholder(sellerLogos[0], 200, 200),
     banner: placeholder(sellerBanners[0], 1600, 400),
-    rating: 4.8, reviewCount: 1248, productCount: 342,
-    city: "Karachi", joined: "2018-03-12", verified: true, responseTime: "Within 2 hours",
-    description: "AutoPro Karachi is a trusted name in genuine OEM auto parts. We stock parts for all major Japanese, Korean and European cars with same-day dispatch across Pakistan.",
-    policies: { returns: "7-day easy returns", shipping: "Free shipping over Rs. 5,000", warranty: "6-month warranty on all parts" },
+    rating: 4.8,
+    reviewCount: 1248,
+    productCount: 342,
+    city: "Karachi",
+    joined: "2018-03-12",
+    verified: true,
+    responseTime: "Within 2 hours",
+    description:
+      "AutoPro Karachi is a trusted name in genuine OEM auto parts. We stock parts for all major Japanese, Korean and European cars with same-day dispatch across Pakistan.",
+    policies: {
+      returns: "7-day easy returns",
+      shipping: "Free shipping over Rs. 5,000",
+      warranty: "6-month warranty on all parts",
+    },
   },
   {
     slug: "lahore-spare-hub",
@@ -212,10 +277,20 @@ export const sellers: Seller[] = [
     tagline: "Your one-stop spare parts destination",
     logo: placeholder(sellerLogos[1], 200, 200),
     banner: placeholder(sellerBanners[1], 1600, 400),
-    rating: 4.7, reviewCount: 892, productCount: 421,
-    city: "Lahore", joined: "2019-07-22", verified: true, responseTime: "Within 4 hours",
-    description: "Specialists in suspension, brakes and engine parts. Authorised dealer for Bosch, KYB and Brembo in Punjab region.",
-    policies: { returns: "10-day returns", shipping: "Nationwide delivery", warranty: "Manufacturer warranty applies" },
+    rating: 4.7,
+    reviewCount: 892,
+    productCount: 421,
+    city: "Lahore",
+    joined: "2019-07-22",
+    verified: true,
+    responseTime: "Within 4 hours",
+    description:
+      "Specialists in suspension, brakes and engine parts. Authorised dealer for Bosch, KYB and Brembo in Punjab region.",
+    policies: {
+      returns: "10-day returns",
+      shipping: "Nationwide delivery",
+      warranty: "Manufacturer warranty applies",
+    },
   },
   {
     slug: "islamabad-motors",
@@ -223,10 +298,20 @@ export const sellers: Seller[] = [
     tagline: "Premium parts, professional service",
     logo: placeholder(sellerLogos[2], 200, 200),
     banner: placeholder(sellerBanners[2], 1600, 400),
-    rating: 4.9, reviewCount: 567, productCount: 189,
-    city: "Islamabad", joined: "2020-01-15", verified: true, responseTime: "Within 1 hour",
-    description: "Curated selection of premium European and Japanese parts. Expert advice and certified technicians on staff.",
-    policies: { returns: "14-day returns", shipping: "Same-day in twin cities", warranty: "1-year warranty" },
+    rating: 4.9,
+    reviewCount: 567,
+    productCount: 189,
+    city: "Islamabad",
+    joined: "2020-01-15",
+    verified: true,
+    responseTime: "Within 1 hour",
+    description:
+      "Curated selection of premium European and Japanese parts. Expert advice and certified technicians on staff.",
+    policies: {
+      returns: "14-day returns",
+      shipping: "Same-day in twin cities",
+      warranty: "1-year warranty",
+    },
   },
   {
     slug: "shahrah-auto-parts",
@@ -234,10 +319,20 @@ export const sellers: Seller[] = [
     tagline: "Quality you can trust",
     logo: placeholder(sellerLogos[3], 200, 200),
     banner: placeholder(sellerBanners[3], 1600, 400),
-    rating: 4.6, reviewCount: 1834, productCount: 612,
-    city: "Karachi", joined: "2017-05-08", verified: true, responseTime: "Within 3 hours",
-    description: "Largest spare parts inventory in Karachi. Wholesale and retail with COD across Pakistan.",
-    policies: { returns: "7-day returns", shipping: "Pan-Pakistan delivery", warranty: "30-day defect warranty" },
+    rating: 4.6,
+    reviewCount: 1834,
+    productCount: 612,
+    city: "Karachi",
+    joined: "2017-05-08",
+    verified: true,
+    responseTime: "Within 3 hours",
+    description:
+      "Largest spare parts inventory in Karachi. Wholesale and retail with COD across Pakistan.",
+    policies: {
+      returns: "7-day returns",
+      shipping: "Pan-Pakistan delivery",
+      warranty: "30-day defect warranty",
+    },
   },
   {
     slug: "punjab-spare-mart",
@@ -245,10 +340,19 @@ export const sellers: Seller[] = [
     tagline: "Honest pricing, original parts",
     logo: placeholder(sellerLogos[4], 200, 200),
     banner: placeholder(sellerBanners[4], 1600, 400),
-    rating: 4.5, reviewCount: 723, productCount: 287,
-    city: "Faisalabad", joined: "2019-11-03", verified: true, responseTime: "Within 6 hours",
+    rating: 4.5,
+    reviewCount: 723,
+    productCount: 287,
+    city: "Faisalabad",
+    joined: "2019-11-03",
+    verified: true,
+    responseTime: "Within 6 hours",
     description: "Family-run business serving Faisalabad and central Punjab for over 15 years.",
-    policies: { returns: "5-day returns", shipping: "Free over Rs. 3,000", warranty: "As per manufacturer" },
+    policies: {
+      returns: "5-day returns",
+      shipping: "Free over Rs. 3,000",
+      warranty: "As per manufacturer",
+    },
   },
   {
     slug: "rawalpindi-engine-house",
@@ -256,8 +360,13 @@ export const sellers: Seller[] = [
     tagline: "Engine specialists since 2005",
     logo: placeholder(sellerLogos[5], 200, 200),
     banner: placeholder(sellerBanners[5], 1600, 400),
-    rating: 4.7, reviewCount: 456, productCount: 156,
-    city: "Rawalpindi", joined: "2020-08-19", verified: true, responseTime: "Within 2 hours",
+    rating: 4.7,
+    reviewCount: 456,
+    productCount: 156,
+    city: "Rawalpindi",
+    joined: "2020-08-19",
+    verified: true,
+    responseTime: "Within 2 hours",
     description: "Engine parts specialists with focus on Toyota, Honda and Suzuki vehicles.",
     policies: { returns: "10-day returns", shipping: "Express courier", warranty: "6 months" },
   },
@@ -267,10 +376,19 @@ export const sellers: Seller[] = [
     tagline: "Southern Punjab's biggest range",
     logo: placeholder(sellerLogos[6], 200, 200),
     banner: placeholder(sellerBanners[6], 1600, 400),
-    rating: 4.4, reviewCount: 389, productCount: 234,
-    city: "Multan", joined: "2021-02-11", verified: true, responseTime: "Within 8 hours",
+    rating: 4.4,
+    reviewCount: 389,
+    productCount: 234,
+    city: "Multan",
+    joined: "2021-02-11",
+    verified: true,
+    responseTime: "Within 8 hours",
     description: "Serving Multan and southern Punjab with a wide range of parts at honest prices.",
-    policies: { returns: "7-day returns", shipping: "Standard delivery", warranty: "Per manufacturer" },
+    policies: {
+      returns: "7-day returns",
+      shipping: "Standard delivery",
+      warranty: "Per manufacturer",
+    },
   },
   {
     slug: "peshawar-parts-centre",
@@ -278,57 +396,209 @@ export const sellers: Seller[] = [
     tagline: "KP's most trusted parts dealer",
     logo: placeholder(sellerLogos[7], 200, 200),
     banner: placeholder(sellerBanners[7], 1600, 400),
-    rating: 4.6, reviewCount: 512, productCount: 198,
-    city: "Peshawar", joined: "2019-04-27", verified: true, responseTime: "Within 4 hours",
+    rating: 4.6,
+    reviewCount: 512,
+    productCount: 198,
+    city: "Peshawar",
+    joined: "2019-04-27",
+    verified: true,
+    responseTime: "Within 4 hours",
     description: "KP region's premier auto parts destination with specialty in 4x4 and SUV parts.",
     policies: { returns: "7-day returns", shipping: "Nationwide", warranty: "6-month warranty" },
   },
 ];
 
 const productNames = [
-  { title: "Bosch Front Brake Pads Set", category: "brakes", brand: "Bosch", price: 4850, compare: 5800 },
-  { title: "Brembo High-Performance Brake Rotors", category: "brakes", brand: "Brembo", price: 18500, compare: 22000 },
+  {
+    title: "Bosch Front Brake Pads Set",
+    category: "brakes",
+    brand: "Bosch",
+    price: 4850,
+    compare: 5800,
+  },
+  {
+    title: "Brembo High-Performance Brake Rotors",
+    category: "brakes",
+    brand: "Brembo",
+    price: 18500,
+    compare: 22000,
+  },
   { title: "Brake Caliper Assembly OEM", category: "brakes", brand: "Bosch", price: 12400 },
-  { title: "DOT-4 Brake Fluid 500ml", category: "brakes", brand: "Bosch", price: 850, compare: 1100 },
-  { title: "Denso Oil Filter — Premium", category: "engine", brand: "Denso", price: 1250, compare: 1500 },
-  { title: "NGK Iridium Spark Plugs (Set of 4)", category: "engine", brand: "NGK", price: 3200, compare: 3800 },
+  {
+    title: "DOT-4 Brake Fluid 500ml",
+    category: "brakes",
+    brand: "Bosch",
+    price: 850,
+    compare: 1100,
+  },
+  {
+    title: "Denso Oil Filter — Premium",
+    category: "engine",
+    brand: "Denso",
+    price: 1250,
+    compare: 1500,
+  },
+  {
+    title: "NGK Iridium Spark Plugs (Set of 4)",
+    category: "engine",
+    brand: "NGK",
+    price: 3200,
+    compare: 3800,
+  },
   { title: "Engine Air Filter — High Flow", category: "engine", brand: "Bosch", price: 2150 },
-  { title: "Timing Belt Kit Complete", category: "engine", brand: "Denso", price: 8400, compare: 9800 },
-  { title: "Mobil 1 Full Synthetic 5W-30 (4L)", category: "engine", brand: "Mobil 1", price: 9200, compare: 10500 },
+  {
+    title: "Timing Belt Kit Complete",
+    category: "engine",
+    brand: "Denso",
+    price: 8400,
+    compare: 9800,
+  },
+  {
+    title: "Mobil 1 Full Synthetic 5W-30 (4L)",
+    category: "engine",
+    brand: "Mobil 1",
+    price: 9200,
+    compare: 10500,
+  },
   { title: "Engine Mount — Front", category: "engine", brand: "Denso", price: 4600 },
-  { title: "KYB Excel-G Shock Absorbers (Pair)", category: "suspension", brand: "KYB", price: 14800, compare: 17200 },
+  {
+    title: "KYB Excel-G Shock Absorbers (Pair)",
+    category: "suspension",
+    brand: "KYB",
+    price: 14800,
+    compare: 17200,
+  },
   { title: "Strut Assembly Front Right", category: "suspension", brand: "KYB", price: 11200 },
-  { title: "Lower Control Arm with Bushings", category: "suspension", brand: "Valeo", price: 6800, compare: 8200 },
+  {
+    title: "Lower Control Arm with Bushings",
+    category: "suspension",
+    brand: "Valeo",
+    price: 6800,
+    compare: 8200,
+  },
   { title: "Stabilizer Link — Heavy Duty", category: "suspension", brand: "KYB", price: 1850 },
-  { title: "Philips H4 Crystal Vision LED Headlights", category: "lighting", brand: "Philips", price: 5400, compare: 6800 },
+  {
+    title: "Philips H4 Crystal Vision LED Headlights",
+    category: "lighting",
+    brand: "Philips",
+    price: 5400,
+    compare: 6800,
+  },
   { title: "LED Tail Light Assembly", category: "lighting", brand: "Valeo", price: 8900 },
-  { title: "Fog Lamp Set with Wiring Harness", category: "lighting", brand: "Philips", price: 4200, compare: 5000 },
-  { title: "Interior Dome Light LED Conversion", category: "lighting", brand: "Philips", price: 1450 },
-  { title: "Exide Maintenance-Free Battery 65Ah", category: "electrical", brand: "Exide", price: 18500, compare: 21000 },
-  { title: "Bosch Alternator 90A Reconditioned", category: "electrical", brand: "Bosch", price: 14200 },
-  { title: "Starter Motor Assembly OEM", category: "electrical", brand: "Denso", price: 16800, compare: 19500 },
+  {
+    title: "Fog Lamp Set with Wiring Harness",
+    category: "lighting",
+    brand: "Philips",
+    price: 4200,
+    compare: 5000,
+  },
+  {
+    title: "Interior Dome Light LED Conversion",
+    category: "lighting",
+    brand: "Philips",
+    price: 1450,
+  },
+  {
+    title: "Exide Maintenance-Free Battery 65Ah",
+    category: "electrical",
+    brand: "Exide",
+    price: 18500,
+    compare: 21000,
+  },
+  {
+    title: "Bosch Alternator 90A Reconditioned",
+    category: "electrical",
+    brand: "Bosch",
+    price: 14200,
+  },
+  {
+    title: "Starter Motor Assembly OEM",
+    category: "electrical",
+    brand: "Denso",
+    price: 16800,
+    compare: 19500,
+  },
   { title: "Ignition Coil Pack (Set of 4)", category: "electrical", brand: "NGK", price: 7200 },
   { title: "Wiring Harness Repair Kit", category: "electrical", brand: "Bosch", price: 2400 },
-  { title: "Front Bumper Cover OEM", category: "body", brand: "Valeo", price: 22500, compare: 26000 },
+  {
+    title: "Front Bumper Cover OEM",
+    category: "body",
+    brand: "Valeo",
+    price: 22500,
+    compare: 26000,
+  },
   { title: "Side View Mirror with Indicator", category: "body", brand: "Valeo", price: 6400 },
-  { title: "Door Handle Chrome Finish (Set)", category: "body", brand: "Valeo", price: 3800, compare: 4500 },
+  {
+    title: "Door Handle Chrome Finish (Set)",
+    category: "body",
+    brand: "Valeo",
+    price: 3800,
+    compare: 4500,
+  },
   { title: "Hood Strut Gas Springs (Pair)", category: "body", brand: "KYB", price: 2200 },
-  { title: "Premium All-Weather Floor Mats Set", category: "interior", brand: "Valeo", price: 4800, compare: 5800 },
+  {
+    title: "Premium All-Weather Floor Mats Set",
+    category: "interior",
+    brand: "Valeo",
+    price: 4800,
+    compare: 5800,
+  },
   { title: "Leather Seat Cover Set Universal", category: "interior", brand: "Valeo", price: 8900 },
-  { title: "Dashboard Cover — UV Resistant", category: "interior", brand: "Valeo", price: 2400, compare: 3000 },
-  { title: "Steering Wheel Cover Premium Leather", category: "interior", brand: "Valeo", price: 1800 },
-  { title: "All-Season Tyre 195/65R15", category: "tyres-wheels", brand: "Bosch", price: 12800, compare: 14500 },
+  {
+    title: "Dashboard Cover — UV Resistant",
+    category: "interior",
+    brand: "Valeo",
+    price: 2400,
+    compare: 3000,
+  },
+  {
+    title: "Steering Wheel Cover Premium Leather",
+    category: "interior",
+    brand: "Valeo",
+    price: 1800,
+  },
+  {
+    title: "All-Season Tyre 195/65R15",
+    category: "tyres-wheels",
+    brand: "Bosch",
+    price: 12800,
+    compare: 14500,
+  },
   { title: "Performance Tyre 205/55R16", category: "tyres-wheels", brand: "Bosch", price: 16400 },
-  { title: "Alloy Wheel 16\" Sport Design", category: "tyres-wheels", brand: "Valeo", price: 22500, compare: 26800 },
+  {
+    title: 'Alloy Wheel 16" Sport Design',
+    category: "tyres-wheels",
+    brand: "Valeo",
+    price: 22500,
+    compare: 26800,
+  },
   { title: "Wheel Hub Bearing Assembly", category: "tyres-wheels", brand: "KYB", price: 5200 },
-  { title: "Tyre Pressure Sensor TPMS", category: "tyres-wheels", brand: "Bosch", price: 3400, compare: 4000 },
+  {
+    title: "Tyre Pressure Sensor TPMS",
+    category: "tyres-wheels",
+    brand: "Bosch",
+    price: 3400,
+    compare: 4000,
+  },
   { title: "Lug Nut Set Chrome (20pcs)", category: "tyres-wheels", brand: "Valeo", price: 1200 },
-  { title: "Cabin Air Filter Activated Carbon", category: "engine", brand: "Bosch", price: 1650, compare: 2000 },
+  {
+    title: "Cabin Air Filter Activated Carbon",
+    category: "engine",
+    brand: "Bosch",
+    price: 1650,
+    compare: 2000,
+  },
   { title: "Radiator Coolant 4L Concentrate", category: "engine", brand: "Shell", price: 1850 },
-  { title: "Wiper Blade Set Premium 22\"+18\"", category: "body", brand: "Bosch", price: 2100, compare: 2600 },
+  {
+    title: 'Wiper Blade Set Premium 22"+18"',
+    category: "body",
+    brand: "Bosch",
+    price: 2100,
+    compare: 2600,
+  },
 ];
 
-const sample = <T,>(arr: T[], i: number) => arr[i % arr.length];
+const sample = <T>(arr: T[], i: number) => arr[i % arr.length];
 
 const allCompat: Product["compatibility"][number][] = [];
 vehicles.forEach((v) =>
@@ -336,12 +606,25 @@ vehicles.forEach((v) =>
 );
 
 export const products: Product[] = productNames.map((p, i) => {
-  const slug = p.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const slug = p.title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
   const sellerSlug = sellers[i % sellers.length].slug;
   const compatCount = 2 + (i % 3);
-  const compat = Array.from({ length: compatCount }, (_, j) => allCompat[(i * 3 + j) % allCompat.length]);
+  const compat = Array.from(
+    { length: compatCount },
+    (_, j) => allCompat[(i * 3 + j) % allCompat.length],
+  );
   const stock = i % 11 === 0 ? 0 : i % 7 === 0 ? 3 : 12 + (i % 40);
-  const badges: Product["badge"][] = ["best-seller", "new", "deal", "fast-shipping", undefined, undefined];
+  const badges: Product["badge"][] = [
+    "best-seller",
+    "new",
+    "deal",
+    "fast-shipping",
+    undefined,
+    undefined,
+  ];
   return {
     id: `prod-${i + 1}`,
     slug: `${slug}-${i + 1}`,
@@ -369,7 +652,10 @@ export const products: Product[] = productNames.map((p, i) => {
       { label: "Brand", value: p.brand },
       { label: "SKU", value: `SK-${10000 + i}` },
       { label: "Material", value: i % 2 ? "OEM Grade Steel" : "Reinforced Composite" },
-      { label: "Country of Origin", value: i % 3 === 0 ? "Japan" : i % 3 === 1 ? "Germany" : "Korea" },
+      {
+        label: "Country of Origin",
+        value: i % 3 === 0 ? "Japan" : i % 3 === 1 ? "Germany" : "Korea",
+      },
       { label: "Warranty", value: "6 months" },
       { label: "Box Contents", value: "1 × Part, Installation guide" },
     ],
@@ -378,8 +664,16 @@ export const products: Product[] = productNames.map((p, i) => {
 });
 
 const reviewAuthors = [
-  "Ahmed K.", "Fatima R.", "Bilal M.", "Sana A.", "Hassan I.",
-  "Ayesha N.", "Usman T.", "Zara S.", "Imran H.", "Hira K.",
+  "Ahmed K.",
+  "Fatima R.",
+  "Bilal M.",
+  "Sana A.",
+  "Hassan I.",
+  "Ayesha N.",
+  "Usman T.",
+  "Zara S.",
+  "Imran H.",
+  "Hira K.",
 ];
 
 export const productReviews: ProductReview[] = products.flatMap((p) =>
@@ -389,7 +683,13 @@ export const productReviews: ProductReview[] = products.flatMap((p) =>
     author: reviewAuthors[(parseInt(p.id.split("-")[1]) + j) % reviewAuthors.length],
     rating: [5, 4, 5, 4, 3, 5][(j + parseInt(p.id.split("-")[1])) % 6],
     date: ["2 days ago", "1 week ago", "2 weeks ago", "1 month ago"][j % 4],
-    title: ["Perfect fit!", "Great value", "Highly recommended", "Excellent quality", "Worth every rupee"][j % 5],
+    title: [
+      "Perfect fit!",
+      "Great value",
+      "Highly recommended",
+      "Excellent quality",
+      "Worth every rupee",
+    ][j % 5],
     body: "Fitted on my car without any modifications. Quality feels premium, packaging was secure, and seller communicated promptly throughout. Would definitely buy from again.",
     fitment: 4 + (j % 2),
     quality: 4 + ((j + 1) % 2),
@@ -413,8 +713,7 @@ export const storeReviews: StoreReview[] = sellers.flatMap((s) =>
   })),
 );
 
-export const formatPKR = (n: number) =>
-  `Rs. ${n.toLocaleString("en-PK")}`;
+export const formatPKR = (n: number) => `Rs. ${n.toLocaleString("en-PK")}`;
 
 export const getSeller = (slug: string) => sellers.find((s) => s.slug === slug)!;
 export const getProduct = (slug: string) => products.find((p) => p.slug === slug);
@@ -422,10 +721,18 @@ export const getProductsBySeller = (slug: string) => products.filter((p) => p.se
 export const getProductsByCategory = (slug: string) => products.filter((p) => p.category === slug);
 
 export const trustPillars = [
-  { icon: "ShieldCheck", title: "Verified Sellers", description: "Every store is vetted and trust-rated" },
+  {
+    icon: "ShieldCheck",
+    title: "Verified Sellers",
+    description: "Every store is vetted and trust-rated",
+  },
   { icon: "Banknote", title: "Cash on Delivery", description: "Pay only when your order arrives" },
   { icon: "RotateCcw", title: "Easy Returns", description: "7-day hassle-free return policy" },
-  { icon: "BadgeCheck", title: "Fitment Guarantee", description: "Wrong part? Free replacement, always" },
+  {
+    icon: "BadgeCheck",
+    title: "Fitment Guarantee",
+    description: "Wrong part? Free replacement, always",
+  },
 ];
 
 export type CartLine = { productId: string; qty: number };

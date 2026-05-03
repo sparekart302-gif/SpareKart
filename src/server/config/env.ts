@@ -2,6 +2,11 @@ import "server-only";
 
 import { isAbsolute, join } from "node:path";
 import { z } from "zod";
+import {
+  hasConfiguredGoogleClientId,
+  hasConfiguredMongoUri,
+  hasConfiguredValue,
+} from "./env-flags";
 
 const emptyToUndefined = (value: unknown) => {
   if (typeof value !== "string") {
@@ -31,9 +36,11 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32).default(DEFAULT_JWT_SECRET),
   DATABASE_URL: optionalString,
   SPAREKART_RUNTIME_DIR: optionalString,
-  SPAREKART_SEED_PASSWORD: z.string().min(8).default("SpareKart123!"),
-  SPAREKART_SUPERADMIN_EMAIL: z.string().email().default("sparekart302@gmail.com"),
-  SPAREKART_SUPERADMIN_PASSWORD: z.string().min(8).default("sparekart302"),
+  SPAREKART_SEED_PASSWORD: optionalString,
+  SPAREKART_SUPER_ADMIN_EMAIL: optionalEmail,
+  SPAREKART_SUPER_ADMIN_PASSWORD: optionalString,
+  SPAREKART_SUPERADMIN_EMAIL: optionalEmail,
+  SPAREKART_SUPERADMIN_PASSWORD: optionalString,
 });
 
 export type ServerEnv = z.infer<typeof envSchema> & {
@@ -41,19 +48,33 @@ export type ServerEnv = z.infer<typeof envSchema> & {
   mongodbConfigured: boolean;
   resendConfigured: boolean;
   googleConfigured: boolean;
+  resendPartiallyConfigured: boolean;
+  googlePartiallyConfigured: boolean;
   jwtUsesDefault: boolean;
+  resolvedSuperAdminEmail?: string;
+  resolvedSuperAdminPassword?: string;
+  seedPasswordConfigured: boolean;
+  superAdminPasswordConfigured: boolean;
 };
 
 let cachedEnv: ServerEnv | null = null;
 
+function getAppRoot() {
+  return process.env.SPAREKART_APP_ROOT || process.env.INIT_CWD || process.cwd();
+}
+
 function resolveRuntimeRoot(runtimeDir?: string) {
   if (!runtimeDir) {
-    return join(/* turbopackIgnore: true */ process.cwd(), ".sparekart-runtime");
+    return join(/* turbopackIgnore: true */ getAppRoot(), ".sparekart-runtime");
   }
 
   return isAbsolute(runtimeDir)
     ? runtimeDir
-    : join(/* turbopackIgnore: true */ process.cwd(), runtimeDir);
+    : join(/* turbopackIgnore: true */ getAppRoot(), runtimeDir);
+}
+
+function resolvePreferredValue(...values: Array<string | undefined>) {
+  return values.find((value) => typeof value === "string" && value.trim().length > 0);
 }
 
 export function getServerEnv(): ServerEnv {
@@ -76,17 +97,38 @@ export function getServerEnv(): ServerEnv {
     DATABASE_URL: process.env.DATABASE_URL,
     SPAREKART_RUNTIME_DIR: process.env.SPAREKART_RUNTIME_DIR,
     SPAREKART_SEED_PASSWORD: process.env.SPAREKART_SEED_PASSWORD,
+    SPAREKART_SUPER_ADMIN_EMAIL: process.env.SPAREKART_SUPER_ADMIN_EMAIL,
+    SPAREKART_SUPER_ADMIN_PASSWORD: process.env.SPAREKART_SUPER_ADMIN_PASSWORD,
     SPAREKART_SUPERADMIN_EMAIL: process.env.SPAREKART_SUPERADMIN_EMAIL,
     SPAREKART_SUPERADMIN_PASSWORD: process.env.SPAREKART_SUPERADMIN_PASSWORD,
   });
 
+  const resolvedSuperAdminEmail = resolvePreferredValue(
+    parsed.SPAREKART_SUPER_ADMIN_EMAIL,
+    parsed.SPAREKART_SUPERADMIN_EMAIL,
+  );
+  const resolvedSuperAdminPassword = resolvePreferredValue(
+    parsed.SPAREKART_SUPER_ADMIN_PASSWORD,
+    parsed.SPAREKART_SUPERADMIN_PASSWORD,
+  );
+  const resendKeyConfigured = hasConfiguredValue(parsed.RESEND_API_KEY);
+  const resendFromConfigured = hasConfiguredValue(parsed.RESEND_FROM_EMAIL);
+  const googleClientIdConfigured = hasConfiguredGoogleClientId(parsed.GOOGLE_CLIENT_ID);
+  const googleClientSecretConfigured = hasConfiguredValue(parsed.GOOGLE_CLIENT_SECRET);
+
   cachedEnv = {
     ...parsed,
     runtimeRoot: resolveRuntimeRoot(parsed.SPAREKART_RUNTIME_DIR),
-    mongodbConfigured: Boolean(parsed.MONGODB_URI),
-    resendConfigured: Boolean(parsed.RESEND_API_KEY && parsed.RESEND_FROM_EMAIL),
-    googleConfigured: Boolean(parsed.GOOGLE_CLIENT_ID && parsed.GOOGLE_CLIENT_SECRET),
+    mongodbConfigured: hasConfiguredMongoUri(parsed.MONGODB_URI),
+    resendConfigured: resendKeyConfigured && resendFromConfigured,
+    resendPartiallyConfigured: resendKeyConfigured !== resendFromConfigured,
+    googleConfigured: googleClientIdConfigured && googleClientSecretConfigured,
+    googlePartiallyConfigured: googleClientIdConfigured !== googleClientSecretConfigured,
     jwtUsesDefault: parsed.JWT_SECRET === DEFAULT_JWT_SECRET,
+    resolvedSuperAdminEmail,
+    resolvedSuperAdminPassword,
+    seedPasswordConfigured: hasConfiguredValue(parsed.SPAREKART_SEED_PASSWORD),
+    superAdminPasswordConfigured: hasConfiguredValue(resolvedSuperAdminPassword),
   };
 
   return cachedEnv;

@@ -40,15 +40,9 @@ import {
 } from "@/components/admin/OperationsUI";
 import { AccessGuard } from "@/components/marketplace/AccessGuard";
 import { NotificationFeed } from "@/components/marketplace/NotificationFeed";
-import {
-  OrderTimeline,
-  SellerFulfillmentGrid,
-} from "@/components/marketplace/OrderProgressUI";
+import { OrderTimeline, SellerFulfillmentGrid } from "@/components/marketplace/OrderProgressUI";
 import { SellerCommissionDashboard } from "@/components/marketplace/SellerCommissionDashboard";
-import {
-  OrderStatusBadge,
-  PaymentStatusBadge,
-} from "@/components/marketplace/StatusBadge";
+import { OrderStatusBadge, PaymentStatusBadge } from "@/components/marketplace/StatusBadge";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Link } from "@/components/navigation/Link";
 import { SellerShell } from "@/components/seller/SellerShell";
@@ -77,7 +71,12 @@ import type {
 } from "@/modules/marketplace/types";
 
 const dashboardTabs = [
-  { key: "overview", label: "Overview", description: "Performance and health", Icon: LayoutDashboard },
+  {
+    key: "overview",
+    label: "Overview",
+    description: "Performance and health",
+    Icon: LayoutDashboard,
+  },
   { key: "store", label: "Store Profile", description: "Brand and trust details", Icon: Store },
   { key: "products", label: "Products", description: "Catalog and listings", Icon: PackageCheck },
   { key: "inventory", label: "Inventory", description: "Stock and replenishment", Icon: Boxes },
@@ -116,13 +115,7 @@ const productBadges: SellerProductDraft["badge"][] = [
   "fast-shipping",
 ];
 
-const productStatuses: ProductFilterStatus[] = [
-  "ALL",
-  "ACTIVE",
-  "DRAFT",
-  "FLAGGED",
-  "INACTIVE",
-];
+const productStatuses: ProductFilterStatus[] = ["ALL", "ACTIVE", "DRAFT", "FLAGGED", "INACTIVE"];
 
 const orderStatusFilters: Array<OrderStatus | "ALL"> = [
   "ALL",
@@ -140,9 +133,7 @@ const SELLER_ORDERS_PER_PAGE = 10;
 const SELLER_PRODUCTS_PER_PAGE = 12;
 
 function normalizeDashboardTab(value: string | null): DashboardTab {
-  return dashboardTabs.some((tab) => tab.key === value)
-    ? (value as DashboardTab)
-    : "overview";
+  return dashboardTabs.some((tab) => tab.key === value) ? (value as DashboardTab) : "overview";
 }
 
 function formatLabel(value: string) {
@@ -286,7 +277,10 @@ function buildProductInput(
   existing: ManagedProduct | undefined,
   sellerSlug: string,
 ): ManagedProductInput {
-  const images = draft.images.map((image) => image.trim()).filter(Boolean).slice(0, 4);
+  const images = draft.images
+    .map((image) => image.trim())
+    .filter(Boolean)
+    .slice(0, 4);
 
   const specs = parseSpecLines(draft.specLines);
   const compatibility = parseCompatibilityLines(draft.compatibilityLines);
@@ -337,28 +331,35 @@ export default function SellerOrdersPage({
   } = useMarketplace();
 
   const sellerSlug = currentUser?.sellerSlug;
-  const sellerRecord = sellerSlug
-    ? state.sellersDirectory.find((seller) => seller.slug === sellerSlug)
-    : undefined;
-  const sellerProducts = sellerSlug
-    ? state.managedProducts
-        .filter((product) => product.sellerSlug === sellerSlug && !product.deletedAt)
-        .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
-    : [];
-  const orders = sellerSlug ? getOrdersForSeller(state, sellerSlug) : [];
+  const sellerRecord = useMemo(
+    () =>
+      sellerSlug ? state.sellersDirectory.find((seller) => seller.slug === sellerSlug) : undefined,
+    [sellerSlug, state.sellersDirectory],
+  );
+  const sellerProducts = useMemo(
+    () =>
+      sellerSlug
+        ? state.managedProducts
+            .filter((product) => product.sellerSlug === sellerSlug && !product.deletedAt)
+            .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+        : [],
+    [sellerSlug, state.managedProducts],
+  );
+  const orders = useMemo(
+    () => (sellerSlug ? getOrdersForSeller(state, sellerSlug) : []),
+    [sellerSlug, state],
+  );
   const notifications = currentUser
     ? getNotificationsForUser(state, currentUser.id).slice(0, 5)
     : [];
   const approvedReviews = sellerSlug
     ? state.managedStoreReviews.filter(
-        (review) =>
-          review.sellerSlug === sellerSlug && review.moderationStatus === "APPROVED",
+        (review) => review.sellerSlug === sellerSlug && review.moderationStatus === "APPROVED",
       )
     : [];
   const pendingReviews = sellerSlug
     ? state.managedStoreReviews.filter(
-        (review) =>
-          review.sellerSlug === sellerSlug && review.moderationStatus === "PENDING",
+        (review) => review.sellerSlug === sellerSlug && review.moderationStatus === "PENDING",
       )
     : [];
   const lowStockProducts = sellerProducts.filter((product) => {
@@ -374,17 +375,16 @@ export default function SellerOrdersPage({
   );
   const storeRating =
     approvedReviews.reduce((sum, review) => sum + review.rating, 0) /
-      (approvedReviews.length || 1) || sellerRecord?.rating || 0;
+      (approvedReviews.length || 1) ||
+    sellerRecord?.rating ||
+    0;
   const totalSellerValue = orders.reduce((sum, order) => {
     const sellerItems = order.items.filter((item) => item.sellerSlug === sellerSlug);
     return (
-      sum +
-      sellerItems.reduce((itemTotal, item) => itemTotal + item.unitPrice * item.quantity, 0)
+      sum + sellerItems.reduce((itemTotal, item) => itemTotal + item.unitPrice * item.quantity, 0)
     );
   }, 0);
-  const readyOrders = orders.filter((order) =>
-    ["CONFIRMED", "PROCESSING"].includes(order.status),
-  );
+  const readyOrders = orders.filter((order) => ["CONFIRMED", "PROCESSING"].includes(order.status));
   const liveOrderCount = orders.filter((order) =>
     ["CONFIRMED", "PROCESSING", "SHIPPED"].includes(order.status),
   ).length;
@@ -411,9 +411,7 @@ export default function SellerOrdersPage({
   const [inventoryDeltaByProduct, setInventoryDeltaByProduct] = useState<Record<string, string>>(
     {},
   );
-  const [inventoryNoteByProduct, setInventoryNoteByProduct] = useState<Record<string, string>>(
-    {},
-  );
+  const [inventoryNoteByProduct, setInventoryNoteByProduct] = useState<Record<string, string>>({});
 
   // Modal states
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -434,10 +432,8 @@ export default function SellerOrdersPage({
     return sellerProducts.filter((product) => {
       const searchable = `${product.title} ${product.brand} ${product.sku}`.toLowerCase();
       return (
-        (!productQuery.trim() ||
-          searchable.includes(productQuery.trim().toLowerCase())) &&
-        (productStatusFilter === "ALL" ||
-          product.moderationStatus === productStatusFilter)
+        (!productQuery.trim() || searchable.includes(productQuery.trim().toLowerCase())) &&
+        (productStatusFilter === "ALL" || product.moderationStatus === productStatusFilter)
       );
     });
   }, [productQuery, productStatusFilter, sellerProducts]);
@@ -453,10 +449,10 @@ export default function SellerOrdersPage({
 
   const visibleOrders = useMemo(() => {
     return orders.filter((order) => {
-      const searchable = `${order.orderNumber} ${order.shippingAddress.fullName} ${order.shippingAddress.city}`.toLowerCase();
+      const searchable =
+        `${order.orderNumber} ${order.shippingAddress.fullName} ${order.shippingAddress.city}`.toLowerCase();
       return (
-        (!orderQuery.trim() ||
-          searchable.includes(orderQuery.trim().toLowerCase())) &&
+        (!orderQuery.trim() || searchable.includes(orderQuery.trim().toLowerCase())) &&
         (orderStatusFilter === "ALL" || order.status === orderStatusFilter)
       );
     });
@@ -534,9 +530,7 @@ export default function SellerOrdersPage({
       updateSellerStoreProfile(storeDraft);
       toast.success("Store profile updated.");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to update store profile.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to update store profile.");
     }
   };
 
@@ -548,18 +542,14 @@ export default function SellerOrdersPage({
     try {
       const input = buildProductInput(productDraft, selectedProduct, sellerRecord.slug);
       saveSellerProduct(input);
-      toast.success(
-        productDraft.id ? "Product listing updated." : "Product listing created.",
-      );
+      toast.success(productDraft.id ? "Product listing updated." : "Product listing created.");
 
       if (!productDraft.id) {
         setSelectedProductId("new");
         setProductDraft(createEmptyProductDraft(defaultCategory));
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to save product listing.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to save product listing.");
     }
   };
 
@@ -568,9 +558,7 @@ export default function SellerOrdersPage({
       adjustSellerInventory({ productId, quantityDelta });
       toast.success("Inventory updated.");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to update inventory.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to update inventory.");
     }
   };
 
@@ -591,9 +579,7 @@ export default function SellerOrdersPage({
       setInventoryNoteByProduct((previous) => ({ ...previous, [productId]: "" }));
       toast.success("Inventory adjustment applied.");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to apply stock adjustment.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to apply stock adjustment.");
     }
   };
 
@@ -642,16 +628,18 @@ export default function SellerOrdersPage({
       return;
     }
 
-    const input: InventoryAdjustmentInput = { productId: selectedInventoryProductId, quantityDelta, note };
+    const input: InventoryAdjustmentInput = {
+      productId: selectedInventoryProductId,
+      quantityDelta,
+      note,
+    };
 
     try {
       adjustSellerInventory(input);
       handleCloseInventoryModal();
       toast.success("Inventory adjustment applied.");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to apply stock adjustment.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to apply stock adjustment.");
     }
   };
 
@@ -660,9 +648,7 @@ export default function SellerOrdersPage({
       updateOrderStatus(orderId, nextStatus);
       toast.success(`Order moved to ${formatLabel(nextStatus)}.`);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to update seller order status.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to update seller order status.");
     }
   };
 
@@ -806,7 +792,8 @@ export default function SellerOrdersPage({
             </div>
             <h1 className="mt-4 text-2xl font-black text-foreground">Store record unavailable</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Your seller account is active, but a store record could not be loaded for this session.
+              Your seller account is active, but a store record could not be loaded for this
+              session.
             </p>
           </div>
         </div>
@@ -934,8 +921,7 @@ export default function SellerOrdersPage({
                   label="Out Of Stock"
                   value={String(
                     sellerProducts.filter(
-                      (product) =>
-                        (state.inventory[product.id]?.available ?? product.stock) === 0,
+                      (product) => (state.inventory[product.id]?.available ?? product.stock) === 0,
                     ).length,
                   )}
                   helper="Needs urgent replenishment"
@@ -978,18 +964,15 @@ export default function SellerOrdersPage({
                 <SellerMetricCard
                   label="Shipped / Delivered"
                   value={String(
-                    orders.filter((order) =>
-                      ["SHIPPED", "DELIVERED"].includes(order.status),
-                    ).length,
+                    orders.filter((order) => ["SHIPPED", "DELIVERED"].includes(order.status))
+                      .length,
                   )}
                   helper="Beyond fulfilment checkpoint"
                 />
               </section>
             ) : null}
 
-            {activeTab === "earnings" ? (
-              <SellerCommissionDashboard embedded />
-            ) : null}
+            {activeTab === "earnings" ? <SellerCommissionDashboard embedded /> : null}
 
             <div className="space-y-6">
               {activeTab === "overview" ? (
@@ -1139,18 +1122,12 @@ export default function SellerOrdersPage({
                       description="Customer trust and storefront quality signals that affect conversion."
                     >
                       <div className="space-y-3">
-                        <HealthRow
-                          label="Store rating"
-                          value={`${storeRating.toFixed(1)} / 5`}
-                        />
+                        <HealthRow label="Store rating" value={`${storeRating.toFixed(1)} / 5`} />
                         <HealthRow
                           label="Published reviews"
                           value={String(approvedReviews.length || sellerRecord.reviewCount)}
                         />
-                        <HealthRow
-                          label="Tier"
-                          value={sellerRecord.tier}
-                        />
+                        <HealthRow label="Tier" value={sellerRecord.tier} />
                         <HealthRow
                           label="Payout hold"
                           value={sellerRecord.payoutHold ? "Enabled" : "Clear"}
@@ -1217,51 +1194,84 @@ export default function SellerOrdersPage({
                 >
                   <div className="grid gap-6 lg:grid-cols-3">
                     <div className="rounded-[18px] border border-border/60 p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Store Name</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                        Store Name
+                      </p>
                       <p className="mt-2 text-lg font-black text-foreground">{storeDraft.name}</p>
                     </div>
                     <div className="rounded-[18px] border border-border/60 p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Tagline</p>
-                      <p className="mt-2 text-sm text-foreground">{storeDraft.tagline || "Not set"}</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                        Tagline
+                      </p>
+                      <p className="mt-2 text-sm text-foreground">
+                        {storeDraft.tagline || "Not set"}
+                      </p>
                     </div>
                     <div className="rounded-[18px] border border-border/60 p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Response Time</p>
-                      <p className="mt-2 text-sm font-semibold text-foreground">{storeDraft.responseTime}</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                        Response Time
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-foreground">
+                        {storeDraft.responseTime}
+                      </p>
                     </div>
                   </div>
 
                   <div className="mt-6 rounded-[18px] border border-border/60 p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground mb-2">Store Description</p>
-                    <p className="text-sm text-muted-foreground leading-6">{storeDraft.description || "No description set"}</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground mb-2">
+                      Store Description
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-6">
+                      {storeDraft.description || "No description set"}
+                    </p>
                   </div>
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-3">
                     <div className="rounded-[24px] border-2 border-dashed border-border p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-2">Logo</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-2">
+                        Logo
+                      </p>
                       {storeDraft.logo ? (
-                        <img src={storeDraft.logo} alt="Logo" className="h-16 w-16 rounded-lg object-contain" />
+                        <img
+                          src={storeDraft.logo}
+                          alt="Logo"
+                          className="h-16 w-16 rounded-lg object-contain"
+                        />
                       ) : (
                         <p className="text-sm text-muted-foreground">Not set</p>
                       )}
                     </div>
                     <div className="rounded-[24px] border-2 border-dashed border-border p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-2">Banner</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-2">
+                        Banner
+                      </p>
                       {storeDraft.banner ? (
-                        <img src={storeDraft.banner} alt="Banner" className="h-16 rounded-lg object-contain w-full" />
+                        <img
+                          src={storeDraft.banner}
+                          alt="Banner"
+                          className="h-16 rounded-lg object-contain w-full"
+                        />
                       ) : (
                         <p className="text-sm text-muted-foreground">Not set</p>
                       )}
                     </div>
                     <div className="rounded-[24px] bg-info/10 p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-info mb-2">Quick Tips</p>
-                      <p className="text-xs text-info/80">Use the editor to update policies, social links, and visuals.</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-info mb-2">
+                        Quick Tips
+                      </p>
+                      <p className="text-xs text-info/80">
+                        Use the editor to update policies, social links, and visuals.
+                      </p>
                     </div>
                   </div>
                 </DashboardSection>
               ) : null}
 
               {activeTab === "products" ? (
-                <OperationsPanel title="Product catalog" description="Table-first catalog management with status tabs, direct editing, stock actions, and pagination.">
+                <OperationsPanel
+                  title="Product catalog"
+                  description="Table-first catalog management with status tabs, direct editing, stock actions, and pagination."
+                >
                   <OperationsToolbar>
                     <div className="grid gap-2">
                       <OperationsTabs
@@ -1273,7 +1283,9 @@ export default function SellerOrdersPage({
                           count:
                             status === "ALL"
                               ? sellerProducts.length
-                              : sellerProducts.filter((product) => product.moderationStatus === status).length,
+                              : sellerProducts.filter(
+                                  (product) => product.moderationStatus === status,
+                                ).length,
                         }))}
                       />
                       <OperationsSearch
@@ -1318,19 +1330,29 @@ export default function SellerOrdersPage({
                                   className="h-11 w-11 rounded-xl object-cover"
                                 />
                                 <div className="min-w-0">
-                                  <div className="line-clamp-1 font-black text-foreground">{product.title}</div>
-                                  <div className="mt-0.5 text-xs text-muted-foreground">{product.brand} · {product.sku}</div>
+                                  <div className="line-clamp-1 font-black text-foreground">
+                                    {product.title}
+                                  </div>
+                                  <div className="mt-0.5 text-xs text-muted-foreground">
+                                    {product.brand} · {product.sku}
+                                  </div>
                                 </div>
                               </div>
                             </OperationsTd>
                             <OperationsTd>
                               <StatusChip status={product.moderationStatus} />
                               {product.reviewRequired ? (
-                                <div className="mt-1 text-[11px] font-semibold text-warning-foreground">Needs review</div>
+                                <div className="mt-1 text-[11px] font-semibold text-warning-foreground">
+                                  Needs review
+                                </div>
                               ) : null}
                             </OperationsTd>
-                            <OperationsTd className="text-xs font-semibold text-muted-foreground">{formatLabel(product.category)}</OperationsTd>
-                            <OperationsTd className="text-right font-black tabular-nums">{formatPKR(product.price)}</OperationsTd>
+                            <OperationsTd className="text-xs font-semibold text-muted-foreground">
+                              {formatLabel(product.category)}
+                            </OperationsTd>
+                            <OperationsTd className="text-right font-black tabular-nums">
+                              {formatPKR(product.price)}
+                            </OperationsTd>
                             <OperationsTd className="text-right">
                               <span
                                 className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${
@@ -1388,8 +1410,12 @@ export default function SellerOrdersPage({
                               className="h-14 w-14 rounded-xl object-cover"
                             />
                             <div className="min-w-0 flex-1">
-                              <div className="line-clamp-2 text-sm font-black text-foreground">{product.title}</div>
-                              <div className="mt-1 text-xs text-muted-foreground">{product.brand} · {product.sku}</div>
+                              <div className="line-clamp-2 text-sm font-black text-foreground">
+                                {product.title}
+                              </div>
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                {product.brand} · {product.sku}
+                              </div>
                               <div className="mt-2 flex flex-wrap gap-1.5">
                                 <StatusChip status={product.moderationStatus} />
                                 <span
@@ -1470,8 +1496,7 @@ export default function SellerOrdersPage({
                   >
                     <div className="space-y-4">
                       {sellerProducts.map((product) => {
-                        const available =
-                          state.inventory[product.id]?.available ?? product.stock;
+                        const available = state.inventory[product.id]?.available ?? product.stock;
                         return (
                           <div
                             key={product.id}
@@ -1516,32 +1541,28 @@ export default function SellerOrdersPage({
                                   onClick={() => handleQuickInventory(product.id, -1)}
                                   className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-card px-3 text-sm font-semibold shadow-[var(--shadow-soft)]"
                                 >
-                                  <Minus className="h-4 w-4" />
-                                  1
+                                  <Minus className="h-4 w-4" />1
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleQuickInventory(product.id, -5)}
                                   className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-card px-3 text-sm font-semibold shadow-[var(--shadow-soft)]"
                                 >
-                                  <Minus className="h-4 w-4" />
-                                  5
+                                  <Minus className="h-4 w-4" />5
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleQuickInventory(product.id, 1)}
                                   className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-card px-3 text-sm font-semibold shadow-[var(--shadow-soft)]"
                                 >
-                                  <Plus className="h-4 w-4" />
-                                  1
+                                  <Plus className="h-4 w-4" />1
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleQuickInventory(product.id, 5)}
                                   className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-card px-3 text-sm font-semibold shadow-[var(--shadow-soft)]"
                                 >
-                                  <Plus className="h-4 w-4" />
-                                  5
+                                  <Plus className="h-4 w-4" />5
                                 </button>
                               </div>
                             </div>
@@ -1588,7 +1609,10 @@ export default function SellerOrdersPage({
 
               {activeTab === "orders" ? (
                 <OperationsWorkspace className="xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
-                  <OperationsPanel title="Seller order desk" description="A fulfilment queue with status tabs, fast search, pagination, and one focused order inspector.">
+                  <OperationsPanel
+                    title="Seller order desk"
+                    description="A fulfilment queue with status tabs, fast search, pagination, and one focused order inspector."
+                  >
                     <OperationsToolbar>
                       <div className="grid gap-2">
                         <OperationsTabs
@@ -1653,17 +1677,27 @@ export default function SellerOrdersPage({
                               onClick={() => setSelectedSellerOrderId(order.id)}
                             >
                               <OperationsTd>
-                                <div className="font-black text-foreground">{order.orderNumber}</div>
+                                <div className="font-black text-foreground">
+                                  {order.orderNumber}
+                                </div>
                                 <div className="mt-0.5 text-xs text-muted-foreground">
                                   {new Date(order.createdAt).toLocaleDateString()}
                                 </div>
                               </OperationsTd>
                               <OperationsTd>
-                                <div className="font-semibold text-foreground">{order.shippingAddress.fullName}</div>
-                                <div className="mt-0.5 text-xs text-muted-foreground">{order.shippingAddress.city}</div>
+                                <div className="font-semibold text-foreground">
+                                  {order.shippingAddress.fullName}
+                                </div>
+                                <div className="mt-0.5 text-xs text-muted-foreground">
+                                  {order.shippingAddress.city}
+                                </div>
                               </OperationsTd>
                               <OperationsTd>
-                                {fulfillment ? <OrderStatusBadge status={fulfillment.status} /> : <OrderStatusBadge status={order.status} />}
+                                {fulfillment ? (
+                                  <OrderStatusBadge status={fulfillment.status} />
+                                ) : (
+                                  <OrderStatusBadge status={order.status} />
+                                )}
                               </OperationsTd>
                               <OperationsTd>
                                 {payment ? <PaymentStatusBadge status={payment.status} /> : null}
@@ -1671,7 +1705,9 @@ export default function SellerOrdersPage({
                                   {payment?.method.replaceAll("_", " ") ?? order.paymentMethod}
                                 </div>
                               </OperationsTd>
-                              <OperationsTd className="text-right font-bold tabular-nums">{sellerItems.length}</OperationsTd>
+                              <OperationsTd className="text-right font-bold tabular-nums">
+                                {sellerItems.length}
+                              </OperationsTd>
                               <OperationsTd className="text-right font-black tabular-nums text-foreground">
                                 {formatPKR(sellerOrderValue)}
                               </OperationsTd>
@@ -1702,7 +1738,9 @@ export default function SellerOrdersPage({
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <div className="truncate text-sm font-black text-foreground">{order.orderNumber}</div>
+                                <div className="truncate text-sm font-black text-foreground">
+                                  {order.orderNumber}
+                                </div>
                                 <div className="mt-1 truncate text-xs text-muted-foreground">
                                   {order.shippingAddress.fullName} · {order.shippingAddress.city}
                                 </div>
@@ -1712,7 +1750,11 @@ export default function SellerOrdersPage({
                               </div>
                             </div>
                             <div className="mt-2 flex flex-wrap gap-1.5">
-                              {fulfillment ? <OrderStatusBadge status={fulfillment.status} /> : <OrderStatusBadge status={order.status} />}
+                              {fulfillment ? (
+                                <OrderStatusBadge status={fulfillment.status} />
+                              ) : (
+                                <OrderStatusBadge status={order.status} />
+                              )}
                               {payment ? <PaymentStatusBadge status={payment.status} /> : null}
                             </div>
                           </OperationsMobileCard>
@@ -1753,15 +1795,23 @@ export default function SellerOrdersPage({
                           ) : (
                             <OrderStatusBadge status={selectedSellerOrder.status} />
                           )}
-                          {selectedSellerPayment ? <PaymentStatusBadge status={selectedSellerPayment.status} /> : null}
+                          {selectedSellerPayment ? (
+                            <PaymentStatusBadge status={selectedSellerPayment.status} />
+                          ) : null}
                         </>
                       ) : null
                     }
-                    empty={<EmptyPanel title="Select an order" body="Open a row from the queue to inspect items, delivery, and seller actions." />}
+                    empty={
+                      <EmptyPanel
+                        title="Select an order"
+                        body="Open a row from the queue to inspect items, delivery, and seller actions."
+                      />
+                    }
                   >
                     {selectedSellerOrder && selectedSellerOrderView
                       ? (() => {
-                          const { fulfillment, sellerItems, sellerSelection } = selectedSellerOrderView;
+                          const { fulfillment, sellerItems, sellerSelection } =
+                            selectedSellerOrderView;
                           return (
                             <div className="space-y-3">
                               <div className="rounded-[14px] border border-border/70 bg-background p-3">
@@ -1771,7 +1821,10 @@ export default function SellerOrdersPage({
                                 </div>
                                 <div className="mt-3 space-y-2">
                                   {sellerItems.map((item) => (
-                                    <div key={`${selectedSellerOrder.id}-${item.productId}`} className="flex gap-3 rounded-xl border border-border/60 bg-card p-2.5">
+                                    <div
+                                      key={`${selectedSellerOrder.id}-${item.productId}`}
+                                      className="flex gap-3 rounded-xl border border-border/60 bg-card p-2.5"
+                                    >
                                       <OptimizedImage
                                         src={item.image}
                                         alt={item.title}
@@ -1780,8 +1833,12 @@ export default function SellerOrdersPage({
                                         className="h-12 w-12 rounded-xl object-cover"
                                       />
                                       <div className="min-w-0 flex-1">
-                                        <div className="line-clamp-2 text-sm font-semibold text-foreground">{item.title}</div>
-                                        <div className="mt-0.5 text-xs text-muted-foreground">Qty {item.quantity} · SKU {item.sku}</div>
+                                        <div className="line-clamp-2 text-sm font-semibold text-foreground">
+                                          {item.title}
+                                        </div>
+                                        <div className="mt-0.5 text-xs text-muted-foreground">
+                                          Qty {item.quantity} · SKU {item.sku}
+                                        </div>
                                       </div>
                                       <div className="text-sm font-black tabular-nums text-foreground">
                                         {formatPKR(item.unitPrice * item.quantity)}
@@ -1792,14 +1849,22 @@ export default function SellerOrdersPage({
                               </div>
 
                               <div className="rounded-[14px] border border-border/70 bg-background p-3">
-                                <div className="text-sm font-bold text-foreground">Fulfilment state</div>
+                                <div className="text-sm font-bold text-foreground">
+                                  Fulfilment state
+                                </div>
                                 <div className="mt-2 rounded-xl border border-border/60 bg-card p-3">
                                   <div className="flex items-center justify-between gap-3">
                                     <div>
-                                      <div className="text-sm font-semibold text-foreground">Your store status</div>
-                                      <div className="mt-0.5 text-xs text-muted-foreground">Move forward only when payment is clear.</div>
+                                      <div className="text-sm font-semibold text-foreground">
+                                        Your store status
+                                      </div>
+                                      <div className="mt-0.5 text-xs text-muted-foreground">
+                                        Move forward only when payment is clear.
+                                      </div>
                                     </div>
-                                    {fulfillment ? <OrderStatusBadge status={fulfillment.status} /> : null}
+                                    {fulfillment ? (
+                                      <OrderStatusBadge status={fulfillment.status} />
+                                    ) : null}
                                   </div>
                                 </div>
                                 <p className="mt-2 text-xs leading-5 text-muted-foreground">
@@ -1817,11 +1882,16 @@ export default function SellerOrdersPage({
                               </div>
 
                               <div className="rounded-[14px] border border-border/70 bg-background p-3">
-                                <div className="text-sm font-bold text-foreground">Fulfilment details</div>
+                                <div className="text-sm font-bold text-foreground">
+                                  Fulfilment details
+                                </div>
                                 <div className="mt-2">
                                   <OperationsKeyValue
                                     label="Payment method"
-                                    value={selectedSellerPayment?.method.replaceAll("_", " ") ?? selectedSellerOrder.paymentMethod}
+                                    value={
+                                      selectedSellerPayment?.method.replaceAll("_", " ") ??
+                                      selectedSellerOrder.paymentMethod
+                                    }
                                   />
                                   <OperationsKeyValue
                                     label="Shipping option"
@@ -1861,7 +1931,8 @@ export default function SellerOrdersPage({
                                 </div>
                                 {selectedSellerTransitions.length === 0 ? (
                                   <div className="mt-2 rounded-xl border border-border/60 bg-card px-3 py-2 text-xs leading-5 text-muted-foreground">
-                                    This order is not ready for seller action yet. Admin payment verification or previous fulfilment steps must complete first.
+                                    This order is not ready for seller action yet. Admin payment
+                                    verification or previous fulfilment steps must complete first.
                                   </div>
                                 ) : (
                                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -1869,7 +1940,12 @@ export default function SellerOrdersPage({
                                       <button
                                         key={`${selectedSellerOrder.id}-${status}`}
                                         type="button"
-                                        onClick={() => handleUpdateSellerOrderStatus(selectedSellerOrder.id, status)}
+                                        onClick={() =>
+                                          handleUpdateSellerOrderStatus(
+                                            selectedSellerOrder.id,
+                                            status,
+                                          )
+                                        }
                                         className="inline-flex min-h-10 items-center justify-center rounded-xl border border-border/70 bg-card px-3 py-2 text-xs font-black uppercase tracking-[0.1em]"
                                       >
                                         Move to {formatLabel(status)}
@@ -1880,7 +1956,9 @@ export default function SellerOrdersPage({
                               </div>
 
                               <div className="rounded-[14px] border border-border/70 bg-background p-3">
-                                <div className="text-sm font-bold text-foreground">Seller progress across this order</div>
+                                <div className="text-sm font-bold text-foreground">
+                                  Seller progress across this order
+                                </div>
                                 <div className="mt-3">
                                   <SellerFulfillmentGrid
                                     state={state}
@@ -1891,7 +1969,9 @@ export default function SellerOrdersPage({
                               </div>
 
                               <div className="rounded-[14px] border border-border/70 bg-background p-3">
-                                <div className="text-sm font-bold text-foreground">Order timeline</div>
+                                <div className="text-sm font-bold text-foreground">
+                                  Order timeline
+                                </div>
                                 <div className="mt-3">
                                   <OrderTimeline items={selectedSellerTimeline} />
                                 </div>
@@ -1937,8 +2017,14 @@ export default function SellerOrdersPage({
           onDeltaChange={setInventoryModalDelta}
           note={inventoryModalNote}
           onNoteChange={setInventoryModalNote}
-          productTitle={sellerProducts.find(p => p.id === selectedInventoryProductId)?.title || ""}
-          currentStock={state.inventory[selectedInventoryProductId]?.available || sellerProducts.find(p => p.id === selectedInventoryProductId)?.stock || 0}
+          productTitle={
+            sellerProducts.find((p) => p.id === selectedInventoryProductId)?.title || ""
+          }
+          currentStock={
+            state.inventory[selectedInventoryProductId]?.available ||
+            sellerProducts.find((p) => p.id === selectedInventoryProductId)?.stock ||
+            0
+          }
         />
       )}
     </AccessGuard>
@@ -1975,7 +2061,9 @@ function SellerMetricCard({
           <div className="mt-0.5 hidden text-[11px] text-muted-foreground sm:block">{helper}</div>
         </div>
         <div className="shrink-0 text-right">
-          <div className="text-lg font-black tracking-tight text-foreground sm:text-[1.35rem]">{value}</div>
+          <div className="text-lg font-black tracking-tight text-foreground sm:text-[1.35rem]">
+            {value}
+          </div>
         </div>
       </div>
     </div>
@@ -2056,7 +2144,9 @@ function StatusChip({ status }: { status: ProductModerationStatus }) {
           : "bg-info/10 text-info";
 
   return (
-    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${tone}`}>
+    <span
+      className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${tone}`}
+    >
       {formatLabel(status)}
     </span>
   );

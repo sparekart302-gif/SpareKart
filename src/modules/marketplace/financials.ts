@@ -1,10 +1,5 @@
-import {
-  buildCommissionRecordsForOrder,
-} from "./commission-management";
-import {
-  getEligibleSettlementsForSeller,
-  roundMoney,
-} from "./settlements";
+import { buildCommissionRecordsForOrder } from "./commission-management";
+import { getEligibleSettlementsForSeller, roundMoney } from "./settlements";
 import type {
   CommissionRecord,
   MarketplaceOrder,
@@ -14,7 +9,10 @@ import type {
   SellerSettlement,
 } from "./types";
 
-function getPayoutPeriodWindow(dateString: string, period: MarketplaceState["payoutCycleConfig"]["period"]) {
+function getPayoutPeriodWindow(
+  dateString: string,
+  period: MarketplaceState["payoutCycleConfig"]["period"],
+) {
   const date = new Date(dateString);
 
   if (period === "WEEKLY") {
@@ -73,10 +71,7 @@ export function deactivateOrderCommissions(
   );
 }
 
-export function getPayoutByCommissionId(
-  payouts: SellerPayout[],
-  commissionId: string,
-) {
+export function getPayoutByCommissionId(payouts: SellerPayout[], commissionId: string) {
   return payouts.find(
     (payout) =>
       payout.commissionIds.includes(commissionId) &&
@@ -84,10 +79,7 @@ export function getPayoutByCommissionId(
   );
 }
 
-export function getEligibleSellerPayoutCommissions(
-  state: MarketplaceState,
-  sellerSlug: string,
-) {
+export function getEligibleSellerPayoutCommissions(state: MarketplaceState, sellerSlug: string) {
   const seller = state.sellersDirectory.find((entry) => entry.slug === sellerSlug);
 
   if (!seller || seller.payoutHold) {
@@ -104,7 +96,9 @@ export function getEligibleSellerPayoutCommissions(
     }
 
     const order = state.orders.find((candidate) => candidate.id === commission.orderId);
-    const payment = order ? state.payments.find((candidate) => candidate.id === order.paymentId) : undefined;
+    const payment = order
+      ? state.payments.find((candidate) => candidate.id === order.paymentId)
+      : undefined;
 
     if (!order || !payment || order.status !== "DELIVERED" || payment.status !== "PAID") {
       return false;
@@ -114,10 +108,7 @@ export function getEligibleSellerPayoutCommissions(
   });
 }
 
-export function getEligibleSellerPayoutSettlements(
-  state: MarketplaceState,
-  sellerSlug: string,
-) {
+export function getEligibleSellerPayoutSettlements(state: MarketplaceState, sellerSlug: string) {
   const seller = state.sellersDirectory.find((entry) => entry.slug === sellerSlug);
 
   if (!seller || seller.payoutHold) {
@@ -148,17 +139,16 @@ function applyPayoutAccountToRecord(payout: SellerPayout, payoutAccount?: Seller
             iban: payoutAccount.iban,
           }
         : payout.bankDetails,
-    easyPaisaNumber: payoutAccount.method === "EASYPAISA" ? payoutAccount.easyPaisaNumber : payout.easyPaisaNumber,
-    jazzCashNumber: payoutAccount.method === "JAZZCASH" ? payoutAccount.jazzCashNumber : payout.jazzCashNumber,
+    easyPaisaNumber:
+      payoutAccount.method === "EASYPAISA" ? payoutAccount.easyPaisaNumber : payout.easyPaisaNumber,
+    jazzCashNumber:
+      payoutAccount.method === "JAZZCASH" ? payoutAccount.jazzCashNumber : payout.jazzCashNumber,
     paypalEmail: payoutAccount.method === "PAYPAL" ? payoutAccount.paypalEmail : payout.paypalEmail,
     walletId: payoutAccount.method === "WALLET" ? payoutAccount.walletId : payout.walletId,
   };
 }
 
-export function reconcileScheduledPayouts(
-  state: MarketplaceState,
-  updatedAt: string,
-) {
+export function reconcileScheduledPayouts(state: MarketplaceState, updatedAt: string) {
   const nextPayouts = [...state.sellerPayouts];
   const openStatuses = new Set([
     "DRAFT",

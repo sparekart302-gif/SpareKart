@@ -23,8 +23,8 @@ export function CategoryManagementDialog({
   open: boolean;
   categories: ManagedCategory[];
   onOpenChange: (open: boolean) => void;
-  saveCategoryRecord: (category: ManagedCategoryInput) => void;
-  deleteCategoryRecord: (slug: string) => void;
+  saveCategoryRecord: (category: ManagedCategoryInput) => Promise<void>;
+  deleteCategoryRecord: (slug: string) => Promise<void>;
 }) {
   const [selectedCategory, setSelectedCategory] = useState<ManagedCategoryInput | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -47,31 +47,27 @@ export function CategoryManagementDialog({
     setIsCreating(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedCategory) return;
 
     try {
-      saveCategoryRecord(selectedCategory);
+      await saveCategoryRecord(selectedCategory);
       toast.success(isCreating ? "Category created." : "Category saved.");
       setSelectedCategory(null);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to save category.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to save category.");
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedCategory) return;
 
     try {
-      deleteCategoryRecord(selectedCategory.slug);
+      await deleteCategoryRecord(selectedCategory.slug);
       toast.success("Category deleted.");
       setSelectedCategory(null);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to delete category.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to delete category.");
     }
   };
 
@@ -79,9 +75,7 @@ export function CategoryManagementDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto p-0">
         <DialogHeader className="sticky top-0 z-10 border-b border-border bg-card px-5 py-4 sm:px-6">
-          <DialogTitle className="text-xl font-black tracking-tight">
-            Category Taxonomy
-          </DialogTitle>
+          <DialogTitle className="text-xl font-black tracking-tight">Category Taxonomy</DialogTitle>
           <DialogDescription>
             Manage category naming, visibility, and descriptions across all seller listings.
           </DialogDescription>
@@ -162,9 +156,7 @@ export function CategoryManagementDialog({
                       value={selectedCategory.active ? "yes" : "no"}
                       onChange={(event) =>
                         setSelectedCategory((prev) =>
-                          prev
-                            ? { ...prev, active: event.target.value === "yes" }
-                            : prev,
+                          prev ? { ...prev, active: event.target.value === "yes" } : prev,
                         )
                       }
                       className="h-11 w-full rounded-xl border border-border/60 bg-background px-3 text-sm focus:outline-none"
@@ -207,7 +199,7 @@ export function CategoryManagementDialog({
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={handleSave}
+                    onClick={() => void handleSave()}
                     className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
                   >
                     {isCreating ? "Create category" : "Save changes"}
@@ -215,7 +207,7 @@ export function CategoryManagementDialog({
                   {!isCreating && (
                     <button
                       type="button"
-                      onClick={handleDelete}
+                      onClick={() => void handleDelete()}
                       className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-destructive/10 px-4 text-sm font-semibold text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />

@@ -3,7 +3,12 @@
 import { Mail, Phone, ShieldCheck, ShoppingBag, Star, Store } from "lucide-react";
 import { Link } from "@/components/navigation/Link";
 import { AdminCompactStat, AdminKeyValue, AdminScopeGate } from "@/components/admin/AdminCommon";
-import { AdminEmptyState, AdminPageHeader, AdminPanel, AdminPill } from "@/components/admin/AdminUI";
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+  AdminPill,
+} from "@/components/admin/AdminUI";
 import {
   getScopeLabel,
   getUserOrderHistory,
@@ -79,9 +84,23 @@ function UserDetailContent({ userId }: { userId: string }) {
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <AdminCompactStat label="Orders" value={String(orders.length)} helper="Marketplace orders placed" />
-        <AdminCompactStat label="Spend" value={formatPKR(totalSpend)} helper="Total order value" tone="success" />
-        <AdminCompactStat label="Manual payments" value={String(manualPayments.length)} helper="Proof-based orders" tone="warning" />
+        <AdminCompactStat
+          label="Orders"
+          value={String(orders.length)}
+          helper="Marketplace orders placed"
+        />
+        <AdminCompactStat
+          label="Spend"
+          value={formatPKR(totalSpend)}
+          helper="Total order value"
+          tone="success"
+        />
+        <AdminCompactStat
+          label="Manual payments"
+          value={String(manualPayments.length)}
+          helper="Proof-based orders"
+          tone="warning"
+        />
         <AdminCompactStat
           label="Reviews"
           value={String(reviews.product.length + reviews.store.length)}
@@ -95,10 +114,26 @@ function UserDetailContent({ userId }: { userId: string }) {
             <div className="space-y-1">
               <div className="text-2xl font-black tracking-tight text-foreground">{user.name}</div>
               <div className="flex flex-wrap gap-2">
-                <AdminPill tone={user.role.includes("ADMIN") ? "info" : user.role === "SELLER" ? "warning" : "default"}>
+                <AdminPill
+                  tone={
+                    user.role.includes("ADMIN")
+                      ? "info"
+                      : user.role === "SELLER"
+                        ? "warning"
+                        : "default"
+                  }
+                >
                   {user.role.replaceAll("_", " ")}
                 </AdminPill>
-                <AdminPill tone={user.status === "ACTIVE" ? "success" : user.status === "SUSPENDED" ? "danger" : "warning"}>
+                <AdminPill
+                  tone={
+                    user.status === "ACTIVE"
+                      ? "success"
+                      : user.status === "SUSPENDED"
+                        ? "danger"
+                        : "warning"
+                  }
+                >
                   {user.status}
                 </AdminPill>
               </div>
@@ -124,13 +159,21 @@ function UserDetailContent({ userId }: { userId: string }) {
                 }
               />
               <AdminKeyValue label="Joined" value={formatDate(user.createdAt)} />
-              <AdminKeyValue label="Last login" value={user.lastLoginAt ? formatDateTime(user.lastLoginAt) : "No session activity"} />
-              {user.adminTitle ? <AdminKeyValue label="Admin title" value={user.adminTitle} /> : null}
+              <AdminKeyValue
+                label="Last login"
+                value={user.lastLoginAt ? formatDateTime(user.lastLoginAt) : "No session activity"}
+              />
+              {user.adminTitle ? (
+                <AdminKeyValue label="Admin title" value={user.adminTitle} />
+              ) : null}
               {user.sellerSlug ? (
                 <AdminKeyValue
                   label="Seller store"
                   value={
-                    <Link href={`/admin/sellers/${user.sellerSlug}`} className="text-accent hover:underline">
+                    <Link
+                      href={`/admin/sellers/${user.sellerSlug}`}
+                      className="text-accent hover:underline"
+                    >
                       {user.sellerSlug}
                     </Link>
                   }
@@ -155,22 +198,37 @@ function UserDetailContent({ userId }: { userId: string }) {
             <AdminPanel title="Customer profile">
               <div className="space-y-1">
                 <AdminKeyValue label="City" value={account.city} />
-                <AdminKeyValue label="Saved vehicles" value={String(account.savedVehicles.length)} />
+                <AdminKeyValue
+                  label="Saved vehicles"
+                  value={String(account.savedVehicles.length)}
+                />
                 <AdminKeyValue label="Addresses" value={String(account.addresses.length)} />
-                <AdminKeyValue label="Wishlist items" value={String(account.wishlistProductIds.length)} />
+                <AdminKeyValue
+                  label="Wishlist items"
+                  value={String(account.wishlistProductIds.length)}
+                />
               </div>
             </AdminPanel>
           ) : null}
         </div>
 
         <div className="space-y-4">
-          <AdminPanel title="Order history" description="Most recent order activity for this account.">
+          <AdminPanel
+            title="Order history"
+            description="Most recent order activity for this account."
+          >
             {orders.length === 0 ? (
-              <AdminEmptyState title="No orders yet" body="This user has not placed any marketplace orders yet." />
+              <AdminEmptyState
+                title="No orders yet"
+                body="This user has not placed any marketplace orders yet."
+              />
             ) : (
               <div className="space-y-3">
                 {orders.slice(0, 6).map((order) => (
-                  <div key={order.id} className="rounded-[22px] bg-surface px-4 py-4 shadow-[var(--shadow-soft)]">
+                  <div
+                    key={order.id}
+                    className="rounded-[22px] bg-surface px-4 py-4 shadow-[var(--shadow-soft)]"
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <div className="text-sm font-bold text-foreground">{order.orderNumber}</div>
@@ -179,7 +237,9 @@ function UserDetailContent({ userId }: { userId: string }) {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-black text-foreground">{formatPKR(order.totals.total)}</div>
+                        <div className="text-sm font-black text-foreground">
+                          {formatPKR(order.totals.total)}
+                        </div>
                         <div className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
                           {order.status.replaceAll("_", " ")}
                         </div>
@@ -187,7 +247,10 @@ function UserDetailContent({ userId }: { userId: string }) {
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {order.items.slice(0, 3).map((item) => (
-                        <span key={`${order.id}-${item.productId}`} className="rounded-full bg-card px-3 py-1 text-xs font-semibold text-foreground shadow-[var(--shadow-soft)]">
+                        <span
+                          key={`${order.id}-${item.productId}`}
+                          className="rounded-full bg-card px-3 py-1 text-xs font-semibold text-foreground shadow-[var(--shadow-soft)]"
+                        >
                           {item.title}
                         </span>
                       ))}
@@ -205,17 +268,34 @@ function UserDetailContent({ userId }: { userId: string }) {
               ) : (
                 <div className="space-y-3">
                   {payments.slice(0, 6).map((payment) => (
-                    <div key={payment.id} className="rounded-[20px] bg-surface px-4 py-4 shadow-[var(--shadow-soft)]">
+                    <div
+                      key={payment.id}
+                      className="rounded-[20px] bg-surface px-4 py-4 shadow-[var(--shadow-soft)]"
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-sm font-bold text-foreground">{payment.method.replaceAll("_", " ")}</div>
-                          <div className="mt-1 text-xs text-muted-foreground">{formatDateTime(payment.updatedAt)}</div>
+                          <div className="text-sm font-bold text-foreground">
+                            {payment.method.replaceAll("_", " ")}
+                          </div>
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {formatDateTime(payment.updatedAt)}
+                          </div>
                         </div>
-                        <AdminPill tone={payment.status === "PAID" ? "success" : payment.status === "REJECTED" ? "danger" : "warning"}>
+                        <AdminPill
+                          tone={
+                            payment.status === "PAID"
+                              ? "success"
+                              : payment.status === "REJECTED"
+                                ? "danger"
+                                : "warning"
+                          }
+                        >
                           {payment.status.replaceAll("_", " ")}
                         </AdminPill>
                       </div>
-                      <div className="mt-3 text-sm font-semibold text-foreground">{formatPKR(payment.amountDue)}</div>
+                      <div className="mt-3 text-sm font-semibold text-foreground">
+                        {formatPKR(payment.amountDue)}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -224,10 +304,26 @@ function UserDetailContent({ userId }: { userId: string }) {
 
             <AdminPanel title="Review footprint">
               <div className="grid gap-3 sm:grid-cols-2">
-                <ReviewBox label="Product reviews" value={String(reviews.product.length)} Icon={ShoppingBag} />
-                <ReviewBox label="Store reviews" value={String(reviews.store.length)} Icon={Store} />
-                <ReviewBox label="Verified reviews" value={String(reviews.product.filter((review) => review.verified).length)} Icon={ShieldCheck} />
-                <ReviewBox label="Avg. rating" value={averageRating([...reviews.product, ...reviews.store]).toFixed(1)} Icon={Star} />
+                <ReviewBox
+                  label="Product reviews"
+                  value={String(reviews.product.length)}
+                  Icon={ShoppingBag}
+                />
+                <ReviewBox
+                  label="Store reviews"
+                  value={String(reviews.store.length)}
+                  Icon={Store}
+                />
+                <ReviewBox
+                  label="Verified reviews"
+                  value={String(reviews.product.filter((review) => review.verified).length)}
+                  Icon={ShieldCheck}
+                />
+                <ReviewBox
+                  label="Avg. rating"
+                  value={averageRating([...reviews.product, ...reviews.store]).toFixed(1)}
+                  Icon={Star}
+                />
               </div>
             </AdminPanel>
           </section>

@@ -1,4 +1,5 @@
 # COD Payment Management & Commission Deduction System
+
 ## Complete Implementation Guide
 
 ---
@@ -18,6 +19,7 @@ This is a **professional COD payment management and commission deduction system*
 ## 📦 Files Created
 
 ### 1. **Commission Types** (`src/modules/marketplace/commission-types.ts`)
+
 Core data structures for the system:
 
 ```typescript
@@ -31,6 +33,7 @@ Core data structures for the system:
 ```
 
 **Key Features:**
+
 - Tracks commission per order and per seller
 - Supports multiple payout statuses (PENDING, SCHEDULED, PROCESSING, PAID, etc.)
 - Category-based deduction tracking
@@ -39,25 +42,29 @@ Core data structures for the system:
 ---
 
 ### 2. **Commission Management** (`src/modules/marketplace/commission-management.ts`)
+
 Business logic for commission calculations:
 
 **Commission Calculation Engine:**
+
 ```typescript
-getCommissionRateForCategory()         // Get rate for product category
-calculateOrderCommission()              // Calculate commission for single order
-calculateSellerCommissions()            // Batch commission calculation
-calculateCommissionDeductionSummary()  // Aggregate commission data
+getCommissionRateForCategory(); // Get rate for product category
+calculateOrderCommission(); // Calculate commission for single order
+calculateSellerCommissions(); // Batch commission calculation
+calculateCommissionDeductionSummary(); // Aggregate commission data
 ```
 
 **Payout Management:**
+
 ```typescript
-createPayoutFromCommissions()          // Generate payout from commissions
-generateSellerEarningsSummary()        // Create seller earnings overview
-generateCommissionReport()              // Admin commission report
-shouldGeneratePayout()                  // Payout eligibility check
+createPayoutFromCommissions(); // Generate payout from commissions
+generateSellerEarningsSummary(); // Create seller earnings overview
+generateCommissionReport(); // Admin commission report
+shouldGeneratePayout(); // Payout eligibility check
 ```
 
 **Category Commission Rates (Configurable):**
+
 - Engine: 10%
 - Suspension: 12%
 - Brakes: 11%
@@ -73,6 +80,7 @@ shouldGeneratePayout()                  // Payout eligibility check
 - Tyres & Wheels: 8%
 
 **Default Payout Config:**
+
 - Period: Monthly
 - Minimum Payout: 1000 PKR
 - Holding Period: 3 days after delivery
@@ -81,24 +89,28 @@ shouldGeneratePayout()                  // Payout eligibility check
 ---
 
 ### 3. **Admin Payment Verification** (`src/modules/marketplace/admin-payment-verification.ts`)
+
 Admin-only payment verification logic:
 
 **Core Functions:**
+
 ```typescript
-canVerifyPayments()                 // Authorization check
-verifyCODPayment()                  // Main verification handler
-approvePayment()                    // Approve COD payment and trigger commissions
-rejectPayment()                     // Reject COD payment
-generatePaymentVerificationReport() // Create verification status report
-batchVerifyCODPayments()           // Batch process multiple paymentsholdPaymentForReview()             // Flag payment for investigation
-releasePaymentFromHold()           // Release flagged payment with decision
+canVerifyPayments(); // Authorization check
+verifyCODPayment(); // Main verification handler
+approvePayment(); // Approve COD payment and trigger commissions
+rejectPayment(); // Reject COD payment
+generatePaymentVerificationReport(); // Create verification status report
+batchVerifyCODPayments(); // Batch process multiple paymentsholdPaymentForReview()             // Flag payment for investigation
+releasePaymentFromHold(); // Release flagged payment with decision
 ```
 
 **Access Control:**
+
 - Only ADMIN and SUPER_ADMIN roles
 - Role-based authorization checks
 
 **Approval Workflow:**
+
 1. Admin reviews pending COD payment
 2. Admin can approve or reject with notes
 3. On approval:
@@ -114,9 +126,11 @@ releasePaymentFromHold()           // Release flagged payment with decision
 ---
 
 ### 4. **COD Payment Verification Panel** (`src/components/admin/CODPaymentVerificationPanel.tsx`)
+
 Professional admin UI component:
 
 **Features:**
+
 - Real-time payment queue with filtering
 - Search by order #, customer, phone
 - Status badges (PENDING, UNDER_REVIEW, PAID, REJECTED)
@@ -126,6 +140,7 @@ Professional admin UI component:
 - Commission breakdown on approval
 
 **Layout:**
+
 - Left: Payment queue table (searchable, filterable)
 - Right: Verification details and action buttons
 - Top: Summary statistics
@@ -133,9 +148,11 @@ Professional admin UI component:
 ---
 
 ### 5. **Seller Commission Dashboard** (`src/components/marketplace/SellerCommissionDashboard.tsx`)
+
 Real-time earnings tracking for sellers:
 
 **Seller Views:**
+
 1. **Overview Stats:**
    - Total Earnings (all-time)
    - Total Commissions (deducted)
@@ -160,6 +177,7 @@ Real-time earnings tracking for sellers:
    - Net monthly income
 
 **Real-time Updates:**
+
 - Tracks commission rates by category
 - Shows pending vs. scheduled vs. paid
 - Calculates net earnings automatically
@@ -167,9 +185,11 @@ Real-time earnings tracking for sellers:
 ---
 
 ### 6. **Admin Payments Dashboard** (`src/routes/admin.payments.tsx`)
+
 Administrative payment and commission management page:
 
 **Admin Views:**
+
 1. **Overview Metrics:**
    - Total Commissions Earned
    - Payouts Paid
@@ -222,11 +242,13 @@ Admin Reviews Payment (Verification Panel)
 ## 💰 Commission Deduction Logic
 
 **When it triggers:**
+
 1. **COD Orders**: After admin approval
 2. **Online Payment Orders**: On payment confirmation
 3. **Manual**: Admin can manually calculate
 
 **What it does:**
+
 1. Identifies all items in order by seller
 2. Groups by product category
 3. Applies category commission rate
@@ -235,6 +257,7 @@ Admin Reviews Payment (Verification Panel)
 6. Creates audit log entry
 
 **Example:**
+
 ```
 Order Total: 10,000 PKR
 Items:
@@ -283,16 +306,17 @@ Seller Net Earning: 8,740 PKR
 
 **Role-Based Access:**
 
-| Feature | CUSTOMER | SELLER | ADMIN | SUPER_ADMIN |
-|---------|----------|--------|-------|-------------|
-| View own commissions | ✗ | ✓ | ✗ | ✗ |
-| View all commissions | ✗ | ✗ | ✓ | ✓ |
-| Verify COD payments | ✗ | ✗ | ✓ | ✓ |
-| Manage payouts | ✗ | ✗ | ✓ | ✓ |
-| Manual commission adjustment | ✗ | ✗ | ✗ | ✓ |
-| View commission reports | ✗ | ✗ | ✓ | ✓ |
+| Feature                      | CUSTOMER | SELLER | ADMIN | SUPER_ADMIN |
+| ---------------------------- | -------- | ------ | ----- | ----------- |
+| View own commissions         | ✗        | ✓      | ✗     | ✗           |
+| View all commissions         | ✗        | ✗      | ✓     | ✓           |
+| Verify COD payments          | ✗        | ✗      | ✓     | ✓           |
+| Manage payouts               | ✗        | ✗      | ✓     | ✓           |
+| Manual commission adjustment | ✗        | ✗      | ✗     | ✓           |
+| View commission reports      | ✗        | ✗      | ✓     | ✓           |
 
 **Validation:**
+
 - Payment method verification
 - Amount validation
 - Authorization checks before operations
@@ -303,6 +327,7 @@ Seller Net Earning: 8,740 PKR
 ## 📊 Reports Available
 
 ### For Sellers:
+
 - Earnings Summary (all-time and monthly)
 - Commission Breakdown (by category)
 - Payout History (with dates and amounts)
@@ -310,6 +335,7 @@ Seller Net Earning: 8,740 PKR
 - Average Commission Rate
 
 ### For Admins:
+
 - Total Commissions Earned
 - Total Payouts Paid
 - Pending Payouts
@@ -353,6 +379,7 @@ Seller Net Earning: 8,740 PKR
 ## 📱 UI Workflow
 
 ### Admin Traffic Flow:
+
 ```
 Admin Dashboard
     ↓
@@ -369,6 +396,7 @@ Payments Section
 ```
 
 ### Seller Traffic Flow:
+
 ```
 Seller Dashboard
     ↓
@@ -389,17 +417,20 @@ Earnings Section
 ## 🚀 Implementation Checklist
 
 ### Phase 1: Core Types & Logic ✅
+
 - [x] Commission types
 - [x] Commission calculation engine
 - [x] Payout management logic
 - [x] Admin verification system
 
 ### Phase 2: UI Components ✅
+
 - [x] Admin payment verification panel
 - [x] Seller commission dashboard
 - [x] Admin payments dashboard
 
 ### Phase 3: Integration (TODO)
+
 - [ ] Connect to Zustand store
 - [ ] Add API endpoints for persistence
 - [ ] Integrate with notification system
@@ -408,6 +439,7 @@ Earnings Section
 - [ ] Add payment verification admin page
 
 ### Phase 4: Testing & Polish (TODO)
+
 - [ ] Unit tests for commission calculations
 - [ ] Integration tests for workflows
 - [ ] E2E tests for full flow
@@ -419,12 +451,15 @@ Earnings Section
 ## 🔧 Configuration
 
 ### To modify commission rates:
+
 Edit `CATEGORY_COMMISSION_RATES` in `commission-management.ts`
 
 ### To change payout schedule:
+
 Edit `getDefaultPayoutCycleConfig()` function
 
 ### To add new seller tier rates:
+
 Extend the commission calculation logic with seller tier lookup
 
 ---

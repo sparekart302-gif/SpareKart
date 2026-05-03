@@ -1,16 +1,44 @@
 import "server-only";
 
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { getRuntimeRoot } from "@/server/config/env";
+
 const writeLocks = new Map<string, Promise<void>>();
 
 async function ensureDir(filePath: string) {
   await mkdir(dirname(filePath), { recursive: true });
 }
 
+export async function ensureRuntimeDirectory() {
+  const runtimeRoot = getRuntimeRoot();
+  await mkdir(runtimeRoot, { recursive: true });
+  return runtimeRoot;
+}
+
 export function getRuntimeFilePath(...parts: string[]) {
   return join(getRuntimeRoot(), ...parts);
+}
+
+export async function probeRuntimeDirectory() {
+  const runtimeRoot = await ensureRuntimeDirectory();
+  const probeFile = join(runtimeRoot, ".write-probe");
+
+  try {
+    await writeFile(probeFile, new Date().toISOString(), "utf8");
+    await rm(probeFile, { force: true });
+
+    return {
+      ok: true,
+      path: runtimeRoot,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      path: runtimeRoot,
+      error: error instanceof Error ? error.message : "Unknown runtime storage error.",
+    };
+  }
 }
 
 export async function readJsonFile<T>(filePath: string, fallback: T): Promise<T> {

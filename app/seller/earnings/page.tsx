@@ -7,8 +7,7 @@ export const metadata: Metadata = buildPageMetadata({
   title: "Earnings & Payouts — SpareKart Seller",
   description:
     "Track seller earnings, commissions, settlement status, payout account verification, and payout history.",
-  openGraphDescription:
-    "SpareKart seller earnings and payout dashboard.",
+  openGraphDescription: "SpareKart seller earnings and payout dashboard.",
 });
 
 export default function Page() {

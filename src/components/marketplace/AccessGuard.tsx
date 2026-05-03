@@ -28,7 +28,10 @@ export function AccessGuard({
           </div>
           <h1 className="mt-4 text-2xl font-black">{title}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-          <Link href="/login" className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground">
+          <Link
+            href="/login"
+            className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground"
+          >
             Switch account
           </Link>
         </div>

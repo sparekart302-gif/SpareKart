@@ -57,7 +57,8 @@ export default function AdminAdminsPage() {
         role: selectedUser.role,
         status: selectedUser.status,
         adminTitle: selectedUser.adminTitle ?? "",
-        adminScopes: selectedUser.role === "SUPER_ADMIN" ? adminScopes : selectedUser.adminScopes ?? [],
+        adminScopes:
+          selectedUser.role === "SUPER_ADMIN" ? adminScopes : (selectedUser.adminScopes ?? []),
       });
       return;
     }
@@ -102,22 +103,28 @@ export default function AdminAdminsPage() {
                   type="button"
                   onClick={() => setSelectedUserId(user.id)}
                   className={`w-full rounded-[22px] p-4 text-left shadow-[var(--shadow-soft)] transition-colors ${
-                    selectedUserId === user.id ? "bg-accent-soft" : "bg-surface hover:bg-accent-soft/40"
+                    selectedUserId === user.id
+                      ? "bg-accent-soft"
+                      : "bg-surface hover:bg-accent-soft/40"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-sm font-bold text-foreground">{user.name}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">{user.adminTitle ?? user.role}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {user.adminTitle ?? user.role}
+                      </div>
                     </div>
                     <AdminPill tone={user.role === "SUPER_ADMIN" ? "info" : "success"}>
                       {user.role.replaceAll("_", " ")}
                     </AdminPill>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {(user.role === "SUPER_ADMIN" ? adminScopes : user.adminScopes ?? []).slice(0, 4).map((scope) => (
-                      <AdminPill key={`${user.id}-${scope}`}>{getScopeLabel(scope)}</AdminPill>
-                    ))}
+                    {(user.role === "SUPER_ADMIN" ? adminScopes : (user.adminScopes ?? []))
+                      .slice(0, 4)
+                      .map((scope) => (
+                        <AdminPill key={`${user.id}-${scope}`}>{getScopeLabel(scope)}</AdminPill>
+                      ))}
                   </div>
                 </button>
               ))}
@@ -129,7 +136,9 @@ export default function AdminAdminsPage() {
               <AdminField label="Full name">
                 <input
                   value={draft.name}
-                  onChange={(event) => setDraft((previous) => ({ ...previous, name: event.target.value }))}
+                  onChange={(event) =>
+                    setDraft((previous) => ({ ...previous, name: event.target.value }))
+                  }
                   className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                 />
               </AdminField>
@@ -137,14 +146,18 @@ export default function AdminAdminsPage() {
                 <AdminField label="Email">
                   <input
                     value={draft.email}
-                    onChange={(event) => setDraft((previous) => ({ ...previous, email: event.target.value }))}
+                    onChange={(event) =>
+                      setDraft((previous) => ({ ...previous, email: event.target.value }))
+                    }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                   />
                 </AdminField>
                 <AdminField label="Phone">
                   <input
                     value={draft.phone}
-                    onChange={(event) => setDraft((previous) => ({ ...previous, phone: event.target.value }))}
+                    onChange={(event) =>
+                      setDraft((previous) => ({ ...previous, phone: event.target.value }))
+                    }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                   />
                 </AdminField>
@@ -153,7 +166,12 @@ export default function AdminAdminsPage() {
                 <AdminField label="Role">
                   <select
                     value={draft.role}
-                    onChange={(event) => setDraft((previous) => ({ ...previous, role: event.target.value as "ADMIN" | "SUPER_ADMIN" }))}
+                    onChange={(event) =>
+                      setDraft((previous) => ({
+                        ...previous,
+                        role: event.target.value as "ADMIN" | "SUPER_ADMIN",
+                      }))
+                    }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                   >
                     <option value="ADMIN">Admin</option>
@@ -163,7 +181,12 @@ export default function AdminAdminsPage() {
                 <AdminField label="Status">
                   <select
                     value={draft.status}
-                    onChange={(event) => setDraft((previous) => ({ ...previous, status: event.target.value as "ACTIVE" | "SUSPENDED" | "INVITED" }))}
+                    onChange={(event) =>
+                      setDraft((previous) => ({
+                        ...previous,
+                        status: event.target.value as "ACTIVE" | "SUSPENDED" | "INVITED",
+                      }))
+                    }
                     className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                   >
                     <option value="ACTIVE">ACTIVE</option>
@@ -175,7 +198,9 @@ export default function AdminAdminsPage() {
               <AdminField label="Admin title">
                 <input
                   value={draft.adminTitle ?? ""}
-                  onChange={(event) => setDraft((previous) => ({ ...previous, adminTitle: event.target.value }))}
+                  onChange={(event) =>
+                    setDraft((previous) => ({ ...previous, adminTitle: event.target.value }))
+                  }
                   className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
                 />
               </AdminField>
@@ -241,7 +266,9 @@ export default function AdminAdminsPage() {
                         toast.success("Admin removed.");
                         setSelectedUserId("");
                       } catch (error) {
-                        toast.error(error instanceof Error ? error.message : "Unable to remove admin.");
+                        toast.error(
+                          error instanceof Error ? error.message : "Unable to remove admin.",
+                        );
                       }
                     }}
                     className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-destructive/10 px-5 text-sm font-semibold text-destructive"

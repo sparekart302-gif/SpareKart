@@ -1,13 +1,19 @@
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { jsonMongoError, parsePositiveInt } from "@/server/mongodb/http";
-import { createUser, listUsers } from "@/server/mongodb/services/users";
+import { jsonSuccess } from "@/server/http/responses";
+import { requireAdminSessionUser } from "@/server/auth/service";
+import {
+  createMarketplaceUserAdmin,
+  listMarketplaceUsersAdmin,
+} from "@/server/marketplace/admin-api";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
+    await requireAdminSessionUser();
     const { searchParams } = request.nextUrl;
-    const result = await listUsers({
+    const result = await listMarketplaceUsersAdmin({
       page: parsePositiveInt(searchParams.get("page"), 1),
       limit: parsePositiveInt(searchParams.get("limit"), 20),
       search: searchParams.get("search") ?? undefined,
@@ -15,7 +21,10 @@ export async function GET(request: NextRequest) {
       status: searchParams.get("status") ?? undefined,
     });
 
-    return NextResponse.json({ ok: true, ...result });
+    return jsonSuccess(result, {
+      message: "Users fetched successfully.",
+      extra: result,
+    });
   } catch (error) {
     return jsonMongoError(error, "Unable to fetch users.");
   }
@@ -23,9 +32,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdminSessionUser();
     const body = await request.json();
-    const user = await createUser(body);
-    return NextResponse.json({ ok: true, item: user }, { status: 201 });
+    const user = await createMarketplaceUserAdmin(body);
+    return jsonSuccess(
+      { item: user },
+      {
+        status: 201,
+        message: "User created successfully.",
+        extra: {
+          item: user,
+        },
+      },
+    );
   } catch (error) {
     return jsonMongoError(error, "Unable to create user.");
   }

@@ -13,17 +13,12 @@ import {
 import { toast } from "sonner";
 import { Link } from "@/components/navigation/Link";
 import { AccessGuard } from "@/components/marketplace/AccessGuard";
-import {
-  SellerFulfillmentGrid,
-} from "@/components/marketplace/OrderProgressUI";
-import {
-  OrderStatusBadge,
-  ProofStatusBadge,
-} from "@/components/marketplace/StatusBadge";
+import { SellerFulfillmentGrid } from "@/components/marketplace/OrderProgressUI";
+import { OrderStatusBadge, ProofStatusBadge } from "@/components/marketplace/StatusBadge";
 import { PageLayout, Breadcrumbs } from "@/components/marketplace/PageLayout";
 import { PaymentProofForm } from "@/components/payments/PaymentProofForm";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
-import { formatPKR, getSeller } from "@/data/marketplace";
+import { formatPKR } from "@/data/marketplace";
 import { canUploadProof } from "@/modules/marketplace/permissions";
 import {
   getNotificationsForUser,
@@ -32,11 +27,7 @@ import {
   getProofAttemptsForOrder,
 } from "@/modules/marketplace/selectors";
 import { useMarketplace } from "@/modules/marketplace/store";
-import type {
-  MarketplaceOrder,
-  PaymentProof,
-  PaymentRecord,
-} from "@/modules/marketplace/types";
+import type { MarketplaceOrder, PaymentProof, PaymentRecord } from "@/modules/marketplace/types";
 
 type OrderStateTone = "danger" | "info" | "success" | "warning";
 
@@ -64,7 +55,13 @@ export default function AccountOrdersPage() {
         description="Switch to a customer account to upload payment proof and track your own orders."
       >
         <div className="container mx-auto px-4">
-          <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "My Account", to: "/account" }, { label: "Orders" }]} />
+          <Breadcrumbs
+            items={[
+              { label: "Home", to: "/" },
+              { label: "My Account", to: "/account" },
+              { label: "Orders" },
+            ]}
+          />
         </div>
 
         <section className="container mx-auto px-4 py-6 sm:py-8">
@@ -86,15 +83,21 @@ export default function AccountOrdersPage() {
           <div className="flex flex-wrap gap-2 mb-4">
             <div className="flex-1 min-w-[110px] rounded-lg bg-background px-3 py-2 border border-border/40">
               <div className="text-lg font-black text-foreground">{orders.length}</div>
-              <div className="mt-0.5 text-[10px] font-semibold uppercase text-muted-foreground">Orders</div>
+              <div className="mt-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                Orders
+              </div>
             </div>
             <div className="flex-1 min-w-[110px] rounded-lg bg-background px-3 py-2 border border-border/40">
               <div className="text-lg font-black text-foreground">{awaitingActionCount}</div>
-              <div className="mt-0.5 text-[10px] font-semibold uppercase text-muted-foreground">Need action</div>
+              <div className="mt-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                Need action
+              </div>
             </div>
             <div className="flex-1 min-w-[110px] rounded-lg bg-background px-3 py-2 border border-border/40">
               <div className="text-lg font-black text-foreground">{activeOrdersCount}</div>
-              <div className="mt-0.5 text-[10px] font-semibold uppercase text-muted-foreground">Active</div>
+              <div className="mt-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                Active
+              </div>
             </div>
           </div>
 
@@ -128,7 +131,9 @@ export default function AccountOrdersPage() {
                 <ReceiptText className="h-5 w-5" />
               </div>
               <h2 className="text-lg font-bold">No orders yet</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Your orders will appear here once placed</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your orders will appear here once placed
+              </p>
               <Link
                 href="/shop"
                 className="mt-3 inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-xs font-semibold text-primary-foreground"
@@ -138,8 +143,8 @@ export default function AccountOrdersPage() {
             </div>
           ) : (
             <div className="space-y-0 border border-border/40 rounded-lg overflow-hidden bg-card">
-            {orders.map((order) => {
-              const payment = getPaymentById(state, order.paymentId)!;
+              {orders.map((order) => {
+                const payment = getPaymentById(state, order.paymentId)!;
                 const proofs = getProofAttemptsForOrder(state, order.id);
                 const latestProof = proofs[0];
                 const canSubmit = currentUser ? canUploadProof(currentUser, order, payment) : false;
@@ -147,7 +152,9 @@ export default function AccountOrdersPage() {
                 // Remove timeline from order tracking - use only current status
                 const totalQuantity = getItemCount(order);
                 const primaryItem = order.items[0];
-                const primarySeller = getSeller(primaryItem.sellerSlug);
+                const primarySeller = state.sellersDirectory.find(
+                  (seller) => seller.slug === primaryItem.sellerSlug,
+                );
                 const sellerCount = new Set(order.items.map((item) => item.sellerSlug)).size;
                 const remainingItemsCount = order.items.length - 1;
 
@@ -160,8 +167,12 @@ export default function AccountOrdersPage() {
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 hover:bg-background/50 transition-colors [&::-webkit-details-marker]:hidden">
                       <div className="flex-1 grid grid-cols-4 gap-4 items-center text-sm">
                         <div className="min-w-0">
-                          <div className="text-[10px] font-bold text-muted-foreground">{order.orderNumber}</div>
-                          <div className="mt-0.5 text-xs text-foreground">{formatOrderDate(order.createdAt)}</div>
+                          <div className="text-[10px] font-bold text-muted-foreground">
+                            {order.orderNumber}
+                          </div>
+                          <div className="mt-0.5 text-xs text-foreground">
+                            {formatOrderDate(order.createdAt)}
+                          </div>
                         </div>
                         <div className="hidden sm:block">
                           <OrderStatusBadge status={order.status} />
@@ -170,7 +181,9 @@ export default function AccountOrdersPage() {
                           {totalQuantity} items
                         </div>
                         <div className="text-right">
-                          <div className="font-black tabular-nums text-sm">{formatPKR(order.totals.total)}</div>
+                          <div className="font-black tabular-nums text-sm">
+                            {formatPKR(order.totals.total)}
+                          </div>
                         </div>
                       </div>
                       <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180 shrink-0" />
@@ -192,10 +205,13 @@ export default function AccountOrdersPage() {
                             {primaryItem.title}
                           </div>
                           <div className="text-[10px] text-muted-foreground mt-0.5">
-                            Qty {primaryItem.quantity} · {primarySeller.name}
+                            Qty {primaryItem.quantity} ·{" "}
+                            {primarySeller?.name ?? primaryItem.sellerSlug}
                           </div>
                           {remainingItemsCount > 0 && (
-                            <div className="text-[10px] text-muted-foreground mt-0.5">+{remainingItemsCount} more from this order</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                              +{remainingItemsCount} more from this order
+                            </div>
                           )}
                         </div>
                       </div>
@@ -204,28 +220,39 @@ export default function AccountOrdersPage() {
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <div className="text-muted-foreground font-semibold">Status</div>
-                          <div className="mt-1"><OrderStatusBadge status={order.status} /></div>
+                          <div className="mt-1">
+                            <OrderStatusBadge status={order.status} />
+                          </div>
                         </div>
                         <div>
                           <div className="text-muted-foreground font-semibold">Payment</div>
-                          <div className="mt-1"><MetaPill label={getPaymentLabel(payment)} /></div>
+                          <div className="mt-1">
+                            <MetaPill label={getPaymentLabel(payment)} />
+                          </div>
                         </div>
                       </div>
 
                       {/* Current state message */}
-                      <div className={`flex items-start gap-2.5 rounded-lg p-3 ${
-                        stateSummary.tone === "danger" ? "bg-destructive/5" :
-                        stateSummary.tone === "warning" ? "bg-warning/5" :
-                        stateSummary.tone === "success" ? "bg-success/5" : 
-                        "bg-accent/5"
-                      }`}>
+                      <div
+                        className={`flex items-start gap-2.5 rounded-lg p-3 ${
+                          stateSummary.tone === "danger"
+                            ? "bg-destructive/5"
+                            : stateSummary.tone === "warning"
+                              ? "bg-warning/5"
+                              : stateSummary.tone === "success"
+                                ? "bg-success/5"
+                                : "bg-accent/5"
+                        }`}
+                      >
                         <stateSummary.Icon className="h-4 w-4 shrink-0 mt-0.5" />
                         <div className="min-w-0">
                           <div className="text-xs font-bold">{stateSummary.title}</div>
-                          <div className="text-[10px] text-muted-foreground mt-0.5">{stateSummary.detail}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                            {stateSummary.detail}
+                          </div>
                         </div>
                       </div>
-                      
+
                       <details className="group">
                         <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
                           <div>
@@ -256,16 +283,18 @@ export default function AccountOrdersPage() {
                                   : "Submit payment proof"
                               }
                               onSubmit={(payload) => {
-                                try {
-                                  submitProof(order.id, payload);
-                                  toast.success("Payment proof submitted successfully.");
-                                } catch (error) {
-                                  toast.error(
-                                    error instanceof Error
-                                      ? error.message
-                                      : "Unable to submit payment proof.",
-                                  );
-                                }
+                                void (async () => {
+                                  try {
+                                    await submitProof(order.id, payload);
+                                    toast.success("Payment proof submitted successfully.");
+                                  } catch (error) {
+                                    toast.error(
+                                      error instanceof Error
+                                        ? error.message
+                                        : "Unable to submit payment proof.",
+                                    );
+                                  }
+                                })();
                               }}
                             />
                           )}
@@ -282,9 +311,14 @@ export default function AccountOrdersPage() {
                             </div>
                             <div className="space-y-3">
                               {order.items.map((item) => {
-                                const seller = getSeller(item.sellerSlug);
+                                const seller = state.sellersDirectory.find(
+                                  (candidate) => candidate.slug === item.sellerSlug,
+                                );
                                 return (
-                                  <div key={`${order.id}-${item.productId}`} className="flex gap-3 rounded-2xl bg-card p-3 shadow-[var(--shadow-soft)]">
+                                  <div
+                                    key={`${order.id}-${item.productId}`}
+                                    className="flex gap-3 rounded-2xl bg-card p-3 shadow-[var(--shadow-soft)]"
+                                  >
                                     <OptimizedImage
                                       src={item.image}
                                       alt={item.title}
@@ -297,7 +331,7 @@ export default function AccountOrdersPage() {
                                         {item.title}
                                       </div>
                                       <div className="mt-1 text-xs text-muted-foreground">
-                                        Qty {item.quantity} · {seller.name}
+                                        Qty {item.quantity} · {seller?.name ?? item.sellerSlug}
                                       </div>
                                     </div>
                                     <div className="text-sm font-bold tabular-nums">
@@ -394,7 +428,9 @@ export default function AccountOrdersPage() {
 function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[18px] border border-border/60 bg-card px-3 py-3 text-center shadow-[var(--shadow-soft)]">
-      <div className="text-[1.1rem] font-black tabular-nums text-foreground sm:text-[1.25rem]">{value}</div>
+      <div className="text-[1.1rem] font-black tabular-nums text-foreground sm:text-[1.25rem]">
+        {value}
+      </div>
       <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </div>
@@ -439,9 +475,7 @@ function ProofAttemptCard({ proof }: { proof: PaymentProof }) {
         </div>
       </div>
 
-      {proof.adminNote && (
-        <p className="mt-3 text-sm text-muted-foreground">{proof.adminNote}</p>
-      )}
+      {proof.adminNote && <p className="mt-3 text-sm text-muted-foreground">{proof.adminNote}</p>}
     </div>
   );
 }
@@ -511,7 +545,8 @@ function getOrderStateSummary(order: MarketplaceOrder, payment: PaymentRecord) {
   if (order.status === "DELIVERED") {
     return {
       title: "Order delivered",
-      detail: "Your order has been marked delivered. Review the timeline for the latest seller update.",
+      detail:
+        "Your order has been marked delivered. Review the timeline for the latest seller update.",
       tone: "success" as OrderStateTone,
       Icon: PackageCheck,
     };
@@ -538,7 +573,8 @@ function getOrderStateSummary(order: MarketplaceOrder, payment: PaymentRecord) {
   if (payment.method === "COD" && payment.status === "PENDING") {
     return {
       title: "Cash on delivery order",
-      detail: "Your order is moving through fulfilment. SpareKart will verify the collected cash after delivery before seller payout is released.",
+      detail:
+        "Your order is moving through fulfilment. SpareKart will verify the collected cash after delivery before seller payout is released.",
       tone: "info" as OrderStateTone,
       Icon: CreditCard,
     };
@@ -556,7 +592,8 @@ function getOrderStateSummary(order: MarketplaceOrder, payment: PaymentRecord) {
   if (payment.method === "COD" && payment.status === "REJECTED") {
     return {
       title: "COD settlement needs review",
-      detail: "The delivery cash receipt needs another admin check. Your order history remains available while SpareKart resolves it.",
+      detail:
+        "The delivery cash receipt needs another admin check. Your order history remains available while SpareKart resolves it.",
       tone: "danger" as OrderStateTone,
       Icon: CircleAlert,
     };

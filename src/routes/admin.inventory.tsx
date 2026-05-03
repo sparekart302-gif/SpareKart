@@ -3,7 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ShieldCheck, Store } from "lucide-react";
 import { toast } from "sonner";
-import { AdminCompactStat, AdminField, AdminKeyValue, AdminScopeGate } from "@/components/admin/AdminCommon";
+import {
+  AdminCompactStat,
+  AdminField,
+  AdminKeyValue,
+  AdminScopeGate,
+} from "@/components/admin/AdminCommon";
 import { AdminPageHeader, AdminPanel, AdminPill } from "@/components/admin/AdminUI";
 import {
   OperationsDetailPanel,
@@ -19,7 +24,10 @@ import {
   OperationsToolbar,
   OperationsWorkspace,
 } from "@/components/admin/OperationsUI";
-import { getManagedInventoryRows, getSellerRecordBySlug } from "@/modules/marketplace/admin-selectors";
+import {
+  getManagedInventoryRows,
+  getSellerRecordBySlug,
+} from "@/modules/marketplace/admin-selectors";
 import { useMarketplace } from "@/modules/marketplace/store";
 import { formatPKR } from "@/data/marketplace";
 
@@ -35,7 +43,8 @@ export default function AdminInventoryPage() {
 
   const rows = useMemo(() => {
     return getManagedInventoryRows(state).filter(({ product }) => {
-      const searchable = `${product.title} ${product.sku} ${product.brand} ${product.sellerSlug}`.toLowerCase();
+      const searchable =
+        `${product.title} ${product.sku} ${product.brand} ${product.sellerSlug}`.toLowerCase();
       return !query.trim() || searchable.includes(query.trim().toLowerCase());
     });
   }, [query, state]);
@@ -52,13 +61,15 @@ export default function AdminInventoryPage() {
   }, [rows, selectedProductId]);
 
   const selectedRow = rows.find((row) => row.product.id === selectedProductId);
-  const selectedSeller = selectedRow ? getSellerRecordBySlug(state, selectedRow.product.sellerSlug) : undefined;
-  const lowStockCount = rows.filter((row) => row.inventory.available > 0 && row.inventory.available <= 5).length;
+  const selectedSeller = selectedRow
+    ? getSellerRecordBySlug(state, selectedRow.product.sellerSlug)
+    : undefined;
+  const lowStockCount = rows.filter(
+    (row) => row.inventory.available > 0 && row.inventory.available <= 5,
+  ).length;
   const outOfStockCount = rows.filter((row) => row.inventory.available === 0).length;
   const affectedSellers = new Set(
-    rows
-      .filter((row) => row.inventory.available <= 5)
-      .map((row) => row.product.sellerSlug),
+    rows.filter((row) => row.inventory.available <= 5).map((row) => row.product.sellerSlug),
   ).size;
   const totalPages = Math.max(Math.ceil(rows.length / INVENTORY_PER_PAGE), 1);
   const paginatedRows = rows.slice((page - 1) * INVENTORY_PER_PAGE, page * INVENTORY_PER_PAGE);
@@ -77,10 +88,28 @@ export default function AdminInventoryPage() {
         />
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <AdminCompactStat label="Tracked SKUs" value={String(rows.length)} helper="Seller-owned inventory records" />
-          <AdminCompactStat label="Low stock" value={String(lowStockCount)} helper="At or below 5 units" tone="warning" />
-          <AdminCompactStat label="Out of stock" value={String(outOfStockCount)} helper="Need replenishment" tone="danger" />
-          <AdminCompactStat label="Affected sellers" value={String(affectedSellers)} helper="Sellers with stock pressure" />
+          <AdminCompactStat
+            label="Tracked SKUs"
+            value={String(rows.length)}
+            helper="Seller-owned inventory records"
+          />
+          <AdminCompactStat
+            label="Low stock"
+            value={String(lowStockCount)}
+            helper="At or below 5 units"
+            tone="warning"
+          />
+          <AdminCompactStat
+            label="Out of stock"
+            value={String(outOfStockCount)}
+            helper="Need replenishment"
+            tone="danger"
+          />
+          <AdminCompactStat
+            label="Affected sellers"
+            value={String(affectedSellers)}
+            helper="Sellers with stock pressure"
+          />
         </section>
 
         <OperationsWorkspace>
@@ -122,8 +151,12 @@ export default function AdminInventoryPage() {
                         <div className="mt-0.5 text-xs text-muted-foreground">{product.sku}</div>
                       </OperationsTd>
                       <OperationsTd>
-                        <div className="text-sm font-semibold text-foreground">{seller?.name ?? product.sellerSlug}</div>
-                        <div className="mt-0.5 text-xs text-muted-foreground">{seller?.city ?? "Seller record"}</div>
+                        <div className="text-sm font-semibold text-foreground">
+                          {seller?.name ?? product.sellerSlug}
+                        </div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">
+                          {seller?.city ?? "Seller record"}
+                        </div>
                       </OperationsTd>
                       <OperationsTd>
                         <AdminPill
@@ -138,7 +171,9 @@ export default function AdminInventoryPage() {
                           {inventory.available}
                         </AdminPill>
                       </OperationsTd>
-                      <OperationsTd className="text-right font-black tabular-nums">{formatPKR(product.price * inventory.available)}</OperationsTd>
+                      <OperationsTd className="text-right font-black tabular-nums">
+                        {formatPKR(product.price * inventory.available)}
+                      </OperationsTd>
                     </OperationsRow>
                   );
                 })}
@@ -156,7 +191,9 @@ export default function AdminInventoryPage() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="line-clamp-2 text-sm font-black text-foreground">{product.title}</div>
+                        <div className="line-clamp-2 text-sm font-black text-foreground">
+                          {product.title}
+                        </div>
                         <div className="mt-1 truncate text-xs text-muted-foreground">
                           {seller?.name ?? product.sellerSlug} · {product.sku}
                         </div>
@@ -218,23 +255,46 @@ export default function AdminInventoryPage() {
             }
           >
             <div className="space-y-3">
-              <AdminPanel title="Selected inventory record" description="Inventory ownership stays with the seller. Admin edits should only correct verified integrity issues.">
+              <AdminPanel
+                title="Selected inventory record"
+                description="Inventory ownership stays with the seller. Admin edits should only correct verified integrity issues."
+              >
                 {!selectedRow ? (
-                  <div className="text-sm text-muted-foreground">Select a product to inspect stock health and audit history.</div>
+                  <div className="text-sm text-muted-foreground">
+                    Select a product to inspect stock health and audit history.
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     <div className="space-y-1">
-                      <AdminKeyValue label="Seller" value={selectedSeller?.name ?? selectedRow.product.sellerSlug} />
-                      <AdminKeyValue label="Seller status" value={selectedSeller?.status.replaceAll("_", " ") ?? "Unknown"} />
-                      <AdminKeyValue label="Current stock" value={String(selectedRow.inventory.available)} />
-                      <AdminKeyValue label="Unit price" value={formatPKR(selectedRow.product.price)} />
+                      <AdminKeyValue
+                        label="Seller"
+                        value={selectedSeller?.name ?? selectedRow.product.sellerSlug}
+                      />
+                      <AdminKeyValue
+                        label="Seller status"
+                        value={selectedSeller?.status.replaceAll("_", " ") ?? "Unknown"}
+                      />
+                      <AdminKeyValue
+                        label="Current stock"
+                        value={String(selectedRow.inventory.available)}
+                      />
+                      <AdminKeyValue
+                        label="Unit price"
+                        value={formatPKR(selectedRow.product.price)}
+                      />
                       <AdminKeyValue
                         label="Stock value"
-                        value={formatPKR(selectedRow.product.price * selectedRow.inventory.available)}
+                        value={formatPKR(
+                          selectedRow.product.price * selectedRow.inventory.available,
+                        )}
                       />
                       <AdminKeyValue
                         label="Last update"
-                        value={selectedRow.inventory.updatedAt ? new Date(selectedRow.inventory.updatedAt).toLocaleString() : "Seeded inventory"}
+                        value={
+                          selectedRow.inventory.updatedAt
+                            ? new Date(selectedRow.inventory.updatedAt).toLocaleString()
+                            : "Seeded inventory"
+                        }
                       />
                     </div>
                   </div>
@@ -246,11 +306,14 @@ export default function AdminInventoryPage() {
                 description="Use only when investigating a verified discrepancy. Every correction is logged for audit review."
               >
                 {!selectedRow ? (
-                  <div className="text-sm text-muted-foreground">Select a product before applying a stock correction.</div>
+                  <div className="text-sm text-muted-foreground">
+                    Select a product before applying a stock correction.
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     <div className="rounded-[14px] bg-warning/10 px-3 py-2 text-xs leading-5 text-warning-foreground">
-                      Sellers manage their own inventory. Admin corrections should be exceptional and tied to a documented marketplace integrity issue.
+                      Sellers manage their own inventory. Admin corrections should be exceptional
+                      and tied to a documented marketplace integrity issue.
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-[0.42fr_1fr]">
@@ -284,7 +347,11 @@ export default function AdminInventoryPage() {
                           setDelta(0);
                           setNote("");
                         } catch (error) {
-                          toast.error(error instanceof Error ? error.message : "Unable to save inventory correction.");
+                          toast.error(
+                            error instanceof Error
+                              ? error.message
+                              : "Unable to save inventory correction.",
+                          );
                         }
                       }}
                       disabled={delta === 0 || !note.trim()}
@@ -300,20 +367,31 @@ export default function AdminInventoryPage() {
               <AdminPanel title="Recent stock movements">
                 <div className="space-y-2">
                   {state.inventoryMovements
-                    .filter((movement) => !selectedProductId || movement.productId === selectedProductId)
+                    .filter(
+                      (movement) => !selectedProductId || movement.productId === selectedProductId,
+                    )
                     .slice()
                     .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
                     .slice(0, 6)
                     .map((movement) => {
-                      const product = state.managedProducts.find((item) => item.id === movement.productId);
+                      const product = state.managedProducts.find(
+                        (item) => item.id === movement.productId,
+                      );
                       return (
-                        <div key={movement.id} className="rounded-xl border border-border/60 bg-background px-3 py-2">
-                          <div className="text-sm font-bold text-foreground">{product?.title ?? movement.productId}</div>
+                        <div
+                          key={movement.id}
+                          className="rounded-xl border border-border/60 bg-background px-3 py-2"
+                        >
+                          <div className="text-sm font-bold text-foreground">
+                            {product?.title ?? movement.productId}
+                          </div>
                           <div className="mt-1 text-xs text-muted-foreground">
-                            {movement.reason.replaceAll("_", " ")} · {new Date(movement.createdAt).toLocaleString()}
+                            {movement.reason.replaceAll("_", " ")} ·{" "}
+                            {new Date(movement.createdAt).toLocaleString()}
                           </div>
                           <div className="mt-1 text-sm font-semibold text-foreground">
-                            {movement.beforeQty} → {movement.afterQty} ({movement.quantityDelta > 0 ? "+" : ""}
+                            {movement.beforeQty} → {movement.afterQty} (
+                            {movement.quantityDelta > 0 ? "+" : ""}
                             {movement.quantityDelta})
                           </div>
                         </div>
@@ -330,7 +408,10 @@ export default function AdminInventoryPage() {
                     .map((row) => {
                       const seller = getSellerRecordBySlug(state, row.product.sellerSlug);
                       return (
-                        <div key={row.product.id} className="rounded-xl border border-border/60 bg-background px-3 py-2">
+                        <div
+                          key={row.product.id}
+                          className="rounded-xl border border-border/60 bg-background px-3 py-2"
+                        >
                           <div className="flex items-start gap-3">
                             <div className="grid h-9 w-9 place-items-center rounded-xl bg-muted">
                               {row.inventory.available === 0 ? (
@@ -340,9 +421,12 @@ export default function AdminInventoryPage() {
                               )}
                             </div>
                             <div className="min-w-0">
-                              <div className="line-clamp-2 text-sm font-bold text-foreground">{row.product.title}</div>
+                              <div className="line-clamp-2 text-sm font-bold text-foreground">
+                                {row.product.title}
+                              </div>
                               <div className="mt-1 text-xs text-muted-foreground">
-                                {seller?.name ?? row.product.sellerSlug} · {row.inventory.available} left
+                                {seller?.name ?? row.product.sellerSlug} · {row.inventory.available}{" "}
+                                left
                               </div>
                             </div>
                           </div>

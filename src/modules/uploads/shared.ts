@@ -2,7 +2,8 @@ export type UploadAssetKind =
   | "product"
   | "store-logo"
   | "store-banner"
-  | "review";
+  | "review"
+  | "payment-proof";
 
 export const MARKETPLACE_UPLOAD_ROUTE_PREFIX = "/api/uploads/";
 
@@ -25,4 +26,3 @@ export function isHostedImageReference(value?: string | null) {
 export function isReviewImageReference(value?: string | null) {
   return isHostedImageReference(value) || isDataImageUrl(value);
 }
-

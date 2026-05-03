@@ -26,7 +26,10 @@ export default function LoginPage() {
     }
 
     if (verificationState === "failed" || verificationState === "missing") {
-      return { tone: "danger", text: "That verification link is invalid or expired. Request a fresh code below." };
+      return {
+        tone: "danger",
+        text: "That verification link is invalid or expired. Request a fresh code below.",
+      };
     }
 
     return null;
@@ -53,6 +56,27 @@ export default function LoginPage() {
       };
     }
 
+    if (oauthState === "invalid_state") {
+      return {
+        tone: "danger",
+        text: "Google sign-in could not be validated. Please try again from the login page.",
+      };
+    }
+
+    if (oauthState === "missing_code") {
+      return {
+        tone: "danger",
+        text: "Google did not return an authorization code. Please try again.",
+      };
+    }
+
+    if (oauthState === "not_verified") {
+      return {
+        tone: "danger",
+        text: "Google sign-in requires a verified Google email address.",
+      };
+    }
+
     return null;
   }, [oauthState]);
 
@@ -75,6 +99,8 @@ export default function LoginPage() {
       if (error instanceof ApiRequestError && error.code === "EMAIL_NOT_VERIFIED") {
         toast.error("Verify your email before signing in.");
         router.push(`/verify-email?email=${encodeURIComponent(email.trim())}`);
+      } else if (error instanceof ApiRequestError && error.code === "ACCOUNT_INACTIVE") {
+        toast.error("This account is not active for sign-in.");
       } else {
         toast.error(error instanceof Error ? error.message : "Unable to sign in.");
       }
@@ -87,19 +113,27 @@ export default function LoginPage() {
     <PageLayout>
       <section className="container mx-auto max-w-6xl px-4 py-10 sm:py-12 md:py-14">
         <div className="mx-auto max-w-2xl text-center">
-          <div className="text-xs font-bold uppercase tracking-[0.22em] text-accent">Account Access</div>
-          <h1 className="mt-2 text-[2rem] font-black tracking-tight sm:text-3xl">Sign in to SpareKart</h1>
+          <div className="text-xs font-bold uppercase tracking-[0.22em] text-accent">
+            Account Access
+          </div>
+          <h1 className="mt-2 text-[2rem] font-black tracking-tight sm:text-3xl">
+            Sign in to SpareKart
+          </h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            Sign in with your verified email and password or continue with Google for faster account access.
+            Sign in with your verified email and password or continue with Google for faster account
+            access.
           </p>
         </div>
 
         <div className="mt-8 grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
           <div className="rounded-[28px] bg-card p-6 shadow-[var(--shadow-premium)]">
-            <div className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Email login</div>
+            <div className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+              Email login
+            </div>
             <h2 className="mt-2 text-2xl font-black">Secure sign in</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Customer, seller, and admin accounts can sign in here with verified email/password authentication.
+              Customer, seller, and admin accounts can sign in here with verified email/password
+              authentication.
             </p>
 
             {verificationMessage ? (
@@ -171,7 +205,10 @@ export default function LoginPage() {
                 <Link href="/forgot-password" className="font-semibold text-accent hover:underline">
                   Forgot password?
                 </Link>
-                <Link href={`/verify-email${email ? `?email=${encodeURIComponent(email)}` : ""}`} className="font-semibold text-accent hover:underline">
+                <Link
+                  href={`/verify-email${email ? `?email=${encodeURIComponent(email)}` : ""}`}
+                  className="font-semibold text-accent hover:underline"
+                >
                   Verify email
                 </Link>
               </div>
@@ -188,19 +225,30 @@ export default function LoginPage() {
 
           <div className="space-y-6">
             <div className="rounded-[28px] bg-card p-6 shadow-[var(--shadow-premium)]">
-              <div className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Current session</div>
-              <h2 className="mt-2 text-2xl font-black">{currentUser?.name ?? "No active session"}</h2>
+              <div className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                Current session
+              </div>
+              <h2 className="mt-2 text-2xl font-black">
+                {currentUser?.name ?? "No active session"}
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {currentUser?.email ?? "Sign in to manage orders, reviews, payouts, and account settings across SpareKart."}
+                {currentUser?.email ??
+                  "Sign in to manage orders, reviews, payouts, and account settings across SpareKart."}
               </p>
               <div className="mt-4 inline-flex rounded-full bg-accent-soft px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-accent">
                 {currentSessionLabel}
               </div>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <Link href={getRoleHomePath(currentUser)} className="flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground">
+                <Link
+                  href={getRoleHomePath(currentUser)}
+                  className="flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground"
+                >
                   {currentUser ? "Open my portal" : "Open storefront"}
                 </Link>
-                <Link href="/" className="flex h-11 items-center justify-center rounded-xl bg-surface px-5 text-sm font-semibold shadow-[var(--shadow-soft)]">
+                <Link
+                  href="/"
+                  className="flex h-11 items-center justify-center rounded-xl bg-surface px-5 text-sm font-semibold shadow-[var(--shadow-soft)]"
+                >
                   Back to store
                 </Link>
               </div>
@@ -211,7 +259,8 @@ export default function LoginPage() {
                 <ShieldCheck className="h-3.5 w-3.5 text-accent" /> Account support
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                Need a new account or password help? Use the links below to register, verify your email, or recover access with OTP.
+                Need a new account or password help? Use the links below to register, verify your
+                email, or recover access with OTP.
               </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <Link

@@ -32,9 +32,7 @@ export function getSellerWhatsAppNumber(value?: string | null) {
     return undefined;
   }
 
-  const digits = raw.startsWith("http")
-    ? extractDigitsFromUrl(raw)
-    : raw.replace(/\D/g, "");
+  const digits = raw.startsWith("http") ? extractDigitsFromUrl(raw) : raw.replace(/\D/g, "");
   const normalized = normalizePakistaniMobileNumber(digits);
 
   if (normalized.length < 10) {
@@ -70,4 +68,3 @@ export function normalizeSellerWhatsAppInput(value?: string | null) {
   const phoneNumber = getSellerWhatsAppNumber(value);
   return phoneNumber ? `https://wa.me/${phoneNumber}` : undefined;
 }
-

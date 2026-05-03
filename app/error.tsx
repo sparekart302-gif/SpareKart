@@ -13,9 +13,7 @@ export default function GlobalError({
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
           <span className="text-2xl font-black">!</span>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Something went wrong
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Something went wrong</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           An unexpected error occurred. Please try again.
         </p>

@@ -26,8 +26,9 @@ import { PageLayout, Breadcrumbs } from "@/components/marketplace/PageLayout";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatPKR, getSeller, products, vehicles } from "@/data/marketplace";
+import { formatPKR, vehicles } from "@/data/marketplace";
 import {
+  getActiveMarketplaceProducts,
   getCartQuantity,
   getCustomerAccount,
   getCustomerDefaultAddress,
@@ -99,13 +100,15 @@ export default function AccountPage() {
   } = useMarketplace();
 
   const customerId = currentUser?.id;
+  const activeProducts = getActiveMarketplaceProducts(state);
   const account = getCustomerAccount(state, customerId);
   const orders = customerId ? getOrdersForCustomer(state, customerId) : [];
   const notifications = customerId ? getNotificationsForUser(state, customerId) : [];
   const wishlistProducts = getWishlistProducts(state, customerId);
   const stats = getCustomerStats(state, customerId);
   const defaultAddress = getCustomerDefaultAddress(state, customerId);
-  const primaryVehicle = account?.savedVehicles.find((vehicle) => vehicle.isPrimary) ?? account?.savedVehicles[0];
+  const primaryVehicle =
+    account?.savedVehicles.find((vehicle) => vehicle.isPrimary) ?? account?.savedVehicles[0];
   const recentOrders = orders.slice(0, 3);
 
   const [profileDraft, setProfileDraft] = useState<CustomerProfileUpdate>({
@@ -142,7 +145,9 @@ export default function AccountPage() {
     [vehicleDraft.brand],
   );
   const selectedModel = useMemo(
-    () => selectedBrand.models.find((model) => model.name === vehicleDraft.model) ?? selectedBrand.models[0],
+    () =>
+      selectedBrand.models.find((model) => model.name === vehicleDraft.model) ??
+      selectedBrand.models[0],
     [selectedBrand, vehicleDraft.model],
   );
 
@@ -174,10 +179,12 @@ export default function AccountPage() {
 
   const suggestedWishlistProducts = useMemo(
     () =>
-      products
-        .filter((product) => !wishlistProducts.some((wishlistItem) => wishlistItem.id === product.id))
+      activeProducts
+        .filter(
+          (product) => !wishlistProducts.some((wishlistItem) => wishlistItem.id === product.id),
+        )
         .slice(0, 4),
-    [wishlistProducts],
+    [activeProducts, wishlistProducts],
   );
   const memberSince = formatAccountDate(account?.joinedAt);
 
@@ -193,12 +200,15 @@ export default function AccountPage() {
         <section className="container mx-auto max-w-5xl px-4 py-10 sm:py-12 md:py-14">
           <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="rounded-[28px] bg-card p-6 shadow-[var(--shadow-premium)] sm:p-8">
-              <div className="text-xs font-bold uppercase tracking-[0.22em] text-accent">Account access</div>
+              <div className="text-xs font-bold uppercase tracking-[0.22em] text-accent">
+                Account access
+              </div>
               <h1 className="mt-2 text-[2rem] font-black tracking-tight sm:text-3xl">
                 Sign in to your SpareKart account
               </h1>
               <p className="mt-3 text-sm text-muted-foreground">
-                Access orders, saved vehicles, wishlist items, addresses, and account settings from one secure customer hub.
+                Access orders, saved vehicles, wishlist items, addresses, and account settings from
+                one secure customer hub.
               </p>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -276,7 +286,8 @@ export default function AccountPage() {
             </div>
             <h1 className="mt-4 text-2xl font-black">Customer account only</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              This page is reserved for customer profiles, saved vehicles, addresses, wishlist items, and order tracking.
+              This page is reserved for customer profiles, saved vehicles, addresses, wishlist
+              items, and order tracking.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link
@@ -319,12 +330,15 @@ export default function AccountPage() {
                     {currentUser.name.charAt(0)}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">My account</div>
+                    <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">
+                      My account
+                    </div>
                     <h1 className="mt-1 text-[1.55rem] font-black tracking-tight sm:text-[1.9rem]">
                       {currentUser.name}
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Manage profile, delivery details, vehicles, saved items, and order activity from one compact customer hub.
+                      Manage profile, delivery details, vehicles, saved items, and order activity
+                      from one compact customer hub.
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
                       <span className="rounded-full border border-border/60 bg-background px-3 py-1">
@@ -386,7 +400,11 @@ export default function AccountPage() {
             </div>
           </div>
 
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as (typeof overviewTabs)[number]["value"])} className="mt-6">
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as (typeof overviewTabs)[number]["value"])}
+            className="mt-6"
+          >
             <div className="pb-1">
               <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-[18px] bg-surface p-1 shadow-[var(--shadow-soft)] sm:grid-cols-6">
                 {overviewTabs.map((entry) => (
@@ -405,14 +423,15 @@ export default function AccountPage() {
             <TabsContent value="overview" className="mt-5">
               <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
                 <div className="space-y-5">
-                  <PanelCard
-                    title="Account snapshot"
-                  >
+                  <PanelCard title="Account snapshot">
                     <div className="grid gap-3 sm:grid-cols-2">
                       <QuickInfo label="Email" value={currentUser.email} />
                       <QuickInfo label="Phone" value={currentUser.phone} />
                       <QuickInfo label="City" value={account.city} />
-                      <QuickInfo label="Cart items" value={String(getCartQuantity(state, currentUser.id))} />
+                      <QuickInfo
+                        label="Cart items"
+                        value={String(getCartQuantity(state, currentUser.id))}
+                      />
                     </div>
                     <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                       <Link
@@ -433,7 +452,10 @@ export default function AccountPage() {
                   <PanelCard
                     title="Recent orders"
                     action={
-                      <Link href="/account/orders" className="text-sm font-semibold text-accent hover:underline">
+                      <Link
+                        href="/account/orders"
+                        className="text-sm font-semibold text-accent hover:underline"
+                      >
                         View all
                       </Link>
                     }
@@ -454,7 +476,10 @@ export default function AccountPage() {
                           }
 
                           return (
-                            <div key={order.id} className="rounded-[18px] border border-border/60 p-4">
+                            <div
+                              key={order.id}
+                              className="rounded-[18px] border border-border/60 p-4"
+                            >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                   <div className="text-sm font-bold">{order.orderNumber}</div>
@@ -471,7 +496,9 @@ export default function AccountPage() {
                                   {order.status.replaceAll("_", " ")}
                                 </span>
                                 <span className="rounded-full bg-card px-3 py-1 text-[11px] font-semibold text-muted-foreground shadow-[var(--shadow-soft)]">
-                                  {payment.method === "COD" ? "COD" : payment.method.replaceAll("_", " ")}
+                                  {payment.method === "COD"
+                                    ? "COD"
+                                    : payment.method.replaceAll("_", " ")}
                                 </span>
                               </div>
                             </div>
@@ -492,7 +519,10 @@ export default function AccountPage() {
                         body={`${defaultAddress.addressLine}, ${defaultAddress.city}, ${defaultAddress.province} ${defaultAddress.postalCode}`}
                       />
                     ) : (
-                      <EmptyInline title="No saved address" body="Add an address in the Addresses tab." />
+                      <EmptyInline
+                        title="No saved address"
+                        body="Add an address in the Addresses tab."
+                      />
                     )}
                   </PanelCard>
 
@@ -503,7 +533,10 @@ export default function AccountPage() {
                         body={`${primaryVehicle.brand} ${primaryVehicle.model} · ${primaryVehicle.year} · ${primaryVehicle.engine}`}
                       />
                     ) : (
-                      <EmptyInline title="No saved vehicles" body="Add one in Garage to keep fitment details ready." />
+                      <EmptyInline
+                        title="No saved vehicles"
+                        body="Add one in Garage to keep fitment details ready."
+                      />
                     )}
                   </PanelCard>
 
@@ -514,8 +547,10 @@ export default function AccountPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            markNotificationsRead();
-                            toast.success("Notifications marked as read.");
+                            void (async () => {
+                              await markNotificationsRead();
+                              toast.success("Notifications marked as read.");
+                            })();
                           }}
                           className="text-sm font-semibold text-accent hover:underline"
                         >
@@ -534,36 +569,41 @@ export default function AccountPage() {
             </TabsContent>
 
             <TabsContent value="profile" className="mt-5">
-              <PanelCard
-                title="Profile details"
-                description="Checkout and contact details."
-              >
+              <PanelCard title="Profile details" description="Checkout and contact details.">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Full name">
                     <input
                       value={profileDraft.name}
-                      onChange={(event) => setProfileDraft((previous) => ({ ...previous, name: event.target.value }))}
+                      onChange={(event) =>
+                        setProfileDraft((previous) => ({ ...previous, name: event.target.value }))
+                      }
                       className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
                     />
                   </Field>
                   <Field label="Phone">
                     <input
                       value={profileDraft.phone}
-                      onChange={(event) => setProfileDraft((previous) => ({ ...previous, phone: event.target.value }))}
+                      onChange={(event) =>
+                        setProfileDraft((previous) => ({ ...previous, phone: event.target.value }))
+                      }
                       className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
                     />
                   </Field>
                   <Field label="Email">
                     <input
                       value={profileDraft.email}
-                      onChange={(event) => setProfileDraft((previous) => ({ ...previous, email: event.target.value }))}
+                      onChange={(event) =>
+                        setProfileDraft((previous) => ({ ...previous, email: event.target.value }))
+                      }
                       className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
                     />
                   </Field>
                   <Field label="City">
                     <input
                       value={profileDraft.city}
-                      onChange={(event) => setProfileDraft((previous) => ({ ...previous, city: event.target.value }))}
+                      onChange={(event) =>
+                        setProfileDraft((previous) => ({ ...previous, city: event.target.value }))
+                      }
                       className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
                     />
                   </Field>
@@ -572,12 +612,16 @@ export default function AccountPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      try {
-                        updateProfile(profileDraft);
-                        toast.success("Profile updated successfully.");
-                      } catch (error) {
-                        toast.error(error instanceof Error ? error.message : "Unable to update profile.");
-                      }
+                      void (async () => {
+                        try {
+                          await updateProfile(profileDraft);
+                          toast.success("Profile updated successfully.");
+                        } catch (error) {
+                          toast.error(
+                            error instanceof Error ? error.message : "Unable to update profile.",
+                          );
+                        }
+                      })();
                     }}
                     className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground"
                   >
@@ -605,11 +649,17 @@ export default function AccountPage() {
               <div className="grid gap-4 lg:grid-cols-[1fr_0.95fr]">
                 <PanelCard title="Address book">
                   {account.addresses.length === 0 ? (
-                    <EmptyInline title="No saved addresses" body="Add your first delivery address from the form." />
+                    <EmptyInline
+                      title="No saved addresses"
+                      body="Add your first delivery address from the form."
+                    />
                   ) : (
                     <div className="space-y-3">
                       {account.addresses.map((address) => (
-                        <div key={address.id} className="rounded-[18px] border border-border/60 p-4">
+                        <div
+                          key={address.id}
+                          className="rounded-[18px] border border-border/60 p-4"
+                        >
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
@@ -621,9 +671,12 @@ export default function AccountPage() {
                                 )}
                               </div>
                               <div className="mt-2 text-sm text-foreground">{address.fullName}</div>
-                              <div className="mt-1 text-xs text-muted-foreground">{address.phone}</div>
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                {address.phone}
+                              </div>
                               <div className="mt-2 text-sm text-muted-foreground">
-                                {address.addressLine}, {address.city}, {address.province} {address.postalCode}
+                                {address.addressLine}, {address.city}, {address.province}{" "}
+                                {address.postalCode}
                               </div>
                             </div>
                             <div className="flex gap-2">
@@ -641,12 +694,18 @@ export default function AccountPage() {
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    try {
-                                      saveAddress({ ...address, isDefault: true });
-                                      toast.success("Default address updated.");
-                                    } catch (error) {
-                                      toast.error(error instanceof Error ? error.message : "Unable to update address.");
-                                    }
+                                    void (async () => {
+                                      try {
+                                        await saveAddress({ ...address, isDefault: true });
+                                        toast.success("Default address updated.");
+                                      } catch (error) {
+                                        toast.error(
+                                          error instanceof Error
+                                            ? error.message
+                                            : "Unable to update address.",
+                                        );
+                                      }
+                                    })();
                                   }}
                                   className="inline-flex h-9 items-center justify-center rounded-xl bg-card px-3 text-sm font-semibold shadow-[var(--shadow-soft)]"
                                 >
@@ -656,12 +715,16 @@ export default function AccountPage() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  deleteAddress(address.id);
-                                  toast.success("Address removed.");
-                                  if (editingAddressId === address.id) {
-                                    setEditingAddressId(null);
-                                    setAddressDraft(createBlankAddress(currentUser.name, currentUser.phone));
-                                  }
+                                  void (async () => {
+                                    await deleteAddress(address.id);
+                                    toast.success("Address removed.");
+                                    if (editingAddressId === address.id) {
+                                      setEditingAddressId(null);
+                                      setAddressDraft(
+                                        createBlankAddress(currentUser.name, currentUser.phone),
+                                      );
+                                    }
+                                  })();
                                 }}
                                 className="inline-flex h-9 items-center justify-center rounded-xl bg-destructive/10 px-3 text-sm font-semibold text-destructive"
                               >
@@ -675,14 +738,17 @@ export default function AccountPage() {
                   )}
                 </PanelCard>
 
-                <PanelCard
-                  title={editingAddressId ? "Edit address" : "Add new address"}
-                >
+                <PanelCard title={editingAddressId ? "Edit address" : "Add new address"}>
                   <div className="space-y-4">
                     <Field label="Label">
                       <input
                         value={addressDraft.label}
-                        onChange={(event) => setAddressDraft((previous) => ({ ...previous, label: event.target.value }))}
+                        onChange={(event) =>
+                          setAddressDraft((previous) => ({
+                            ...previous,
+                            label: event.target.value,
+                          }))
+                        }
                         className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
                       />
                     </Field>
@@ -690,14 +756,24 @@ export default function AccountPage() {
                       <Field label="Recipient name">
                         <input
                           value={addressDraft.fullName}
-                          onChange={(event) => setAddressDraft((previous) => ({ ...previous, fullName: event.target.value }))}
+                          onChange={(event) =>
+                            setAddressDraft((previous) => ({
+                              ...previous,
+                              fullName: event.target.value,
+                            }))
+                          }
                           className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
                         />
                       </Field>
                       <Field label="Phone">
                         <input
                           value={addressDraft.phone}
-                          onChange={(event) => setAddressDraft((previous) => ({ ...previous, phone: event.target.value }))}
+                          onChange={(event) =>
+                            setAddressDraft((previous) => ({
+                              ...previous,
+                              phone: event.target.value,
+                            }))
+                          }
                           className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
                         />
                       </Field>
@@ -705,7 +781,12 @@ export default function AccountPage() {
                     <Field label="Address line">
                       <input
                         value={addressDraft.addressLine}
-                        onChange={(event) => setAddressDraft((previous) => ({ ...previous, addressLine: event.target.value }))}
+                        onChange={(event) =>
+                          setAddressDraft((previous) => ({
+                            ...previous,
+                            addressLine: event.target.value,
+                          }))
+                        }
                         className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
                       />
                     </Field>
@@ -713,21 +794,36 @@ export default function AccountPage() {
                       <Field label="City">
                         <input
                           value={addressDraft.city}
-                          onChange={(event) => setAddressDraft((previous) => ({ ...previous, city: event.target.value }))}
+                          onChange={(event) =>
+                            setAddressDraft((previous) => ({
+                              ...previous,
+                              city: event.target.value,
+                            }))
+                          }
                           className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
                         />
                       </Field>
                       <Field label="Province">
                         <input
                           value={addressDraft.province}
-                          onChange={(event) => setAddressDraft((previous) => ({ ...previous, province: event.target.value }))}
+                          onChange={(event) =>
+                            setAddressDraft((previous) => ({
+                              ...previous,
+                              province: event.target.value,
+                            }))
+                          }
                           className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
                         />
                       </Field>
                       <Field label="Postal code">
                         <input
                           value={addressDraft.postalCode}
-                          onChange={(event) => setAddressDraft((previous) => ({ ...previous, postalCode: event.target.value }))}
+                          onChange={(event) =>
+                            setAddressDraft((previous) => ({
+                              ...previous,
+                              postalCode: event.target.value,
+                            }))
+                          }
                           className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
                         />
                       </Field>
@@ -737,7 +833,9 @@ export default function AccountPage() {
                       <span className="font-semibold text-foreground">Use as default address</span>
                       <Switch
                         checked={!!addressDraft.isDefault}
-                        onCheckedChange={(checked) => setAddressDraft((previous) => ({ ...previous, isDefault: checked }))}
+                        onCheckedChange={(checked) =>
+                          setAddressDraft((previous) => ({ ...previous, isDefault: checked }))
+                        }
                       />
                     </label>
 
@@ -745,14 +843,22 @@ export default function AccountPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          try {
-                            saveAddress(addressDraft);
-                            toast.success(editingAddressId ? "Address updated." : "Address added.");
-                            setEditingAddressId(null);
-                            setAddressDraft(createBlankAddress(currentUser.name, currentUser.phone));
-                          } catch (error) {
-                            toast.error(error instanceof Error ? error.message : "Unable to save address.");
-                          }
+                          void (async () => {
+                            try {
+                              await saveAddress(addressDraft);
+                              toast.success(
+                                editingAddressId ? "Address updated." : "Address added.",
+                              );
+                              setEditingAddressId(null);
+                              setAddressDraft(
+                                createBlankAddress(currentUser.name, currentUser.phone),
+                              );
+                            } catch (error) {
+                              toast.error(
+                                error instanceof Error ? error.message : "Unable to save address.",
+                              );
+                            }
+                          })();
                         }}
                         className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground"
                       >
@@ -778,11 +884,17 @@ export default function AccountPage() {
               <div className="grid gap-4 lg:grid-cols-[1fr_0.95fr]">
                 <PanelCard title="Saved vehicles">
                   {account.savedVehicles.length === 0 ? (
-                    <EmptyInline title="No saved vehicles" body="Add your first car to the SpareKart garage." />
+                    <EmptyInline
+                      title="No saved vehicles"
+                      body="Add your first car to the SpareKart garage."
+                    />
                   ) : (
                     <div className="space-y-3">
                       {account.savedVehicles.map((vehicle) => (
-                        <div key={vehicle.id} className="rounded-[18px] border border-border/60 p-4">
+                        <div
+                          key={vehicle.id}
+                          className="rounded-[18px] border border-border/60 p-4"
+                        >
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
@@ -812,12 +924,18 @@ export default function AccountPage() {
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    try {
-                                      saveVehicle({ ...vehicle, isPrimary: true });
-                                      toast.success("Primary vehicle updated.");
-                                    } catch (error) {
-                                      toast.error(error instanceof Error ? error.message : "Unable to update vehicle.");
-                                    }
+                                    void (async () => {
+                                      try {
+                                        await saveVehicle({ ...vehicle, isPrimary: true });
+                                        toast.success("Primary vehicle updated.");
+                                      } catch (error) {
+                                        toast.error(
+                                          error instanceof Error
+                                            ? error.message
+                                            : "Unable to update vehicle.",
+                                        );
+                                      }
+                                    })();
                                   }}
                                   className="inline-flex h-9 items-center justify-center rounded-xl bg-card px-3 text-sm font-semibold shadow-[var(--shadow-soft)]"
                                 >
@@ -827,12 +945,14 @@ export default function AccountPage() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  deleteVehicle(vehicle.id);
-                                  toast.success("Vehicle removed.");
-                                  if (editingVehicleId === vehicle.id) {
-                                    setEditingVehicleId(null);
-                                    setVehicleDraft(createBlankVehicle());
-                                  }
+                                  void (async () => {
+                                    await deleteVehicle(vehicle.id);
+                                    toast.success("Vehicle removed.");
+                                    if (editingVehicleId === vehicle.id) {
+                                      setEditingVehicleId(null);
+                                      setVehicleDraft(createBlankVehicle());
+                                    }
+                                  })();
                                 }}
                                 className="inline-flex h-9 items-center justify-center rounded-xl bg-destructive/10 px-3 text-sm font-semibold text-destructive"
                               >
@@ -846,14 +966,17 @@ export default function AccountPage() {
                   )}
                 </PanelCard>
 
-                <PanelCard
-                  title={editingVehicleId ? "Edit vehicle" : "Add vehicle"}
-                >
+                <PanelCard title={editingVehicleId ? "Edit vehicle" : "Add vehicle"}>
                   <div className="space-y-4">
                     <Field label="Nickname">
                       <input
                         value={vehicleDraft.nickname}
-                        onChange={(event) => setVehicleDraft((previous) => ({ ...previous, nickname: event.target.value }))}
+                        onChange={(event) =>
+                          setVehicleDraft((previous) => ({
+                            ...previous,
+                            nickname: event.target.value,
+                          }))
+                        }
                         className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30"
                       />
                     </Field>
@@ -938,7 +1061,9 @@ export default function AccountPage() {
                       <span className="font-semibold text-foreground">Use as primary vehicle</span>
                       <Switch
                         checked={!!vehicleDraft.isPrimary}
-                        onCheckedChange={(checked) => setVehicleDraft((previous) => ({ ...previous, isPrimary: checked }))}
+                        onCheckedChange={(checked) =>
+                          setVehicleDraft((previous) => ({ ...previous, isPrimary: checked }))
+                        }
                       />
                     </label>
 
@@ -946,14 +1071,20 @@ export default function AccountPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          try {
-                            saveVehicle(vehicleDraft);
-                            toast.success(editingVehicleId ? "Vehicle updated." : "Vehicle added.");
-                            setEditingVehicleId(null);
-                            setVehicleDraft(createBlankVehicle());
-                          } catch (error) {
-                            toast.error(error instanceof Error ? error.message : "Unable to save vehicle.");
-                          }
+                          void (async () => {
+                            try {
+                              await saveVehicle(vehicleDraft);
+                              toast.success(
+                                editingVehicleId ? "Vehicle updated." : "Vehicle added.",
+                              );
+                              setEditingVehicleId(null);
+                              setVehicleDraft(createBlankVehicle());
+                            } catch (error) {
+                              toast.error(
+                                error instanceof Error ? error.message : "Unable to save vehicle.",
+                              );
+                            }
+                          })();
                         }}
                         className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground"
                       >
@@ -986,14 +1117,22 @@ export default function AccountPage() {
               <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
                 <PanelCard title="Saved wishlist">
                   {wishlistProducts.length === 0 ? (
-                    <EmptyInline title="Wishlist is empty" body="Save products here to revisit them quickly." />
+                    <EmptyInline
+                      title="Wishlist is empty"
+                      body="Save products here to revisit them quickly."
+                    />
                   ) : (
                     <div className="space-y-3">
                       {wishlistProducts.map((product) => {
-                        const seller = getSeller(product.sellerSlug);
+                        const seller = state.sellersDirectory.find(
+                          (candidate) => candidate.slug === product.sellerSlug,
+                        );
 
                         return (
-                          <div key={product.id} className="rounded-[18px] border border-border/60 p-4">
+                          <div
+                            key={product.id}
+                            className="rounded-[18px] border border-border/60 p-4"
+                          >
                             <div className="flex gap-3">
                               <OptimizedImage
                                 src={product.images[0]}
@@ -1003,11 +1142,14 @@ export default function AccountPage() {
                                 className="h-[72px] w-[72px] rounded-xl object-cover"
                               />
                               <div className="min-w-0 flex-1">
-                                <Link href={`/product/${product.slug}`} className="line-clamp-2 text-sm font-bold text-foreground hover:text-accent">
+                                <Link
+                                  href={`/product/${product.slug}`}
+                                  className="line-clamp-2 text-sm font-bold text-foreground hover:text-accent"
+                                >
                                   {product.title}
                                 </Link>
                                 <div className="mt-1 text-xs text-muted-foreground">
-                                  {seller.name} · {product.brand}
+                                  {seller?.name ?? product.sellerSlug} · {product.brand}
                                 </div>
                                 <div className="mt-2 text-base font-black tabular-nums">
                                   {formatPKR(product.price)}
@@ -1015,14 +1157,20 @@ export default function AccountPage() {
                                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                                   <button
                                     type="button"
-                                    onClick={() => {
+                                  onClick={() => {
+                                    void (async () => {
                                       try {
-                                        addToCart(product.id, 1);
+                                        await addToCart(product.id, 1);
                                         toast.success(`${product.title} added to cart.`);
                                       } catch (error) {
-                                        toast.error(error instanceof Error ? error.message : "Unable to add item to cart.");
+                                        toast.error(
+                                          error instanceof Error
+                                            ? error.message
+                                            : "Unable to add item to cart.",
+                                        );
                                       }
-                                    }}
+                                    })();
+                                  }}
                                     className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
                                   >
                                     Add to cart
@@ -1030,8 +1178,10 @@ export default function AccountPage() {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      toggleWishlist(product.id);
-                                      toast.success("Removed from wishlist.");
+                                      void (async () => {
+                                        await toggleWishlist(product.id);
+                                        toast.success("Removed from wishlist.");
+                                      })();
                                     }}
                                     className="inline-flex h-10 items-center justify-center rounded-xl bg-surface px-4 text-sm font-semibold shadow-[var(--shadow-soft)]"
                                   >
@@ -1047,7 +1197,10 @@ export default function AccountPage() {
                   )}
                 </PanelCard>
 
-                <PanelCard title="Suggested products" description="Recommended for your next order.">
+                <PanelCard
+                  title="Suggested products"
+                  description="Recommended for your next order."
+                >
                   <div className="space-y-3">
                     {suggestedWishlistProducts.map((product) => (
                       <div key={product.id} className="rounded-[18px] border border-border/60 p-4">
@@ -1070,8 +1223,10 @@ export default function AccountPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              toggleWishlist(product.id);
-                              toast.success("Saved to wishlist.");
+                              void (async () => {
+                                await toggleWishlist(product.id);
+                                toast.success("Saved to wishlist.");
+                              })();
                             }}
                             className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-card shadow-[var(--shadow-soft)]"
                           >
@@ -1093,25 +1248,33 @@ export default function AccountPage() {
                       label="Order email updates"
                       description="Receive email updates for order confirmations, shipping, and delivery."
                       checked={account.preferences.orderEmailUpdates}
-                      onCheckedChange={(checked) => updatePreferenceWithToast(updatePreferences, "orderEmailUpdates", checked)}
+                      onCheckedChange={(checked) =>
+                        updatePreferenceWithToast(updatePreferences, "orderEmailUpdates", checked)
+                      }
                     />
                     <PreferenceRow
                       label="Promotions"
                       description="Receive promotions and marketplace campaigns."
                       checked={account.preferences.promotions}
-                      onCheckedChange={(checked) => updatePreferenceWithToast(updatePreferences, "promotions", checked)}
+                      onCheckedChange={(checked) =>
+                        updatePreferenceWithToast(updatePreferences, "promotions", checked)
+                      }
                     />
                     <PreferenceRow
                       label="Price alerts"
                       description="Get notified when watched products or categories change price."
                       checked={account.preferences.priceAlerts}
-                      onCheckedChange={(checked) => updatePreferenceWithToast(updatePreferences, "priceAlerts", checked)}
+                      onCheckedChange={(checked) =>
+                        updatePreferenceWithToast(updatePreferences, "priceAlerts", checked)
+                      }
                     />
                     <PreferenceRow
                       label="SMS alerts"
                       description="Receive time-sensitive shipping and payment alerts via SMS."
                       checked={account.preferences.smsAlerts}
-                      onCheckedChange={(checked) => updatePreferenceWithToast(updatePreferences, "smsAlerts", checked)}
+                      onCheckedChange={(checked) =>
+                        updatePreferenceWithToast(updatePreferences, "smsAlerts", checked)
+                      }
                     />
                   </div>
                 </PanelCard>
@@ -1123,13 +1286,17 @@ export default function AccountPage() {
                         label="Login alerts"
                         description="Get notified whenever your SpareKart session changes."
                         checked={account.preferences.loginAlerts}
-                        onCheckedChange={(checked) => updatePreferenceWithToast(updatePreferences, "loginAlerts", checked)}
+                        onCheckedChange={(checked) =>
+                          updatePreferenceWithToast(updatePreferences, "loginAlerts", checked)
+                        }
                       />
                       <PreferenceRow
                         label="Two-factor verification"
                         description="Require a second confirmation step for sensitive account actions."
                         checked={account.preferences.twoFactorEnabled}
-                        onCheckedChange={(checked) => updatePreferenceWithToast(updatePreferences, "twoFactorEnabled", checked)}
+                        onCheckedChange={(checked) =>
+                          updatePreferenceWithToast(updatePreferences, "twoFactorEnabled", checked)
+                        }
                       />
                     </div>
                   </PanelCard>
@@ -1141,8 +1308,10 @@ export default function AccountPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            markNotificationsRead();
-                            toast.success("Notifications marked as read.");
+                            void (async () => {
+                              await markNotificationsRead();
+                              toast.success("Notifications marked as read.");
+                            })();
                           }}
                           className="text-sm font-semibold text-accent hover:underline"
                         >
@@ -1167,7 +1336,10 @@ export default function AccountPage() {
                         <LogOut className="h-4 w-4" />
                         Logout
                       </button>
-                      <Link href="/login" className="inline-flex h-11 items-center justify-center rounded-xl bg-surface px-5 text-sm font-semibold shadow-[var(--shadow-soft)]">
+                      <Link
+                        href="/login"
+                        className="inline-flex h-11 items-center justify-center rounded-xl bg-surface px-5 text-sm font-semibold shadow-[var(--shadow-soft)]"
+                      >
                         Switch account
                       </Link>
                     </div>
@@ -1175,10 +1347,16 @@ export default function AccountPage() {
 
                   <PanelCard title="Need help?">
                     <div className="grid gap-3">
-                      <Link href="/help" className="inline-flex h-11 items-center justify-center rounded-xl bg-surface px-5 text-sm font-semibold shadow-[var(--shadow-soft)]">
+                      <Link
+                        href="/help"
+                        className="inline-flex h-11 items-center justify-center rounded-xl bg-surface px-5 text-sm font-semibold shadow-[var(--shadow-soft)]"
+                      >
                         Help centre
                       </Link>
-                      <Link href="/compatibility" className="inline-flex h-11 items-center justify-center rounded-xl bg-surface px-5 text-sm font-semibold shadow-[var(--shadow-soft)]">
+                      <Link
+                        href="/compatibility"
+                        className="inline-flex h-11 items-center justify-center rounded-xl bg-surface px-5 text-sm font-semibold shadow-[var(--shadow-soft)]"
+                      >
                         Find parts for your car
                       </Link>
                     </div>
@@ -1194,12 +1372,14 @@ export default function AccountPage() {
 }
 
 function updatePreferenceWithToast(
-  updatePreferences: (input: Partial<CustomerPreferences>) => void,
+  updatePreferences: (input: Partial<CustomerPreferences>) => Promise<void>,
   key: keyof CustomerPreferences,
   value: boolean,
 ) {
-  updatePreferences({ [key]: value });
-  toast.success("Preference updated.");
+  void (async () => {
+    await updatePreferences({ [key]: value });
+    toast.success("Preference updated.");
+  })();
 }
 
 function AccountStat({ label, value }: { label: string; value: string }) {
@@ -1209,7 +1389,9 @@ function AccountStat({ label, value }: { label: string; value: string }) {
         <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           {label}
         </div>
-        <div className="text-base font-black tabular-nums text-foreground sm:text-[1.1rem]">{value}</div>
+        <div className="text-base font-black tabular-nums text-foreground sm:text-[1.1rem]">
+          {value}
+        </div>
       </div>
     </div>
   );
@@ -1231,7 +1413,9 @@ function PanelCard({
       <div className="flex flex-col gap-2.5 border-b border-border/60 pb-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="text-base font-black text-foreground sm:text-[1.05rem]">{title}</div>
-          {description ? <p className="mt-1 text-xs text-muted-foreground sm:text-sm">{description}</p> : null}
+          {description ? (
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">{description}</p>
+          ) : null}
         </div>
         {action}
       </div>
@@ -1274,13 +1458,7 @@ function AddressPreviewCard({
   );
 }
 
-function VehiclePreviewCard({
-  nickname,
-  body,
-}: {
-  nickname: string;
-  body: string;
-}) {
+function VehiclePreviewCard({ nickname, body }: { nickname: string; body: string }) {
   return (
     <div className="rounded-[16px] border border-border/60 px-4 py-3">
       <div className="text-sm font-bold text-foreground">{nickname}</div>

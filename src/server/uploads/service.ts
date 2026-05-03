@@ -14,12 +14,7 @@ const MAX_IMAGE_WIDTH = 1800;
 const MAX_IMAGE_HEIGHT = 1800;
 const WEBP_QUALITY = 82;
 const WEBP_EFFORT = 4;
-const ALLOWED_IMAGE_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-]);
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const UPLOAD_BUCKET_NAME = "sparekart_uploads";
 
 type StoredUploadAsset = {
@@ -197,9 +192,11 @@ export async function saveUploadedImage(input: {
   });
 }
 
-export async function getUploadedImage(assetId: string): Promise<StoredUploadAsset & {
-  buffer: Buffer;
-}> {
+export async function getUploadedImage(assetId: string): Promise<
+  StoredUploadAsset & {
+    buffer: Buffer;
+  }
+> {
   if (!mongoose.Types.ObjectId.isValid(assetId)) {
     throw new MongoApiError("Invalid upload id.", {
       status: 400,

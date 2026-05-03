@@ -5,7 +5,12 @@ import { ExternalLink, Eye, PencilLine } from "lucide-react";
 import { toast } from "sonner";
 import { ProductModerationDialog } from "@/components/admin/ProductModerationDialog";
 import { AdminCompactStat, AdminKeyValue, AdminScopeGate } from "@/components/admin/AdminCommon";
-import { AdminEmptyState, AdminPageHeader, AdminPanel, AdminPill } from "@/components/admin/AdminUI";
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+  AdminPill,
+} from "@/components/admin/AdminUI";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Link } from "@/components/navigation/Link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,9 +54,12 @@ function ProductDetailContent({ productId }: { productId: string }) {
   const product = getManagedProductById(state, productId)!;
   const performance = getProductPerformance(state).find((entry) => entry.product.id === productId);
   const seller = getSellerRecordBySlug(state, product.sellerSlug);
-  const productReviews = state.managedProductReviews.filter((review) => review.productId === productId);
+  const productReviews = state.managedProductReviews.filter(
+    (review) => review.productId === productId,
+  );
   const categoryName =
-    state.managedCategories.find((category) => category.slug === product.category)?.name ?? product.category;
+    state.managedCategories.find((category) => category.slug === product.category)?.name ??
+    product.category;
 
   const [draft, setDraft] = useState<ManagedProductInput>(product);
   const [tagInput, setTagInput] = useState(product.tags.join(", "));
@@ -134,13 +142,18 @@ function ProductDetailContent({ productId }: { productId: string }) {
               <StatusPill status={product.moderationStatus} />
               <AdminPill tone="info">{product.brand}</AdminPill>
               <AdminPill tone="info">{categoryName}</AdminPill>
-              {product.reviewRequired ? <AdminPill tone="warning">Review required</AdminPill> : null}
+              {product.reviewRequired ? (
+                <AdminPill tone="warning">Review required</AdminPill>
+              ) : null}
             </div>
             <div className="mt-3 text-sm text-muted-foreground">
               {seller ? (
                 <>
                   Seller:{" "}
-                  <Link href={`/admin/sellers/${seller.slug}`} className="font-semibold text-accent hover:underline">
+                  <Link
+                    href={`/admin/sellers/${seller.slug}`}
+                    className="font-semibold text-accent hover:underline"
+                  >
                     {seller.name}
                   </Link>
                 </>
@@ -170,35 +183,73 @@ function ProductDetailContent({ productId }: { productId: string }) {
       </AdminPanel>
 
       <section className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
-        <AdminCompactStat label="Revenue" value={formatPKR(performance?.revenue ?? 0)} helper="Attributed sales value" tone="success" />
-        <AdminCompactStat label="Units sold" value={String(performance?.units ?? 0)} helper="Historical order units" />
-        <AdminCompactStat label="Reviews" value={String(productReviews.length)} helper="Review records" />
-        <AdminCompactStat label="Rating" value={product.rating.toFixed(1)} helper="Storefront rating" />
+        <AdminCompactStat
+          label="Revenue"
+          value={formatPKR(performance?.revenue ?? 0)}
+          helper="Attributed sales value"
+          tone="success"
+        />
+        <AdminCompactStat
+          label="Units sold"
+          value={String(performance?.units ?? 0)}
+          helper="Historical order units"
+        />
+        <AdminCompactStat
+          label="Reviews"
+          value={String(productReviews.length)}
+          helper="Review records"
+        />
+        <AdminCompactStat
+          label="Rating"
+          value={product.rating.toFixed(1)}
+          helper="Storefront rating"
+        />
       </section>
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-[18px] bg-surface p-1 shadow-[var(--shadow-soft)]">
-          <TabsTrigger value="overview" className="rounded-2xl px-3 py-2 text-xs font-semibold sm:text-sm">
+          <TabsTrigger
+            value="overview"
+            className="rounded-2xl px-3 py-2 text-xs font-semibold sm:text-sm"
+          >
             Overview
           </TabsTrigger>
-          <TabsTrigger value="catalog" className="rounded-2xl px-3 py-2 text-xs font-semibold sm:text-sm">
+          <TabsTrigger
+            value="catalog"
+            className="rounded-2xl px-3 py-2 text-xs font-semibold sm:text-sm"
+          >
             Catalog Data
           </TabsTrigger>
-          <TabsTrigger value="reviews" className="rounded-2xl px-3 py-2 text-xs font-semibold sm:text-sm">
+          <TabsTrigger
+            value="reviews"
+            className="rounded-2xl px-3 py-2 text-xs font-semibold sm:text-sm"
+          >
             Reviews
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-0">
           <div className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
-            <AdminPanel title="Listing summary" description="Core seller-owned and admin-controlled fields.">
+            <AdminPanel
+              title="Listing summary"
+              description="Core seller-owned and admin-controlled fields."
+            >
               <div className="divide-y divide-border/60">
                 <AdminKeyValue label="SKU" value={product.sku} />
                 <AdminKeyValue label="Category" value={categoryName} />
                 <AdminKeyValue label="Seller price" value={formatPKR(product.price)} />
-                <AdminKeyValue label="Seller stock" value={String(state.inventory[product.id]?.available ?? product.stock)} />
-                <AdminKeyValue label="Review required" value={product.reviewRequired ? "Yes" : "No"} />
-                <AdminKeyValue label="Compatibility rows" value={String(product.compatibility.length)} />
+                <AdminKeyValue
+                  label="Seller stock"
+                  value={String(state.inventory[product.id]?.available ?? product.stock)}
+                />
+                <AdminKeyValue
+                  label="Review required"
+                  value={product.reviewRequired ? "Yes" : "No"}
+                />
+                <AdminKeyValue
+                  label="Compatibility rows"
+                  value={String(product.compatibility.length)}
+                />
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -210,7 +261,10 @@ function ProductDetailContent({ productId }: { productId: string }) {
             </AdminPanel>
 
             <div className="space-y-4">
-              <AdminPanel title="Seller and performance" description="Marketplace activity and seller trust context.">
+              <AdminPanel
+                title="Seller and performance"
+                description="Marketplace activity and seller trust context."
+              >
                 <div className="divide-y divide-border/60">
                   <AdminKeyValue label="Seller" value={seller?.name ?? product.sellerSlug} />
                   <AdminKeyValue label="Seller verified" value={seller?.verified ? "Yes" : "No"} />
@@ -220,7 +274,10 @@ function ProductDetailContent({ productId }: { productId: string }) {
                 </div>
               </AdminPanel>
 
-              <AdminPanel title="Merchandising copy" description="Scrollable copy review without stretching the page.">
+              <AdminPanel
+                title="Merchandising copy"
+                description="Scrollable copy review without stretching the page."
+              >
                 <div className="space-y-3">
                   <div className="rounded-[16px] border border-border/60 px-3.5 py-3">
                     <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -246,7 +303,9 @@ function ProductDetailContent({ productId }: { productId: string }) {
           <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
             <AdminPanel title="Specifications">
               {product.specs.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No structured specifications stored.</div>
+                <div className="text-sm text-muted-foreground">
+                  No structured specifications stored.
+                </div>
               ) : (
                 <div className="divide-y divide-border/60">
                   {product.specs.map((spec) => (
@@ -258,11 +317,16 @@ function ProductDetailContent({ productId }: { productId: string }) {
 
             <AdminPanel title="Compatibility matrix">
               {product.compatibility.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No compatibility data is stored for this product.</div>
+                <div className="text-sm text-muted-foreground">
+                  No compatibility data is stored for this product.
+                </div>
               ) : (
                 <div className="divide-y divide-border/60">
                   {product.compatibility.map((entry, index) => (
-                    <div key={`${entry.brand}-${entry.model}-${index}`} className="py-3 first:pt-0 last:pb-0">
+                    <div
+                      key={`${entry.brand}-${entry.model}-${index}`}
+                      className="py-3 first:pt-0 last:pb-0"
+                    >
                       <div className="text-sm font-semibold text-foreground">
                         {entry.brand} {entry.model}
                       </div>
@@ -278,9 +342,14 @@ function ProductDetailContent({ productId }: { productId: string }) {
         </TabsContent>
 
         <TabsContent value="reviews" className="mt-0">
-          <AdminPanel title="Recent review snapshots" description="Latest moderation-relevant reviews for this product.">
+          <AdminPanel
+            title="Recent review snapshots"
+            description="Latest moderation-relevant reviews for this product."
+          >
             {productReviews.length === 0 ? (
-              <div className="text-sm text-muted-foreground">This product has no review records in moderation yet.</div>
+              <div className="text-sm text-muted-foreground">
+                This product has no review records in moderation yet.
+              </div>
             ) : (
               <div className="divide-y divide-border/60">
                 {productReviews.slice(0, 6).map((review) => (
@@ -346,12 +415,7 @@ function ChecklistChip({ label, active }: { label: string; active: boolean }) {
 }
 
 function StatusPill({ status }: { status: ProductModerationStatus }) {
-  const tone =
-    status === "ACTIVE"
-      ? "success"
-      : status === "FLAGGED"
-        ? "danger"
-        : "warning";
+  const tone = status === "ACTIVE" ? "success" : status === "FLAGGED" ? "danger" : "warning";
 
   return <AdminPill tone={tone}>{status}</AdminPill>;
 }

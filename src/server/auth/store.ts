@@ -7,6 +7,7 @@ import { connectToMongo } from "@/server/mongodb/connection";
 import { MongoApiError } from "@/server/mongodb/errors";
 import { AuthRuntimeModel } from "@/server/mongodb/models/auth-runtime";
 import { getRuntimeFilePath, readJsonFile, updateJsonFile } from "@/server/runtime/storage";
+import { AuthApiError } from "./errors";
 import type { AuthStoreData, AuthUserRecord } from "./types";
 import { hashPassword, verifyPassword } from "./password";
 
@@ -23,15 +24,45 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
-async function buildSeedUsers(): Promise<AuthUserRecord[]> {
+function requireSeedCredentials() {
   const env = getServerEnv();
-  const passwordHash = await hashPassword(env.SPAREKART_SEED_PASSWORD);
-  const superAdminPasswordHash = await hashPassword(env.SPAREKART_SUPERADMIN_PASSWORD);
+
+  if (!env.seedPasswordConfigured) {
+    throw new AuthApiError(
+      "SPAREKART_SEED_PASSWORD is required before auth seed accounts can be initialized.",
+      {
+        status: 500,
+        code: "SEED_PASSWORD_MISSING",
+      },
+    );
+  }
+
+  if (!env.superAdminPasswordConfigured) {
+    throw new AuthApiError(
+      "SPAREKART_SUPER_ADMIN_PASSWORD is required before the seeded super admin can be initialized.",
+      {
+        status: 500,
+        code: "SUPER_ADMIN_PASSWORD_MISSING",
+      },
+    );
+  }
+
+  return {
+    env,
+    seedPassword: env.SPAREKART_SEED_PASSWORD!,
+    superAdminPassword: env.resolvedSuperAdminPassword!,
+  };
+}
+
+async function buildSeedUsers(): Promise<AuthUserRecord[]> {
+  const { env, seedPassword, superAdminPassword } = requireSeedCredentials();
+  const passwordHash = await hashPassword(seedPassword);
+  const superAdminPasswordHash = await hashPassword(superAdminPassword);
 
   return marketplaceUsers.map((user) => ({
     id: user.id,
     email: normalizeEmail(
-      user.role === "SUPER_ADMIN" ? env.SPAREKART_SUPERADMIN_EMAIL : user.email,
+      user.role === "SUPER_ADMIN" ? (env.resolvedSuperAdminEmail ?? user.email) : user.email,
     ),
     name: user.role === "SUPER_ADMIN" ? "SpareKart Super Admin" : user.name,
     phone: user.phone,
@@ -51,10 +82,12 @@ async function buildSeedUsers(): Promise<AuthUserRecord[]> {
 }
 
 async function mergeSeedUsers(currentUsers: AuthUserRecord[]) {
-  const env = getServerEnv();
+  const { env, seedPassword, superAdminPassword } = requireSeedCredentials();
   const seededUsers = await buildSeedUsers();
   const seededUserIds = new Set(seededUsers.map((user) => user.id));
-  const preservedUsers = currentUsers.filter((user) => !user.isSeeded || !seededUserIds.has(user.id));
+  const preservedUsers = currentUsers.filter(
+    (user) => !user.isSeeded || !seededUserIds.has(user.id),
+  );
   const mergedSeededUsers = await Promise.all(
     seededUsers.map(async (seededUser) => {
       const existingUser = currentUsers.find((user) => user.id === seededUser.id);
@@ -67,11 +100,11 @@ async function mergeSeedUsers(currentUsers: AuthUserRecord[]) {
 
       if (seededUser.role === "SUPER_ADMIN") {
         const matchesConfiguredPassword = await verifyPassword(
-          env.SPAREKART_SUPERADMIN_PASSWORD,
+          superAdminPassword,
           existingUser.passwordHash,
         );
         const matchesLegacySeedPassword = await verifyPassword(
-          env.SPAREKART_SEED_PASSWORD,
+          seedPassword,
           existingUser.passwordHash,
         );
 

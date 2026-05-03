@@ -14,11 +14,20 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { products, categories, brands, sellers } from "@/data/marketplace";
 import { useMarketplace } from "@/modules/marketplace/store";
+import {
+  getActiveMarketplaceCategories,
+  getActiveMarketplaceProducts,
+  getActiveMarketplaceSellers,
+  getMarketplaceBrands,
+} from "@/modules/marketplace/selectors";
 
 export default function ShopPage() {
   const { state } = useMarketplace();
+  const products = getActiveMarketplaceProducts(state);
+  const categories = getActiveMarketplaceCategories(state);
+  const brands = getMarketplaceBrands(state);
+  const sellers = getActiveMarketplaceSellers(state);
   const [sort, setSort] = useState("popular");
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -34,7 +43,9 @@ export default function ShopPage() {
     if (selectedSellers.length) list = list.filter((p) => selectedSellers.includes(p.sellerSlug));
     list = list.filter((p) => p.price <= priceMax);
     if (inStockOnly) {
-      list = list.filter((product) => (state.inventory[product.id]?.available ?? product.stock) > 0);
+      list = list.filter(
+        (product) => (state.inventory[product.id]?.available ?? product.stock) > 0,
+      );
     }
     if (minRating) list = list.filter((p) => p.rating >= minRating);
     if (sort === "price-asc") list.sort((a, b) => a.price - b.price);
@@ -42,7 +53,16 @@ export default function ShopPage() {
     else if (sort === "rating") list.sort((a, b) => b.rating - a.rating);
     else if (sort === "newest") list.reverse();
     return list;
-  }, [inStockOnly, minRating, priceMax, selectedBrands, selectedCats, selectedSellers, sort, state.inventory]);
+  }, [
+    inStockOnly,
+    minRating,
+    priceMax,
+    selectedBrands,
+    selectedCats,
+    selectedSellers,
+    sort,
+    state.inventory,
+  ]);
 
   const toggle = (arr: string[], setArr: (a: string[]) => void, val: string) =>
     setArr(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
@@ -72,7 +92,7 @@ export default function ShopPage() {
     })),
     ...selectedBrands.map((brand) => ({
       key: `brand-${brand}`,
-      label: brand,
+      label: brands.find((item) => item.name === brand)?.name ?? brand,
       onClear: () => toggle(selectedBrands, setSelectedBrands, brand),
     })),
     ...selectedSellers.map((slug) => ({
@@ -129,13 +149,19 @@ export default function ShopPage() {
                   </p>
                 </div>
                 {activeFilterCount > 0 && (
-                  <button onClick={resetFilters} className="text-xs font-semibold text-accent hover:underline">
+                  <button
+                    onClick={resetFilters}
+                    className="text-xs font-semibold text-accent hover:underline"
+                  >
                     Clear all
                   </button>
                 )}
               </div>
 
               <ShopFiltersPanel
+                categories={categories}
+                brands={brands}
+                sellers={sellers}
                 selectedCats={selectedCats}
                 selectedBrands={selectedBrands}
                 selectedSellers={selectedSellers}
@@ -158,7 +184,9 @@ export default function ShopPage() {
               <div>
                 <h1 className="text-xl font-bold tracking-tight">All Auto Parts</h1>
                 <p className="text-sm text-muted-foreground">
-                  <span className="font-semibold text-foreground tabular-nums">{filtered.length}</span>{" "}
+                  <span className="font-semibold text-foreground tabular-nums">
+                    {filtered.length}
+                  </span>{" "}
                   products from {sellers.length} verified sellers
                 </p>
               </div>
@@ -188,6 +216,9 @@ export default function ShopPage() {
 
                       <div className="flex-1 overflow-y-auto px-5 py-5">
                         <ShopFiltersPanel
+                          categories={categories}
+                          brands={brands}
+                          sellers={sellers}
                           selectedCats={selectedCats}
                           selectedBrands={selectedBrands}
                           selectedSellers={selectedSellers}
@@ -223,7 +254,11 @@ export default function ShopPage() {
                 </Sheet>
 
                 <div className="relative flex-1 sm:flex-none">
-                  <select value={sort} onChange={(e) => setSort(e.target.value)} className="h-10 w-full appearance-none rounded-xl bg-background pl-4 pr-10 text-sm font-medium shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30 sm:w-auto sm:min-w-48">
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value)}
+                    className="h-10 w-full appearance-none rounded-xl bg-background pl-4 pr-10 text-sm font-medium shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-accent/30 sm:w-auto sm:min-w-48"
+                  >
                     <option value="popular">Most Popular</option>
                     <option value="price-asc">Price: Low to High</option>
                     <option value="price-desc">Price: High to Low</option>
@@ -247,7 +282,10 @@ export default function ShopPage() {
                     <X className="h-3 w-3" />
                   </button>
                 ))}
-                <button onClick={resetFilters} className="text-xs font-semibold text-accent hover:underline">
+                <button
+                  onClick={resetFilters}
+                  className="text-xs font-semibold text-accent hover:underline"
+                >
                   Clear all filters
                 </button>
               </div>
@@ -257,20 +295,34 @@ export default function ShopPage() {
               <div className="gradient-surface rounded-[24px] p-10 text-center shadow-[var(--shadow-soft)] sm:rounded-[28px] sm:p-16">
                 <div className="mb-3 text-4xl sm:mb-4 sm:text-5xl">🔍</div>
                 <h3 className="text-xl font-bold">No products match your filters</h3>
-                <p className="text-sm text-muted-foreground mt-2">Try clearing some filters or broadening your search.</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Try clearing some filters or broadening your search.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-                {filtered.map((p) => <ProductCard key={p.id} product={p} compact />)}
+                {filtered.map((p) => (
+                  <ProductCard key={p.id} product={p} compact />
+                ))}
               </div>
             )}
 
             {/* Pagination */}
             <div className="mt-10 flex flex-wrap items-center justify-center gap-2 sm:mt-12">
               {[1, 2, 3, "…", 8].map((n, i) => (
-                <button key={i} className={`h-10 min-w-10 rounded-xl px-3 text-sm font-semibold shadow-[var(--shadow-soft)] ${n === 1 ? "bg-primary text-primary-foreground" : "bg-surface hover:bg-accent-soft hover:text-accent"}`}>{n}</button>
+                <button
+                  key={i}
+                  className={`h-10 min-w-10 rounded-xl px-3 text-sm font-semibold shadow-[var(--shadow-soft)] ${n === 1 ? "bg-primary text-primary-foreground" : "bg-surface hover:bg-accent-soft hover:text-accent"}`}
+                >
+                  {n}
+                </button>
               ))}
-              <Link to="/shop" className="flex h-10 items-center rounded-xl bg-surface px-4 text-sm font-semibold shadow-[var(--shadow-soft)] transition-colors hover:bg-accent-soft hover:text-accent">Next →</Link>
+              <Link
+                to="/shop"
+                className="flex h-10 items-center rounded-xl bg-surface px-4 text-sm font-semibold shadow-[var(--shadow-soft)] transition-colors hover:bg-accent-soft hover:text-accent"
+              >
+                Next →
+              </Link>
             </div>
           </div>
         </div>
@@ -280,6 +332,9 @@ export default function ShopPage() {
 }
 
 function ShopFiltersPanel({
+  categories,
+  brands,
+  sellers,
   selectedCats,
   selectedBrands,
   selectedSellers,
@@ -293,6 +348,9 @@ function ShopFiltersPanel({
   setInStockOnly,
   setMinRating,
 }: {
+  categories: ReturnType<typeof getActiveMarketplaceCategories>;
+  brands: ReturnType<typeof getMarketplaceBrands>;
+  sellers: ReturnType<typeof getActiveMarketplaceSellers>;
   selectedCats: string[];
   selectedBrands: string[];
   selectedSellers: string[];
@@ -379,7 +437,10 @@ function ShopFiltersPanel({
             >
               <div className="flex text-warning">
                 {Array.from({ length: 5 }).map((_, index) => (
-                  <Star key={index} className={`h-3.5 w-3.5 ${index < rating ? "fill-current" : "text-border"}`} />
+                  <Star
+                    key={index}
+                    className={`h-3.5 w-3.5 ${index < rating ? "fill-current" : "text-border"}`}
+                  />
                 ))}
               </div>
               <span>{rating === 0 ? "All ratings" : `${rating}+ stars`}</span>
@@ -424,9 +485,16 @@ function Checkbox({
 }) {
   return (
     <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm transition-colors hover:bg-surface">
-      <input type="checkbox" checked={!!checked} onChange={onChange} className="h-4 w-4 cursor-pointer accent-[oklch(0.72_0.19_50)]" />
+      <input
+        type="checkbox"
+        checked={!!checked}
+        onChange={onChange}
+        className="h-4 w-4 cursor-pointer accent-[oklch(0.72_0.19_50)]"
+      />
       <span className="flex-1 truncate">{label}</span>
-      {count !== undefined && <span className="text-xs text-muted-foreground tabular-nums">{count}</span>}
+      {count !== undefined && (
+        <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
+      )}
     </label>
   );
 }

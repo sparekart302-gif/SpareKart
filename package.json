@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/start-production.mjs",
     "doctor": "node scripts/deployment-doctor.mjs",
     "mongo:ping": "node scripts/test-mongodb-connection.mjs",
     "verify:local": "npm run doctor && npm run build",

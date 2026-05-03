@@ -1,9 +1,5 @@
-import { categories, products } from "@/data/marketplace";
 import { isHostedImageReference } from "@/modules/uploads/shared";
-import {
-  createOrRefreshOrderCommissions,
-  reconcileScheduledPayouts,
-} from "./financials";
+import { createOrRefreshOrderCommissions, reconcileScheduledPayouts } from "./financials";
 import { canAccessAdminScope } from "./permissions";
 import {
   buildPayoutFromSettlements,
@@ -45,11 +41,7 @@ function createId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function getActorWithScope(
-  state: MarketplaceState,
-  actorUserId: string,
-  scope: AdminScope,
-) {
+function getActorWithScope(state: MarketplaceState, actorUserId: string, scope: AdminScope) {
   const actor = state.users.find((user) => user.id === actorUserId);
   assert(actor, "Admin user not found.");
   assert(canAccessAdminScope(actor, scope), "You do not have access to this admin section.");
@@ -115,11 +107,7 @@ function appendArtifacts(
   };
 }
 
-function ensureUniqueEmail(
-  state: MarketplaceState,
-  email: string,
-  currentUserId?: string,
-) {
+function ensureUniqueEmail(state: MarketplaceState, email: string, currentUserId?: string) {
   const normalized = email.trim().toLowerCase();
   const duplicate = state.users.find(
     (user) => user.email.toLowerCase() === normalized && user.id !== currentUserId,
@@ -161,7 +149,8 @@ export function saveUserRecord(
     lastLoginAt: input.lastLoginAt ?? existing?.lastLoginAt,
     sellerSlug: input.sellerSlug?.trim() || undefined,
     adminTitle: input.adminTitle?.trim() || undefined,
-    adminScopes: input.role === "ADMIN" ? input.adminScopes ?? existing?.adminScopes ?? [] : undefined,
+    adminScopes:
+      input.role === "ADMIN" ? (input.adminScopes ?? existing?.adminScopes ?? []) : undefined,
   };
 
   assert(nextUser.name.length >= 2, "User name is required.");
@@ -245,9 +234,16 @@ export function deleteUserRecord(
   }
 
   const customerOrders = state.orders.some((order) => order.customerUserId === targetUserId);
-  const submittedProofs = state.paymentProofs.some((proof) => proof.submittedByUserId === targetUserId);
-  const ownsSellerRecord = state.sellersDirectory.some((seller) => seller.ownerUserId === targetUserId);
-  assert(!customerOrders && !submittedProofs && !ownsSellerRecord, "This user has marketplace activity and cannot be deleted.");
+  const submittedProofs = state.paymentProofs.some(
+    (proof) => proof.submittedByUserId === targetUserId,
+  );
+  const ownsSellerRecord = state.sellersDirectory.some(
+    (seller) => seller.ownerUserId === targetUserId,
+  );
+  assert(
+    !customerOrders && !submittedProofs && !ownsSellerRecord,
+    "This user has marketplace activity and cannot be deleted.",
+  );
 
   const createdAt = nowIso();
   const nextState: MarketplaceState = {
@@ -293,11 +289,11 @@ export function saveSellerRecord(
     approvedAt:
       statusChanged && input.status === "ACTIVE"
         ? createdAt
-        : input.approvedAt ?? existing.approvedAt,
+        : (input.approvedAt ?? existing.approvedAt),
     approvedByUserId:
       statusChanged && input.status === "ACTIVE"
         ? actorUserId
-        : input.approvedByUserId ?? existing.approvedByUserId,
+        : (input.approvedByUserId ?? existing.approvedByUserId),
     updatedAt: createdAt,
   };
 
@@ -307,7 +303,10 @@ export function saveSellerRecord(
       nextRecord.commissionRate === existing.commissionRate,
       "Only a super admin can change commission rates.",
     );
-    assert(nextRecord.payoutHold === existing.payoutHold, "Only a super admin can manage payout holds.");
+    assert(
+      nextRecord.payoutHold === existing.payoutHold,
+      "Only a super admin can manage payout holds.",
+    );
     assert(
       JSON.stringify(nextRecord.permissions) === JSON.stringify(existing.permissions),
       "Only a super admin can change seller permission profiles.",
@@ -395,7 +394,9 @@ export function saveManagedCategoryRecord(
   const nextState: MarketplaceState = {
     ...state,
     managedCategories: existing
-      ? state.managedCategories.map((category) => (category.slug === slug ? nextCategory : category))
+      ? state.managedCategories.map((category) =>
+          category.slug === slug ? nextCategory : category,
+        )
       : [...state.managedCategories, nextCategory],
   };
 
@@ -456,7 +457,9 @@ export function saveManagedProductRecord(
     ? state.managedProducts.find((product) => product.id === input.id)
     : undefined;
   const productId = input.id ?? createId("product");
-  const categoryExists = state.managedCategories.some((category) => category.slug === input.category);
+  const categoryExists = state.managedCategories.some(
+    (category) => category.slug === input.category,
+  );
   assert(categoryExists, "Selected category does not exist.");
   assert(input.images.length > 0, "At least one image is required.");
   input.images.forEach((imageUrl) => {
@@ -648,10 +651,7 @@ export function moderateManagedReview(
             createNotification({
               userId: existing.userId,
               type: input.status === "APPROVED" ? "REVIEW_APPROVED" : "REVIEW_REJECTED",
-              title:
-                input.status === "APPROVED"
-                  ? "Store review approved"
-                  : "Store review updated",
+              title: input.status === "APPROVED" ? "Store review approved" : "Store review updated",
               message:
                 input.status === "APPROVED"
                   ? "Your store review is now visible on SpareKart."
@@ -674,11 +674,7 @@ export function moderateManagedReview(
   );
 }
 
-export function saveCouponRecord(
-  state: MarketplaceState,
-  actorUserId: string,
-  input: CouponInput,
-) {
+export function saveCouponRecord(state: MarketplaceState, actorUserId: string, input: CouponInput) {
   const actor = getActorWithScope(state, actorUserId, "coupons");
   const createdAt = nowIso();
   const existing = input.id ? state.coupons.find((coupon) => coupon.id === input.id) : undefined;
@@ -691,10 +687,7 @@ export function saveCouponRecord(
   assert(input.value > 0, "Coupon value must be greater than zero.");
   assert(input.usageLimit > 0, "Usage limit must be at least 1.");
   assert(input.minOrderAmount >= 0, "Minimum order amount cannot be negative.");
-  assert(
-    input.type === "FIXED" || input.value <= 100,
-    "Percentage coupons cannot exceed 100%.",
-  );
+  assert(input.type === "FIXED" || input.value <= 100, "Percentage coupons cannot exceed 100%.");
   assert(
     !input.maxDiscountAmount || input.maxDiscountAmount > 0,
     "Maximum discount must be greater than zero.",
@@ -720,7 +713,7 @@ export function saveCouponRecord(
     createdAt: existing?.createdAt ?? input.createdAt ?? createdAt,
     usedByUserIds: input.usedByUserIds ?? existing?.usedByUserIds ?? [],
     eligibleCategorySlugs:
-      input.scope === "CATEGORY" ? input.eligibleCategorySlugs ?? [] : undefined,
+      input.scope === "CATEGORY" ? (input.eligibleCategorySlugs ?? []) : undefined,
   };
 
   const nextState: MarketplaceState = {
@@ -743,11 +736,7 @@ export function saveCouponRecord(
   });
 }
 
-export function deleteCouponRecord(
-  state: MarketplaceState,
-  actorUserId: string,
-  couponId: string,
-) {
+export function deleteCouponRecord(state: MarketplaceState, actorUserId: string, couponId: string) {
   const actor = getActorWithScope(state, actorUserId, "coupons");
   const coupon = state.coupons.find((item) => item.id === couponId);
   assert(coupon, "Coupon not found.");
@@ -851,9 +840,15 @@ export function createSellerPayoutBatchRecord(
     !state.sellerPayouts.some(
       (payout) =>
         payout.sellerSlug === seller.slug &&
-        ["DRAFT", "PENDING_APPROVAL", "APPROVED", "PROCESSING", "HELD", "PENDING", "SCHEDULED"].includes(
-          payout.status,
-        ),
+        [
+          "DRAFT",
+          "PENDING_APPROVAL",
+          "APPROVED",
+          "PROCESSING",
+          "HELD",
+          "PENDING",
+          "SCHEDULED",
+        ].includes(payout.status),
     ),
     "This seller already has an open payout batch.",
   );
@@ -958,8 +953,7 @@ export function reviewCODRemittanceRecord(
     adminNote: input.adminNote?.trim() || remittance.adminNote,
     confirmedByUserId:
       input.status === "REMITTANCE_CONFIRMED" ? actorUserId : remittance.confirmedByUserId,
-    confirmedAt:
-      input.status === "REMITTANCE_CONFIRMED" ? createdAt : remittance.confirmedAt,
+    confirmedAt: input.status === "REMITTANCE_CONFIRMED" ? createdAt : remittance.confirmedAt,
     updatedAt: createdAt,
   };
 
@@ -975,7 +969,10 @@ export function reviewCODRemittanceRecord(
     : undefined;
 
   if (input.status === "REMITTANCE_CONFIRMED" && order && payment) {
-    assert(payment.method === "COD", "Only COD payments can be cleared through remittance confirmation.");
+    assert(
+      payment.method === "COD",
+      "Only COD payments can be cleared through remittance confirmation.",
+    );
 
     const nextPayment = {
       ...payment,
@@ -988,9 +985,7 @@ export function reviewCODRemittanceRecord(
 
     nextState = {
       ...nextState,
-      payments: nextState.payments.map((entry) =>
-        entry.id === payment.id ? nextPayment : entry,
-      ),
+      payments: nextState.payments.map((entry) => (entry.id === payment.id ? nextPayment : entry)),
     };
     nextState = {
       ...nextState,
@@ -1007,8 +1002,7 @@ export function reviewCODRemittanceRecord(
     nextState = {
       ...nextState,
       sellerSettlements: nextState.sellerPayouts.reduce(
-        (settlements, payout) =>
-          updateSettlementStatusesForPayout(settlements, payout, createdAt),
+        (settlements, payout) => updateSettlementStatusesForPayout(settlements, payout, createdAt),
         nextState.sellerSettlements,
       ),
     };
@@ -1023,8 +1017,7 @@ export function reviewCODRemittanceRecord(
               ...settlement,
               settlementStatus: "ON_HOLD",
               holdReason:
-                input.adminNote?.trim() ||
-                "COD remittance was flagged by finance operations.",
+                input.adminNote?.trim() || "COD remittance was flagged by finance operations.",
               updatedAt: createdAt,
             }
           : settlement,
@@ -1066,61 +1059,58 @@ export function reviewCODRemittanceRecord(
       }),
     );
 
-  return appendArtifacts(
-    nextState,
-    {
-      notifications: sellerNotifications,
-      auditTrail: [
-        createAuditEntry({
-          action:
-            input.status === "REMITTANCE_CONFIRMED"
-              ? "COD_REMITTANCE_CONFIRMED"
-              : input.status === "ISSUE_FLAGGED"
-                ? "COD_REMITTANCE_FLAGGED"
-                : "COD_REMITTANCE_UPDATED",
-          actorUserId,
-          actorRole: actor.role,
-          orderId: remittance.orderId,
-          paymentId: remittance.paymentId,
-          fromStatus: remittance.status,
-          toStatus: input.status,
-          note: input.adminNote?.trim(),
-          createdAt,
-        }),
-        ...(input.status === "REMITTANCE_CONFIRMED" && payment
-          ? [
-              createAuditEntry({
-                action: "PAYMENT_STATUS_CHANGED",
-                actorUserId,
-                actorRole: actor.role,
-                orderId: remittance.orderId,
-                paymentId: payment.id,
-                fromStatus: payment.status,
-                toStatus: "PAID",
-                note: "COD payment cleared by confirmed remittance.",
-                createdAt,
-              }),
-            ]
-          : []),
-        ...nextState.sellerSettlements
-          .filter((settlement) => settlement.orderId === remittance.orderId)
-          .map((settlement) =>
+  return appendArtifacts(nextState, {
+    notifications: sellerNotifications,
+    auditTrail: [
+      createAuditEntry({
+        action:
+          input.status === "REMITTANCE_CONFIRMED"
+            ? "COD_REMITTANCE_CONFIRMED"
+            : input.status === "ISSUE_FLAGGED"
+              ? "COD_REMITTANCE_FLAGGED"
+              : "COD_REMITTANCE_UPDATED",
+        actorUserId,
+        actorRole: actor.role,
+        orderId: remittance.orderId,
+        paymentId: remittance.paymentId,
+        fromStatus: remittance.status,
+        toStatus: input.status,
+        note: input.adminNote?.trim(),
+        createdAt,
+      }),
+      ...(input.status === "REMITTANCE_CONFIRMED" && payment
+        ? [
             createAuditEntry({
-              action: "SETTLEMENT_STATUS_CHANGED",
+              action: "PAYMENT_STATUS_CHANGED",
               actorUserId,
               actorRole: actor.role,
-              orderId: settlement.orderId,
-              fromStatus:
-                state.sellerSettlements.find((entry) => entry.id === settlement.id)
-                  ?.settlementStatus ?? "NOT_READY",
-              toStatus: settlement.settlementStatus,
-              note: `${settlement.id} refreshed after COD remittance review.`,
+              orderId: remittance.orderId,
+              paymentId: payment.id,
+              fromStatus: payment.status,
+              toStatus: "PAID",
+              note: "COD payment cleared by confirmed remittance.",
               createdAt,
             }),
-          ),
-      ],
-    },
-  );
+          ]
+        : []),
+      ...nextState.sellerSettlements
+        .filter((settlement) => settlement.orderId === remittance.orderId)
+        .map((settlement) =>
+          createAuditEntry({
+            action: "SETTLEMENT_STATUS_CHANGED",
+            actorUserId,
+            actorRole: actor.role,
+            orderId: settlement.orderId,
+            fromStatus:
+              state.sellerSettlements.find((entry) => entry.id === settlement.id)
+                ?.settlementStatus ?? "NOT_READY",
+            toStatus: settlement.settlementStatus,
+            note: `${settlement.id} refreshed after COD remittance review.`,
+            createdAt,
+          }),
+        ),
+    ],
+  });
 }
 
 export function updateSellerPayoutRecord(
@@ -1161,23 +1151,29 @@ export function updateSellerPayoutRecord(
     transactionReference: input.transactionReference?.trim() || payout.transactionReference,
     processedByUserId: actorUserId,
     approvedByUserId:
-      input.status === "APPROVED" || input.status === "PROCESSING" || input.status === "PAID" || input.status === "SCHEDULED"
+      input.status === "APPROVED" ||
+      input.status === "PROCESSING" ||
+      input.status === "PAID" ||
+      input.status === "SCHEDULED"
         ? actorUserId
         : payout.approvedByUserId,
     approvedAt:
-      input.status === "APPROVED" || input.status === "PROCESSING" || input.status === "PAID" || input.status === "SCHEDULED"
-        ? payout.approvedAt ?? createdAt
+      input.status === "APPROVED" ||
+      input.status === "PROCESSING" ||
+      input.status === "PAID" ||
+      input.status === "SCHEDULED"
+        ? (payout.approvedAt ?? createdAt)
         : payout.approvedAt,
     rejectedByUserId: input.status === "FAILED" ? actorUserId : payout.rejectedByUserId,
     processedAt:
-      input.status === "PROCESSING" || input.status === "PAID"
-        ? createdAt
-        : payout.processedAt,
+      input.status === "PROCESSING" || input.status === "PAID" ? createdAt : payout.processedAt,
     paidAt: input.status === "PAID" ? createdAt : payout.paidAt,
     heldAt: input.status === "HELD" ? createdAt : payout.heldAt,
     rejectedAt: input.status === "FAILED" ? createdAt : payout.rejectedAt,
     failureReason:
-      input.status === "FAILED" ? input.adminNotes?.trim() || payout.failureReason : payout.failureReason,
+      input.status === "FAILED"
+        ? input.adminNotes?.trim() || payout.failureReason
+        : payout.failureReason,
     updatedAt: createdAt,
   };
 
@@ -1229,9 +1225,9 @@ export function updateSellerPayoutRecord(
                   ? `${payout.id} has been paid to your store settlement account.`
                   : input.status === "FAILED"
                     ? `${payout.id} was rejected. Review the admin note and update payout details if needed.`
-                  : input.status === "HELD"
-                    ? `${payout.id} is on hold until the finance team resolves the issue.`
-                  : `${payout.id} is now marked as ${input.status.toLowerCase()}.`,
+                    : input.status === "HELD"
+                      ? `${payout.id} is on hold until the finance team resolves the issue.`
+                      : `${payout.id} is now marked as ${input.status.toLowerCase()}.`,
               createdAt,
             }),
           ]
@@ -1269,7 +1265,10 @@ export function reviewSellerPayoutAccountRecord(
     verifiedByUserId: input.status === "VERIFIED" ? actorUserId : undefined,
     verifiedAt: input.status === "VERIFIED" ? createdAt : undefined,
     rejectedAt: input.status === "REJECTED" ? createdAt : undefined,
-    rejectionReason: input.status === "REJECTED" ? input.adminNote?.trim() || "Payout account rejected." : undefined,
+    rejectionReason:
+      input.status === "REJECTED"
+        ? input.adminNote?.trim() || "Payout account rejected."
+        : undefined,
     updatedAt: createdAt,
   };
 
@@ -1291,8 +1290,10 @@ export function reviewSellerPayoutAccountRecord(
         ? [
             createNotification({
               userId: seller.ownerUserId,
-              type: input.status === "VERIFIED" ? "PAYOUT_ACCOUNT_VERIFIED" : "PAYOUT_ACCOUNT_REJECTED",
-              title: input.status === "VERIFIED" ? "Payout account verified" : "Payout account rejected",
+              type:
+                input.status === "VERIFIED" ? "PAYOUT_ACCOUNT_VERIFIED" : "PAYOUT_ACCOUNT_REJECTED",
+              title:
+                input.status === "VERIFIED" ? "Payout account verified" : "Payout account rejected",
               message:
                 input.status === "VERIFIED"
                   ? `${seller.name} payout details are now verified for payouts.`

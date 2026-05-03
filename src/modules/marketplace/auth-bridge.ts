@@ -75,7 +75,8 @@ function buildSellerRecord(user: AuthenticatedUser, sellerSlug: string): SellerR
     name: storeName,
     tagline: "Pending seller onboarding and admin approval.",
     logo: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?auto=format&fit=crop&w=400&h=400&q=80",
-    banner: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=1600&h=640&q=80",
+    banner:
+      "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=1600&h=640&q=80",
     rating: 0,
     reviewCount: 0,
     productCount: 0,
@@ -128,7 +129,9 @@ export function syncAuthenticatedMarketplaceUser(
   let sellerSlug = authUser.sellerSlug;
 
   if (authUser.role === "SELLER" && !sellerSlug) {
-    const existingSeller = nextState.sellersDirectory.find((seller) => seller.ownerUserId === authUser.id);
+    const existingSeller = nextState.sellersDirectory.find(
+      (seller) => seller.ownerUserId === authUser.id,
+    );
 
     if (existingSeller) {
       sellerSlug = existingSeller.slug;
@@ -151,7 +154,9 @@ export function syncAuthenticatedMarketplaceUser(
     ...nextState,
     currentUserId: authUser.id,
     users: existingUser
-      ? nextState.users.map((user) => (user.id === authUser.id ? { ...user, ...marketplaceUser } : user))
+      ? nextState.users.map((user) =>
+          user.id === authUser.id ? { ...user, ...marketplaceUser } : user,
+        )
       : [...nextState.users, marketplaceUser],
     cartsByUserId: nextState.cartsByUserId[authUser.id]
       ? nextState.cartsByUserId

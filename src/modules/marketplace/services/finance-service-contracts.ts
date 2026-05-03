@@ -28,10 +28,7 @@ export interface SellerPaymentAccountService {
 }
 
 export interface CODRemittanceService {
-  reviewCODRemittance(
-    actorUserId: string,
-    input: CODRemittanceReviewApiInput,
-  ): Promise<void>;
+  reviewCODRemittance(actorUserId: string, input: CODRemittanceReviewApiInput): Promise<void>;
 }
 
 export interface SellerSettlementService {
@@ -42,14 +39,8 @@ export interface SellerSettlementService {
 }
 
 export interface SellerPayoutService {
-  requestSellerPayout(
-    actorUserId: string,
-    input: SellerPayoutRequestApiInput,
-  ): Promise<void>;
-  updateSellerPayout(
-    actorUserId: string,
-    input: SellerPayoutUpdateApiInput,
-  ): Promise<void>;
+  requestSellerPayout(actorUserId: string, input: SellerPayoutRequestApiInput): Promise<void>;
+  updateSellerPayout(actorUserId: string, input: SellerPayoutUpdateApiInput): Promise<void>;
 }
 
 export interface AdminFinancialDashboardService {

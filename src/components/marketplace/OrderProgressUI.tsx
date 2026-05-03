@@ -1,12 +1,18 @@
 "use client";
 
-import { Clock3, PackageCheck, Store, Truck, CheckCircle2, AlertCircle, CreditCard, Package } from "lucide-react";
+import {
+  Clock3,
+  PackageCheck,
+  Store,
+  Truck,
+  CheckCircle2,
+  AlertCircle,
+  CreditCard,
+  Package,
+} from "lucide-react";
 import { OrderStatusBadge } from "@/components/marketplace/StatusBadge";
 import { getMarketplaceSellerBySlug } from "@/modules/marketplace/selectors";
-import type {
-  MarketplaceState,
-  SellerOrderFulfillment,
-} from "@/modules/marketplace/types";
+import type { MarketplaceState, SellerOrderFulfillment } from "@/modules/marketplace/types";
 
 function formatTimelineDate(value: string) {
   return new Date(value).toLocaleString("en-PK", {
@@ -85,22 +91,57 @@ export function OrderTimeline({
   const getIconAndColor = (toStatus?: string, category?: string) => {
     switch (category) {
       case "success":
-        return { Icon: CheckCircle2, bgColor: "bg-success/10", iconColor: "text-success", dotColor: "bg-success" };
+        return {
+          Icon: CheckCircle2,
+          bgColor: "bg-success/10",
+          iconColor: "text-success",
+          dotColor: "bg-success",
+        };
       case "danger":
-        return { Icon: AlertCircle, bgColor: "bg-danger/10", iconColor: "text-danger", dotColor: "bg-danger" };
+        return {
+          Icon: AlertCircle,
+          bgColor: "bg-danger/10",
+          iconColor: "text-danger",
+          dotColor: "bg-danger",
+        };
       case "warning":
         if (toStatus === "SHIPPED") {
-          return { Icon: Truck, bgColor: "bg-purple-500/10", iconColor: "text-purple-600", dotColor: "bg-purple-500" };
+          return {
+            Icon: Truck,
+            bgColor: "bg-purple-500/10",
+            iconColor: "text-purple-600",
+            dotColor: "bg-purple-500",
+          };
         }
-        return { Icon: Clock3, bgColor: "bg-warning/10", iconColor: "text-warning", dotColor: "bg-warning" };
+        return {
+          Icon: Clock3,
+          bgColor: "bg-warning/10",
+          iconColor: "text-warning",
+          dotColor: "bg-warning",
+        };
       default:
         if (toStatus === "CONFIRMED" || toStatus === "PROCESSING") {
-          return { Icon: Package, bgColor: "bg-blue-500/10", iconColor: "text-blue-600", dotColor: "bg-blue-500" };
+          return {
+            Icon: Package,
+            bgColor: "bg-blue-500/10",
+            iconColor: "text-blue-600",
+            dotColor: "bg-blue-500",
+          };
         }
         if (toStatus === "DELIVERED") {
-          return { Icon: CheckCircle2, bgColor: "bg-success/10", iconColor: "text-success", dotColor: "bg-success" };
+          return {
+            Icon: CheckCircle2,
+            bgColor: "bg-success/10",
+            iconColor: "text-success",
+            dotColor: "bg-success",
+          };
         }
-        return { Icon: Clock3, bgColor: "bg-accent-soft", iconColor: "text-accent", dotColor: "bg-accent" };
+        return {
+          Icon: Clock3,
+          bgColor: "bg-accent-soft",
+          iconColor: "text-accent",
+          dotColor: "bg-accent",
+        };
     }
   };
 
@@ -110,17 +151,26 @@ export function OrderTimeline({
   return (
     <div className="relative">
       {/* Timeline horizontal line */}
-      <div className="absolute left-0 right-0 top-2.5 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent pointer-events-none" style={{ zIndex: 0 }} />
-      
+      <div
+        className="absolute left-0 right-0 top-2.5 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent pointer-events-none"
+        style={{ zIndex: 0 }}
+      />
+
       {/* Timeline items - horizontal layout */}
       <div className="flex items-start gap-2 relative" style={{ zIndex: 1 }}>
         {displayItems.map((item, index) => {
-          const { Icon, bgColor, iconColor, dotColor } = getIconAndColor(item.toStatus, item.category);
+          const { Icon, bgColor, iconColor, dotColor } = getIconAndColor(
+            item.toStatus,
+            item.category,
+          );
 
           return (
             <div key={item.id} className="flex-1 flex flex-col items-center">
               {/* Timeline dot */}
-              <div className={`h-7 w-7 rounded-full ${bgColor} border-2 ${dotColor.replace("bg-", "border-")} flex items-center justify-center mb-2 relative shadow-[var(--shadow-soft)]`} style={{ zIndex: 2 }}>
+              <div
+                className={`h-7 w-7 rounded-full ${bgColor} border-2 ${dotColor.replace("bg-", "border-")} flex items-center justify-center mb-2 relative shadow-[var(--shadow-soft)]`}
+                style={{ zIndex: 2 }}
+              >
                 <Icon className={`h-3.5 w-3.5 ${iconColor}`} />
               </div>
 

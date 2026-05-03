@@ -5,7 +5,12 @@ import { AlertTriangle, Search, Star } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@/components/navigation/Link";
 import { AdminCompactStat, AdminKeyValue, AdminScopeGate } from "@/components/admin/AdminCommon";
-import { AdminEmptyState, AdminPageHeader, AdminPanel, AdminPill } from "@/components/admin/AdminUI";
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+  AdminPill,
+} from "@/components/admin/AdminUI";
 import { getReviewInsights } from "@/modules/marketplace/admin-selectors";
 import { useMarketplace } from "@/modules/marketplace/store";
 import type { ReviewModerationStatus } from "@/modules/marketplace/types";
@@ -47,7 +52,9 @@ export default function AdminReviewsPage() {
     const productRows = state.managedProductReviews.map((review) => ({
       id: review.id,
       kind: "product" as const,
-      entityName: state.managedProducts.find((product) => product.id === review.productId)?.title ?? review.productId,
+      entityName:
+        state.managedProducts.find((product) => product.id === review.productId)?.title ??
+        review.productId,
       author: review.author,
       rating: review.rating,
       title: review.title,
@@ -60,7 +67,9 @@ export default function AdminReviewsPage() {
     const storeRows = state.managedStoreReviews.map((review) => ({
       id: review.id,
       kind: "store" as const,
-      entityName: state.sellersDirectory.find((seller) => seller.slug === review.sellerSlug)?.name ?? review.sellerSlug,
+      entityName:
+        state.sellersDirectory.find((seller) => seller.slug === review.sellerSlug)?.name ??
+        review.sellerSlug,
       author: review.author,
       rating: review.rating,
       title: review.title,
@@ -73,13 +82,26 @@ export default function AdminReviewsPage() {
 
     return [...productRows, ...storeRows]
       .filter((review) => {
-        const searchable = `${review.author} ${review.entityName} ${review.title} ${review.body}`.toLowerCase();
-        return (!query.trim() || searchable.includes(query.trim().toLowerCase())) &&
+        const searchable =
+          `${review.author} ${review.entityName} ${review.title} ${review.body}`.toLowerCase();
+        return (
+          (!query.trim() || searchable.includes(query.trim().toLowerCase())) &&
           (statusFilter === "ALL" || review.moderationStatus === statusFilter) &&
-          (kindFilter === "all" || review.kind === kindFilter);
+          (kindFilter === "all" || review.kind === kindFilter)
+        );
       })
-      .sort((left, right) => right.reportedCount - left.reportedCount || right.rating - left.rating);
-  }, [kindFilter, query, state.managedProductReviews, state.managedProducts, state.managedStoreReviews, state.sellersDirectory, statusFilter]);
+      .sort(
+        (left, right) => right.reportedCount - left.reportedCount || right.rating - left.rating,
+      );
+  }, [
+    kindFilter,
+    query,
+    state.managedProductReviews,
+    state.managedProducts,
+    state.managedStoreReviews,
+    state.sellersDirectory,
+    statusFilter,
+  ]);
 
   const totalPages = Math.ceil(reviewRows.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -128,10 +150,28 @@ export default function AdminReviewsPage() {
         />
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <AdminCompactStat label="Avg product rating" value={insights.averageProductRating.toFixed(1)} helper="Across moderated product reviews" />
-          <AdminCompactStat label="Avg store rating" value={insights.averageStoreRating.toFixed(1)} helper="Across moderated store reviews" />
-          <AdminCompactStat label="Pending" value={String(insights.pendingReviewCount)} helper="Awaiting moderation" tone="warning" />
-          <AdminCompactStat label="Flagged" value={String(insights.flaggedReviewCount)} helper="Reported or suspicious" tone="danger" />
+          <AdminCompactStat
+            label="Avg product rating"
+            value={insights.averageProductRating.toFixed(1)}
+            helper="Across moderated product reviews"
+          />
+          <AdminCompactStat
+            label="Avg store rating"
+            value={insights.averageStoreRating.toFixed(1)}
+            helper="Across moderated store reviews"
+          />
+          <AdminCompactStat
+            label="Pending"
+            value={String(insights.pendingReviewCount)}
+            helper="Awaiting moderation"
+            tone="warning"
+          />
+          <AdminCompactStat
+            label="Flagged"
+            value={String(insights.flaggedReviewCount)}
+            helper="Reported or suspicious"
+            tone="danger"
+          />
         </section>
 
         <section className="grid gap-4 lg:grid-cols-[1fr_0.85fr]">
@@ -148,7 +188,9 @@ export default function AdminReviewsPage() {
               </div>
               <select
                 value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value as ReviewModerationStatus | "ALL")}
+                onChange={(event) =>
+                  setStatusFilter(event.target.value as ReviewModerationStatus | "ALL")
+                }
                 className="h-11 rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
               >
                 {moderationStatuses.map((status) => (
@@ -159,7 +201,9 @@ export default function AdminReviewsPage() {
               </select>
               <select
                 value={kindFilter}
-                onChange={(event) => setKindFilter(event.target.value as "product" | "store" | "all")}
+                onChange={(event) =>
+                  setKindFilter(event.target.value as "product" | "store" | "all")
+                }
                 className="h-11 rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none"
               >
                 <option value="all">All types</option>
@@ -190,7 +234,9 @@ export default function AdminReviewsPage() {
                     >
                       <td className="px-3 py-4">
                         <div className="font-medium text-foreground">{review.title}</div>
-                        <div className="mt-0.5 text-xs text-muted-foreground">{review.entityName}</div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">
+                          {review.entityName}
+                        </div>
                       </td>
                       <td className="px-3 py-4 text-muted-foreground">{review.author}</td>
                       <td className="px-3 py-4">
@@ -226,8 +272,11 @@ export default function AdminReviewsPage() {
               <div className="mt-4 flex flex-col gap-3 border-t border-border/50 pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-sm text-muted-foreground">
                   Showing <span className="font-semibold text-foreground">{startIndex + 1}</span> to{" "}
-                  <span className="font-semibold text-foreground">{Math.min(startIndex + ITEMS_PER_PAGE, reviewRows.length)}</span> of{" "}
-                  <span className="font-semibold text-foreground">{reviewRows.length}</span> reviews
+                  <span className="font-semibold text-foreground">
+                    {Math.min(startIndex + ITEMS_PER_PAGE, reviewRows.length)}
+                  </span>{" "}
+                  of <span className="font-semibold text-foreground">{reviewRows.length}</span>{" "}
+                  reviews
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -244,17 +293,14 @@ export default function AdminReviewsPage() {
                         const diff = Math.abs(page - currentPage);
                         return diff === 0 || diff === 1 || page === 1 || page === totalPages;
                       })
-                      .reduce<(number | null)[]>(
-                        (acc, page) => {
-                          const lastItem = acc[acc.length - 1];
-                          if (lastItem !== undefined && lastItem !== null && page - lastItem > 1) {
-                            acc.push(null);
-                          }
-                          acc.push(page);
-                          return acc;
-                        },
-                        []
-                      )
+                      .reduce<(number | null)[]>((acc, page) => {
+                        const lastItem = acc[acc.length - 1];
+                        if (lastItem !== undefined && lastItem !== null && page - lastItem > 1) {
+                          acc.push(null);
+                        }
+                        acc.push(page);
+                        return acc;
+                      }, [])
                       .map((page, idx) =>
                         page === null ? (
                           <span key={`dots-${idx}`} className="px-1 text-muted-foreground">
@@ -272,7 +318,7 @@ export default function AdminReviewsPage() {
                           >
                             {page}
                           </button>
-                        )
+                        ),
                       )}
                   </div>
                   <button
@@ -300,40 +346,62 @@ export default function AdminReviewsPage() {
                   <div className="rounded-[16px] border border-border/50 bg-card p-4 shadow-[var(--shadow-soft)]">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="text-sm font-bold text-foreground">{selectedReview.title}</h3>
+                        <h3 className="text-sm font-bold text-foreground">
+                          {selectedReview.title}
+                        </h3>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {selectedReview.author} • {selectedReview.kind === "product" ? "Product" : "Store"}
+                          {selectedReview.author} •{" "}
+                          {selectedReview.kind === "product" ? "Product" : "Store"}
                         </p>
                       </div>
                       <ModerationPill status={selectedReview.moderationStatus} />
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-foreground/80">{selectedReview.body}</p>
+                    <p className="mt-3 text-sm leading-6 text-foreground/80">
+                      {selectedReview.body}
+                    </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <AdminPill>{selectedReview.rating.toFixed(1)} / 5</AdminPill>
                       {selectedReview.reportedCount > 0 && (
                         <AdminPill tone="danger">
                           <AlertTriangle className="h-3 w-3" />
-                          {selectedReview.reportedCount} {selectedReview.reportedCount === 1 ? "report" : "reports"}
+                          {selectedReview.reportedCount}{" "}
+                          {selectedReview.reportedCount === 1 ? "report" : "reports"}
                         </AdminPill>
                       )}
                     </div>
                   </div>
 
                   <div className="rounded-[16px] border border-border/50 bg-card p-4 shadow-[var(--shadow-soft)]">
-                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Metadata</div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      Metadata
+                    </div>
                     <div className="mt-3 space-y-2 text-sm">
-                      <AdminKeyValue label="Review type" value={selectedReview.kind === "product" ? "Product review" : "Store review"} />
+                      <AdminKeyValue
+                        label="Review type"
+                        value={
+                          selectedReview.kind === "product" ? "Product review" : "Store review"
+                        }
+                      />
                       <AdminKeyValue label="Entity" value={selectedReview.entityName} />
-                      <AdminKeyValue label="Current status" value={selectedReview.moderationStatus} />
+                      <AdminKeyValue
+                        label="Current status"
+                        value={selectedReview.moderationStatus}
+                      />
                       <AdminKeyValue
                         label="Last moderated"
-                        value={selectedReview.moderatedAt ? new Date(selectedReview.moderatedAt).toLocaleString() : "Not moderated yet"}
+                        value={
+                          selectedReview.moderatedAt
+                            ? new Date(selectedReview.moderatedAt).toLocaleString()
+                            : "Not moderated yet"
+                        }
                       />
                     </div>
                   </div>
 
                   <div className="rounded-[16px] border border-border/50 bg-card p-4 shadow-[var(--shadow-soft)]">
-                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Moderator note</div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      Moderator note
+                    </div>
                     <textarea
                       value={moderatorNote}
                       onChange={(event) => setModeratorNote(event.target.value)}
@@ -343,42 +411,48 @@ export default function AdminReviewsPage() {
                   </div>
 
                   <div className="grid gap-2">
-                    {(["APPROVED", "FLAGGED", "REJECTED"] as ReviewModerationStatus[]).map((status) => {
-                      const isApproved = status === "APPROVED";
-                      const isFlagged = status === "FLAGGED";
-                      const isRejected = status === "REJECTED";
-                      return (
-                        <button
-                          key={status}
-                          type="button"
-                          onClick={() => {
-                            try {
-                              moderateReviewRecord({
-                                kind: selectedReview.kind,
-                                reviewId: selectedReview.id,
-                                status,
-                                moderatorNote: moderatorNote,
-                              });
-                              toast.success(`Review marked as ${status.toLowerCase()}.`);
-                              setSelectedReviewId("");
-                            } catch (error) {
-                              toast.error(error instanceof Error ? error.message : "Unable to moderate review.");
-                            }
-                          }}
-                          className={`h-10 w-full rounded-xl px-4 text-sm font-semibold shadow-[var(--shadow-soft)] transition-colors ${
-                            isApproved
-                              ? "bg-green-500/20 text-green-700 hover:bg-green-500/30"
-                              : isFlagged
-                                ? "bg-yellow-500/20 text-yellow-700 hover:bg-yellow-500/30"
-                                : isRejected
-                                  ? "bg-red-500/20 text-red-700 hover:bg-red-500/30"
-                                  : ""
-                          }`}
-                        >
-                          Mark as {status.toLowerCase()}
-                        </button>
-                      );
-                    })}
+                    {(["APPROVED", "FLAGGED", "REJECTED"] as ReviewModerationStatus[]).map(
+                      (status) => {
+                        const isApproved = status === "APPROVED";
+                        const isFlagged = status === "FLAGGED";
+                        const isRejected = status === "REJECTED";
+                        return (
+                          <button
+                            key={status}
+                            type="button"
+                            onClick={() => {
+                              try {
+                                moderateReviewRecord({
+                                  kind: selectedReview.kind,
+                                  reviewId: selectedReview.id,
+                                  status,
+                                  moderatorNote: moderatorNote,
+                                });
+                                toast.success(`Review marked as ${status.toLowerCase()}.`);
+                                setSelectedReviewId("");
+                              } catch (error) {
+                                toast.error(
+                                  error instanceof Error
+                                    ? error.message
+                                    : "Unable to moderate review.",
+                                );
+                              }
+                            }}
+                            className={`h-10 w-full rounded-xl px-4 text-sm font-semibold shadow-[var(--shadow-soft)] transition-colors ${
+                              isApproved
+                                ? "bg-green-500/20 text-green-700 hover:bg-green-500/30"
+                                : isFlagged
+                                  ? "bg-yellow-500/20 text-yellow-700 hover:bg-yellow-500/30"
+                                  : isRejected
+                                    ? "bg-red-500/20 text-red-700 hover:bg-red-500/30"
+                                    : ""
+                            }`}
+                          >
+                            Mark as {status.toLowerCase()}
+                          </button>
+                        );
+                      },
+                    )}
                   </div>
                 </div>
               )}

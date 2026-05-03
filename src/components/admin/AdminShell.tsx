@@ -45,19 +45,79 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { href: "/admin", label: "Dashboard", scope: "dashboard", group: "Workspace", Icon: LayoutDashboard },
-  { href: "/admin/orders", label: "Orders", scope: "orders", group: "Operations", Icon: ClipboardList },
-  { href: "/admin/payments", label: "Payments", scope: "payments", group: "Operations", Icon: CreditCard },
-  { href: "/admin/financial-operations", label: "Financial Ops", scope: "reports", group: "Operations", Icon: BarChart3 },
-  { href: "/admin/inventory", label: "Inventory", scope: "inventory", group: "Operations", Icon: Package },
+  {
+    href: "/admin",
+    label: "Dashboard",
+    scope: "dashboard",
+    group: "Workspace",
+    Icon: LayoutDashboard,
+  },
+  {
+    href: "/admin/orders",
+    label: "Orders",
+    scope: "orders",
+    group: "Operations",
+    Icon: ClipboardList,
+  },
+  {
+    href: "/admin/payments",
+    label: "Payments",
+    scope: "payments",
+    group: "Operations",
+    Icon: CreditCard,
+  },
+  {
+    href: "/admin/financial-operations",
+    label: "Financial Ops",
+    scope: "reports",
+    group: "Operations",
+    Icon: BarChart3,
+  },
+  {
+    href: "/admin/inventory",
+    label: "Inventory",
+    scope: "inventory",
+    group: "Operations",
+    Icon: Package,
+  },
   { href: "/admin/sellers", label: "Sellers", scope: "sellers", group: "Growth", Icon: Store },
-  { href: "/admin/products", label: "Products", scope: "products", group: "Growth", Icon: ShoppingBag },
-  { href: "/admin/reviews", label: "Reviews", scope: "reviews", group: "Growth", Icon: ShieldCheck },
-  { href: "/admin/coupons", label: "Coupons", scope: "coupons", group: "Growth", Icon: TicketPercent },
+  {
+    href: "/admin/products",
+    label: "Products",
+    scope: "products",
+    group: "Growth",
+    Icon: ShoppingBag,
+  },
+  {
+    href: "/admin/reviews",
+    label: "Reviews",
+    scope: "reviews",
+    group: "Growth",
+    Icon: ShieldCheck,
+  },
+  {
+    href: "/admin/coupons",
+    label: "Coupons",
+    scope: "coupons",
+    group: "Growth",
+    Icon: TicketPercent,
+  },
   { href: "/admin/users", label: "Users", scope: "users", group: "System", Icon: Users2 },
   { href: "/admin/audit-logs", label: "Audit Logs", scope: "audit", group: "System", Icon: Boxes },
-  { href: "/admin/settings", label: "Settings", scope: "settings", group: "System", Icon: Settings },
-  { href: "/admin/admins", label: "Admin Roles", scope: "admins", group: "System", Icon: ShieldCheck },
+  {
+    href: "/admin/settings",
+    label: "Settings",
+    scope: "settings",
+    group: "System",
+    Icon: Settings,
+  },
+  {
+    href: "/admin/admins",
+    label: "Admin Roles",
+    scope: "admins",
+    group: "System",
+    Icon: ShieldCheck,
+  },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -68,7 +128,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const summary = useMemo(() => getAdminDashboardSummary(state), [state]);
   const visibleItems = navItems.filter((item) => canAccessAdminScope(currentUser, item.scope));
   const activeItem = visibleItems.find(
-    (item) => pathname === item.href || (item.href !== "/admin" && pathname.startsWith(`${item.href}/`)),
+    (item) =>
+      pathname === item.href || (item.href !== "/admin" && pathname.startsWith(`${item.href}/`)),
   );
   const groupedItems = (["Workspace", "Operations", "Growth", "System"] as const)
     .map((group) => ({
@@ -89,15 +150,23 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="mx-auto inline-flex rounded-full bg-accent-soft px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-accent">
             Admin Access
           </div>
-          <h1 className="mt-4 text-3xl font-black tracking-tight text-foreground">Admin portal only</h1>
+          <h1 className="mt-4 text-3xl font-black tracking-tight text-foreground">
+            Admin portal only
+          </h1>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             Sign in with an admin or super-admin account to access SpareKart marketplace operations.
           </p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/login" className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground">
+            <Link
+              href="/login"
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground"
+            >
               Go to login
             </Link>
-            <Link href="/" className="inline-flex h-11 items-center justify-center rounded-xl bg-surface px-5 text-sm font-semibold shadow-[var(--shadow-soft)]">
+            <Link
+              href="/"
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-surface px-5 text-sm font-semibold shadow-[var(--shadow-soft)]"
+            >
               Back to store
             </Link>
           </div>
@@ -144,7 +213,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </div>
             <div className="space-y-0.5">
               {items.map(({ href, label, Icon }) => {
-                const active = pathname === href || (href !== "/admin" && pathname.startsWith(`${href}/`));
+                const active =
+                  pathname === href || (href !== "/admin" && pathname.startsWith(`${href}/`));
                 return (
                   <Link
                     key={href}
@@ -155,9 +225,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                         : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
                     }`}
                   >
-                    <Icon className={`h-4 w-4 shrink-0 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"}`} />
+                    <Icon
+                      className={`h-4 w-4 shrink-0 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"}`}
+                    />
                     <span className="min-w-0 flex-1 truncate">{label}</span>
-                    <ChevronRight className={`h-3.5 w-3.5 shrink-0 ${active ? "opacity-90" : "opacity-0 group-hover:opacity-40"}`} />
+                    <ChevronRight
+                      className={`h-3.5 w-3.5 shrink-0 ${active ? "opacity-90" : "opacity-0 group-hover:opacity-40"}`}
+                    />
                   </Link>
                 );
               })}
@@ -173,7 +247,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             {currentUser.adminTitle ?? currentUser.role.replaceAll("_", " ")}
           </div>
           <div className="mt-2 grid grid-cols-2 gap-1.5">
-            <Link href="/" className="inline-flex h-8 items-center justify-center rounded-lg border border-border/70 bg-card px-2 text-xs font-bold">
+            <Link
+              href="/"
+              className="inline-flex h-8 items-center justify-center rounded-lg border border-border/70 bg-card px-2 text-xs font-bold"
+            >
               Store
             </Link>
             <button
@@ -211,7 +288,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   <SheetHeader className="sr-only">
                     <SheetTitle>Admin navigation</SheetTitle>
                     <SheetDescription>
-                      Open the SpareKart admin sidebar and switch between marketplace control screens.
+                      Open the SpareKart admin sidebar and switch between marketplace control
+                      screens.
                     </SheetDescription>
                   </SheetHeader>
                   {SidebarContent}
@@ -233,7 +311,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <main className="flex-1 px-3.5 py-3.5 sm:px-4 lg:min-h-0 lg:overflow-y-auto lg:px-5 lg:py-4">{children}</main>
+          <main className="flex-1 px-3.5 py-3.5 sm:px-4 lg:min-h-0 lg:overflow-y-auto lg:px-5 lg:py-4">
+            {children}
+          </main>
         </div>
       </div>
     </div>

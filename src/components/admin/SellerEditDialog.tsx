@@ -54,7 +54,8 @@ export function SellerEditDialog({
             Edit Seller Governance
           </DialogTitle>
           <DialogDescription>
-            Update status, compliance notes, payout settings, and seller permissions without leaving the queue.
+            Update status, compliance notes, payout settings, and seller permissions without leaving
+            the queue.
           </DialogDescription>
         </DialogHeader>
 
@@ -150,7 +151,10 @@ export function SellerEditDialog({
                 </AdminField>
               </div>
 
-              <AdminField label="Approval Note" hint="Shared admin note for approval or follow-up context.">
+              <AdminField
+                label="Approval Note"
+                hint="Shared admin note for approval or follow-up context."
+              >
                 <textarea
                   value={draft.approvalNote ?? ""}
                   onChange={(event) => update("approvalNote", event.target.value || undefined)}
@@ -158,7 +162,10 @@ export function SellerEditDialog({
                 />
               </AdminField>
 
-              <AdminField label="Flagged Reason" hint="Explain why this seller needs moderation or intervention.">
+              <AdminField
+                label="Flagged Reason"
+                hint="Explain why this seller needs moderation or intervention."
+              >
                 <textarea
                   value={draft.flaggedReason ?? ""}
                   onChange={(event) => update("flaggedReason", event.target.value || undefined)}
@@ -240,12 +247,20 @@ export function SellerEditDialog({
                 <div className="text-sm font-black text-foreground">Quality checklist</div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <ChecklistRow label="Brand assets" active={Boolean(draft.logo && draft.banner)} />
-                  <ChecklistRow label="Store description" active={draft.description.trim().length > 60} />
+                  <ChecklistRow
+                    label="Store description"
+                    active={draft.description.trim().length > 60}
+                  />
                   <ChecklistRow
                     label="Policy coverage"
-                    active={Boolean(draft.policies.returns && draft.policies.shipping && draft.policies.warranty)}
+                    active={Boolean(
+                      draft.policies.returns && draft.policies.shipping && draft.policies.warranty,
+                    )}
                   />
-                  <ChecklistRow label="Trust signals" active={draft.verified && draft.rating >= 4} />
+                  <ChecklistRow
+                    label="Trust signals"
+                    active={draft.verified && draft.rating >= 4}
+                  />
                 </div>
               </div>
 
@@ -256,7 +271,14 @@ export function SellerEditDialog({
                   <SummaryRow label="Joined" value={draft.joined} />
                   <SummaryRow label="Rating" value={`${draft.rating.toFixed(1)} / 5`} />
                   <SummaryRow label="Review count" value={String(draft.reviewCount)} />
-                  <SummaryRow label="Last active" value={draft.lastActiveAt ? new Date(draft.lastActiveAt).toLocaleString() : "No recent session"} />
+                  <SummaryRow
+                    label="Last active"
+                    value={
+                      draft.lastActiveAt
+                        ? new Date(draft.lastActiveAt).toLocaleString()
+                        : "No recent session"
+                    }
+                  />
                 </div>
               </div>
             </section>

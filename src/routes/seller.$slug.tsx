@@ -48,11 +48,10 @@ export default function SellerPage({ seller }: SellerPageProps) {
     imageUrls: [] as string[],
   });
 
-  const sellerRecord =
-    state.sellersDirectory.find((item) => item.slug === seller.slug) ?? {
-      ...seller,
-      socialLinks: undefined,
-    };
+  const sellerRecord = state.sellersDirectory.find((item) => item.slug === seller.slug) ?? {
+    ...seller,
+    socialLinks: undefined,
+  };
 
   const sellerProducts = state.managedProducts.filter(
     (product) =>
@@ -64,14 +63,10 @@ export default function SellerPage({ seller }: SellerPageProps) {
     order.items.some((item) => item.sellerSlug === seller.slug),
   );
   const approvedReviews = state.managedStoreReviews
-    .filter(
-      (review) =>
-        review.sellerSlug === seller.slug && review.moderationStatus === "APPROVED",
-    )
+    .filter((review) => review.sellerSlug === seller.slug && review.moderationStatus === "APPROVED")
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
   const pendingReviews = state.managedStoreReviews.filter(
-    (review) =>
-      review.sellerSlug === seller.slug && review.moderationStatus === "PENDING",
+    (review) => review.sellerSlug === seller.slug && review.moderationStatus === "PENDING",
   );
 
   const displayRating =
@@ -88,7 +83,8 @@ export default function SellerPage({ seller }: SellerPageProps) {
   );
   const filteredProducts = useMemo(() => {
     return sellerProducts.filter((product) => {
-      const searchable = `${product.title} ${product.brand} ${product.shortDescription}`.toLowerCase();
+      const searchable =
+        `${product.title} ${product.brand} ${product.shortDescription}`.toLowerCase();
       return (
         (!query.trim() || searchable.includes(query.trim().toLowerCase())) &&
         (categoryFilter === "ALL" || product.category === categoryFilter)
@@ -96,10 +92,10 @@ export default function SellerPage({ seller }: SellerPageProps) {
     });
   }, [categoryFilter, query, sellerProducts]);
 
-  const isOwner =
-    currentUser?.role === "SELLER" && currentUser.sellerSlug === sellerRecord.slug;
+  const isOwner = currentUser?.role === "SELLER" && currentUser.sellerSlug === sellerRecord.slug;
   const canSubmitReview =
-    currentUser?.role === "CUSTOMER" && canUserReviewStore(state, currentUser.id, sellerRecord.slug);
+    currentUser?.role === "CUSTOMER" &&
+    canUserReviewStore(state, currentUser.id, sellerRecord.slug);
   const whatsappLink = buildSellerWhatsAppLink(sellerRecord.socialLinks?.whatsapp, {
     text: `Hi ${sellerRecord.name}, I want to ask about your products on SpareKart.`,
   });
@@ -163,9 +159,7 @@ export default function SellerPage({ seller }: SellerPageProps) {
                       <span className="font-black tabular-nums text-foreground">
                         {displayRating.toFixed(1)}
                       </span>
-                      <span className="text-muted-foreground">
-                        ({displayReviewCount} reviews)
-                      </span>
+                      <span className="text-muted-foreground">({displayReviewCount} reviews)</span>
                     </div>
                     <div className="inline-flex items-center gap-1.5 text-muted-foreground">
                       <Package className="h-4 w-4" />
@@ -236,13 +230,25 @@ export default function SellerPage({ seller }: SellerPageProps) {
             {sellerRecord.socialLinks ? (
               <div className="mt-5 flex flex-wrap gap-2">
                 {sellerRecord.socialLinks.website ? (
-                  <ExternalChip href={sellerRecord.socialLinks.website} icon={Globe} label="Website" />
+                  <ExternalChip
+                    href={sellerRecord.socialLinks.website}
+                    icon={Globe}
+                    label="Website"
+                  />
                 ) : null}
                 {sellerRecord.socialLinks.facebook ? (
-                  <ExternalChip href={sellerRecord.socialLinks.facebook} icon={Facebook} label="Facebook" />
+                  <ExternalChip
+                    href={sellerRecord.socialLinks.facebook}
+                    icon={Facebook}
+                    label="Facebook"
+                  />
                 ) : null}
                 {sellerRecord.socialLinks.instagram ? (
-                  <ExternalChip href={sellerRecord.socialLinks.instagram} icon={Instagram} label="Instagram" />
+                  <ExternalChip
+                    href={sellerRecord.socialLinks.instagram}
+                    icon={Instagram}
+                    label="Instagram"
+                  />
                 ) : null}
                 {whatsappLink ? (
                   <ExternalChip href={whatsappLink} icon={MessageCircle} label="WhatsApp" />
@@ -252,7 +258,8 @@ export default function SellerPage({ seller }: SellerPageProps) {
 
             {isOwner && pendingReviews.length > 0 ? (
               <div className="mt-5 rounded-[22px] bg-warning/10 px-4 py-4 text-sm text-warning-foreground">
-                {pendingReviews.length} new store review{pendingReviews.length > 1 ? "s are" : " is"} awaiting admin moderation.
+                {pendingReviews.length} new store review
+                {pendingReviews.length > 1 ? "s are" : " is"} awaiting admin moderation.
               </div>
             ) : null}
           </div>
@@ -462,7 +469,14 @@ export default function SellerPage({ seller }: SellerPageProps) {
                                 imageUrls: reviewDraft.imageUrls,
                               });
                               toast.success("Review submitted and sent for admin moderation.");
-                              setReviewDraft({ title: "", body: "", rating: 5, orderNumber: "", contact: "", imageUrls: [] });
+                              setReviewDraft({
+                                title: "",
+                                body: "",
+                                rating: 5,
+                                orderNumber: "",
+                                contact: "",
+                                imageUrls: [],
+                              });
                             } catch (error) {
                               toast.error(
                                 error instanceof Error
@@ -478,7 +492,8 @@ export default function SellerPage({ seller }: SellerPageProps) {
                       </div>
                     ) : (
                       <div className="mt-4 text-sm text-muted-foreground">
-                        You can leave a store review after at least one delivered order from this seller.
+                        You can leave a store review after at least one delivered order from this
+                        seller.
                       </div>
                     )
                   ) : currentUser ? (
@@ -488,7 +503,8 @@ export default function SellerPage({ seller }: SellerPageProps) {
                   ) : (
                     <div className="mt-4 space-y-4">
                       <div className="rounded-2xl bg-surface px-4 py-3 text-sm text-muted-foreground shadow-[var(--shadow-soft)]">
-                        Ordered as a guest? Verify your delivered order with the order number and phone or email used at checkout.
+                        Ordered as a guest? Verify your delivered order with the order number and
+                        phone or email used at checkout.
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {[1, 2, 3, 4, 5].map((value) => (
@@ -578,7 +594,14 @@ export default function SellerPage({ seller }: SellerPageProps) {
                               },
                             });
                             toast.success("Review submitted and sent for admin moderation.");
-                            setReviewDraft({ title: "", body: "", rating: 5, orderNumber: "", contact: "", imageUrls: [] });
+                            setReviewDraft({
+                              title: "",
+                              body: "",
+                              rating: 5,
+                              orderNumber: "",
+                              contact: "",
+                              imageUrls: [],
+                            });
                           } catch (error) {
                             toast.error(
                               error instanceof Error
@@ -621,8 +644,17 @@ export default function SellerPage({ seller }: SellerPageProps) {
                     {review.imageUrls?.length ? (
                       <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
                         {review.imageUrls.map((imageUrl) => (
-                          <div key={imageUrl} className="relative aspect-square overflow-hidden rounded-xl">
-                            <OptimizedImage src={imageUrl} alt={review.title} fill sizes="120px" className="object-cover" />
+                          <div
+                            key={imageUrl}
+                            className="relative aspect-square overflow-hidden rounded-xl"
+                          >
+                            <OptimizedImage
+                              src={imageUrl}
+                              alt={review.title}
+                              fill
+                              sizes="120px"
+                              className="object-cover"
+                            />
                           </div>
                         ))}
                       </div>
@@ -641,16 +673,8 @@ export default function SellerPage({ seller }: SellerPageProps) {
 
           {tab === "policies" ? (
             <div className="grid gap-4 md:grid-cols-3">
-              <PolicyCard
-                icon={ShieldCheck}
-                title="Returns"
-                body={sellerRecord.policies.returns}
-              />
-              <PolicyCard
-                icon={Truck}
-                title="Shipping"
-                body={sellerRecord.policies.shipping}
-              />
+              <PolicyCard icon={ShieldCheck} title="Returns" body={sellerRecord.policies.returns} />
+              <PolicyCard icon={Truck} title="Shipping" body={sellerRecord.policies.shipping} />
               <PolicyCard
                 icon={ShieldCheck}
                 title="Warranty"

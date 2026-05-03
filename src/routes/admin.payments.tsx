@@ -7,12 +7,14 @@ import { CheckCircle2, Download, Search, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { CODPaymentVerificationPanel } from "@/components/admin/CODPaymentVerificationPanel";
 import { AdminCompactStat, AdminScopeGate } from "@/components/admin/AdminCommon";
-import { AdminEmptyState, AdminPageHeader, AdminPanel, AdminPill } from "@/components/admin/AdminUI";
-import { OptimizedImage } from "@/components/media/OptimizedImage";
 import {
-  OrderTimeline,
-  SellerFulfillmentGrid,
-} from "@/components/marketplace/OrderProgressUI";
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+  AdminPill,
+} from "@/components/admin/AdminUI";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
+import { OrderTimeline, SellerFulfillmentGrid } from "@/components/marketplace/OrderProgressUI";
 import { PaymentStatusBadge } from "@/components/marketplace/StatusBadge";
 import { Link } from "@/components/navigation/Link";
 import { formatPKR } from "@/data/marketplace";
@@ -22,8 +24,18 @@ import { getOrderTimeline } from "@/modules/marketplace/selectors";
 import { useMarketplace } from "@/modules/marketplace/store";
 import type { PaymentMethod, PaymentProofStatus } from "@/modules/marketplace/types";
 
-const reviewStatusOptions: Array<PaymentProofStatus | "ALL"> = ["ALL", "SUBMITTED", "APPROVED", "REJECTED"];
-const paymentMethodOptions: Array<Exclude<PaymentMethod, "COD"> | "ALL"> = ["ALL", "BANK_TRANSFER", "EASYPAISA", "JAZZCASH"];
+const reviewStatusOptions: Array<PaymentProofStatus | "ALL"> = [
+  "ALL",
+  "SUBMITTED",
+  "APPROVED",
+  "REJECTED",
+];
+const paymentMethodOptions: Array<Exclude<PaymentMethod, "COD"> | "ALL"> = [
+  "ALL",
+  "BANK_TRANSFER",
+  "EASYPAISA",
+  "JAZZCASH",
+];
 
 type DeskView = "MANUAL" | "COD";
 type ManualDetailTab = "REVIEW" | "ORDER" | "ACTIVITY";
@@ -33,7 +45,9 @@ export default function AdminPaymentsPage() {
   const { currentUser, state, approveProof, rejectProof } = useMarketplace();
   const [activeDesk, setActiveDesk] = useState<DeskView>("MANUAL");
   const [detailTab, setDetailTab] = useState<ManualDetailTab>("REVIEW");
-  const [proofStatusFilter, setProofStatusFilter] = useState<PaymentProofStatus | "ALL">("SUBMITTED");
+  const [proofStatusFilter, setProofStatusFilter] = useState<PaymentProofStatus | "ALL">(
+    "SUBMITTED",
+  );
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<PaymentMethod | "ALL">("ALL");
   const [query, setQuery] = useState("");
   const [selectedProofId, setSelectedProofId] = useState("");
@@ -85,7 +99,9 @@ export default function AdminPaymentsPage() {
       .filter((proof) => {
         const order = scopedOrders.find((item) => item.id === proof.orderId);
         const payment = state.payments.find((item) => item.id === proof.paymentId);
-        const customer = order ? state.users.find((user) => user.id === order.customerUserId) : undefined;
+        const customer = order
+          ? state.users.find((user) => user.id === order.customerUserId)
+          : undefined;
         const searchable =
           `${order?.orderNumber ?? ""} ${customer?.name ?? ""} ${customer?.email ?? ""} ${proof.transactionReference}`.toLowerCase();
 
@@ -96,7 +112,15 @@ export default function AdminPaymentsPage() {
         );
       })
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
-  }, [manualProofs, paymentMethodFilter, proofStatusFilter, query, scopedOrders, state.payments, state.users]);
+  }, [
+    manualProofs,
+    paymentMethodFilter,
+    proofStatusFilter,
+    query,
+    scopedOrders,
+    state.payments,
+    state.users,
+  ]);
 
   useEffect(() => {
     if (deskFilter === "COD" || deskFilter === "MANUAL") {
@@ -116,10 +140,18 @@ export default function AdminPaymentsPage() {
   }, [filteredProofs, selectedProofId]);
 
   const selectedProof = filteredProofs.find((proof) => proof.id === selectedProofId);
-  const selectedOrder = selectedProof ? state.orders.find((order) => order.id === selectedProof.orderId) : undefined;
-  const selectedPayment = selectedProof ? state.payments.find((payment) => payment.id === selectedProof.paymentId) : undefined;
-  const selectedCustomer = selectedOrder ? state.users.find((user) => user.id === selectedOrder.customerUserId) : undefined;
-  const selectedCommissionRows = selectedOrder ? getCommissionRowsForOrder(state, selectedOrder.id) : [];
+  const selectedOrder = selectedProof
+    ? state.orders.find((order) => order.id === selectedProof.orderId)
+    : undefined;
+  const selectedPayment = selectedProof
+    ? state.payments.find((payment) => payment.id === selectedProof.paymentId)
+    : undefined;
+  const selectedCustomer = selectedOrder
+    ? state.users.find((user) => user.id === selectedOrder.customerUserId)
+    : undefined;
+  const selectedCommissionRows = selectedOrder
+    ? getCommissionRowsForOrder(state, selectedOrder.id)
+    : [];
   const proofAttempts = selectedOrder
     ? state.paymentProofs
         .filter((proof) => proof.orderId === selectedOrder.id)
@@ -127,7 +159,9 @@ export default function AdminPaymentsPage() {
     : [];
   const auditTrail = selectedOrder
     ? state.auditTrail
-        .filter((entry) => entry.orderId === selectedOrder.id || entry.paymentId === selectedPayment?.id)
+        .filter(
+          (entry) => entry.orderId === selectedOrder.id || entry.paymentId === selectedPayment?.id,
+        )
         .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
         .slice(0, 8)
     : [];
@@ -143,7 +177,9 @@ export default function AdminPaymentsPage() {
   const rejectedCount = manualProofs.filter((proof) => proof.status === "REJECTED").length;
   const codAwaitingReceiptCount = state.orders.filter((order) => {
     const payment = state.payments.find((item) => item.id === order.paymentId);
-    return payment?.method === "COD" && payment.status === "PENDING" && order.status === "DELIVERED";
+    return (
+      payment?.method === "COD" && payment.status === "PENDING" && order.status === "DELIVERED"
+    );
   }).length;
   const codUnderReviewCount = state.payments.filter(
     (payment) => payment.method === "COD" && payment.status === "UNDER_REVIEW",
@@ -189,10 +225,29 @@ export default function AdminPaymentsPage() {
         />
 
         <section className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <AdminCompactStat label="Manual pending" value={String(pendingCount)} helper="Proofs waiting for review" tone="warning" />
-          <AdminCompactStat label="COD review" value={String(codAwaitingReceiptCount + codUnderReviewCount)} helper="Receipt capture and review desk" />
-          <AdminCompactStat label="Verified payments" value={String(verifiedCount)} helper="Released into marketplace flow" tone="success" />
-          <AdminCompactStat label="Rejected" value={String(rejectedCount)} helper="Customers need to resubmit" tone="danger" />
+          <AdminCompactStat
+            label="Manual pending"
+            value={String(pendingCount)}
+            helper="Proofs waiting for review"
+            tone="warning"
+          />
+          <AdminCompactStat
+            label="COD review"
+            value={String(codAwaitingReceiptCount + codUnderReviewCount)}
+            helper="Receipt capture and review desk"
+          />
+          <AdminCompactStat
+            label="Verified payments"
+            value={String(verifiedCount)}
+            helper="Released into marketplace flow"
+            tone="success"
+          />
+          <AdminCompactStat
+            label="Rejected"
+            value={String(rejectedCount)}
+            helper="Customers need to resubmit"
+            tone="danger"
+          />
         </section>
 
         {activeDesk === "COD" ? (
@@ -203,7 +258,11 @@ export default function AdminPaymentsPage() {
           />
         ) : (
           <section className="grid gap-4 xl:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)]">
-            <AdminPanel title="Manual verification queue" description="Slim review rows, fast filters, and no oversized queue cards." className="overflow-hidden">
+            <AdminPanel
+              title="Manual verification queue"
+              description="Slim review rows, fast filters, and no oversized queue cards."
+              className="overflow-hidden"
+            >
               <div className="grid gap-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.46fr)_minmax(0,0.46fr)]">
                 <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-surface px-3">
                   <Search className="h-4 w-4 text-muted-foreground" />
@@ -216,7 +275,9 @@ export default function AdminPaymentsPage() {
                 </div>
                 <select
                   value={proofStatusFilter}
-                  onChange={(event) => setProofStatusFilter(event.target.value as PaymentProofStatus | "ALL")}
+                  onChange={(event) =>
+                    setProofStatusFilter(event.target.value as PaymentProofStatus | "ALL")
+                  }
                   className="h-10 rounded-xl border border-border/60 bg-surface px-3 text-sm focus:outline-none"
                 >
                   {reviewStatusOptions.map((status) => (
@@ -227,7 +288,9 @@ export default function AdminPaymentsPage() {
                 </select>
                 <select
                   value={paymentMethodFilter}
-                  onChange={(event) => setPaymentMethodFilter(event.target.value as PaymentMethod | "ALL")}
+                  onChange={(event) =>
+                    setPaymentMethodFilter(event.target.value as PaymentMethod | "ALL")
+                  }
                   className="h-10 rounded-xl border border-border/60 bg-surface px-3 text-sm focus:outline-none"
                 >
                   {paymentMethodOptions.map((method) => (
@@ -247,14 +310,19 @@ export default function AdminPaymentsPage() {
               <div className="mt-3 -mx-3 sm:-mx-4">
                 {filteredProofs.length === 0 ? (
                   <div className="px-3 py-1 sm:px-4">
-                    <AdminEmptyState title="No proofs found" body="No manual payment proofs match the current search or filters." />
+                    <AdminEmptyState
+                      title="No proofs found"
+                      body="No manual payment proofs match the current search or filters."
+                    />
                   </div>
                 ) : (
                   <div className="divide-y divide-border/60">
                     {filteredProofs.map((proof) => {
                       const order = state.orders.find((item) => item.id === proof.orderId);
                       const payment = state.payments.find((item) => item.id === proof.paymentId);
-                      const customer = order ? state.users.find((user) => user.id === order.customerUserId) : undefined;
+                      const customer = order
+                        ? state.users.find((user) => user.id === order.customerUserId)
+                        : undefined;
 
                       return (
                         <button
@@ -290,15 +358,24 @@ export default function AdminPaymentsPage() {
               </div>
             </AdminPanel>
 
-            <AdminPanel title="Proof detail" description="Keep the review, order context, and activity inside one focused panel." className="h-fit">
+            <AdminPanel
+              title="Proof detail"
+              description="Keep the review, order context, and activity inside one focused panel."
+              className="h-fit"
+            >
               {!selectedProof || !selectedOrder || !selectedPayment || !selectedCustomer ? (
-                <AdminEmptyState title="Select a proof" body="Choose a row from the queue to inspect its screenshot, notes, and order context." />
+                <AdminEmptyState
+                  title="Select a proof"
+                  body="Choose a row from the queue to inspect its screenshot, notes, and order context."
+                />
               ) : (
                 <div>
                   <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border/60 pb-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <div className="text-lg font-black tracking-tight text-foreground">{selectedOrder.orderNumber}</div>
+                        <div className="text-lg font-black tracking-tight text-foreground">
+                          {selectedOrder.orderNumber}
+                        </div>
                         <ProofTone status={selectedProof.status} />
                         <PaymentStatusBadge status={selectedPayment.status} />
                       </div>
@@ -310,7 +387,9 @@ export default function AdminPaymentsPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => downloadInvoice(selectedOrder, selectedPayment, selectedCustomer)}
+                      onClick={() =>
+                        downloadInvoice(selectedOrder, selectedPayment, selectedCustomer)
+                      }
                       className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/60 bg-surface px-3.5 text-sm font-semibold"
                     >
                       <Download className="h-4 w-4" />
@@ -319,12 +398,24 @@ export default function AdminPaymentsPage() {
                   </div>
 
                   <div className="grid gap-3 border-b border-border/60 py-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <CompactMeta label="Order total" value={formatPKR(selectedOrder.totals.total)} />
-                    <CompactMeta label="Amount paid" value={selectedProof.amountPaid ? formatPKR(selectedProof.amountPaid) : "Not provided"} />
+                    <CompactMeta
+                      label="Order total"
+                      value={formatPKR(selectedOrder.totals.total)}
+                    />
+                    <CompactMeta
+                      label="Amount paid"
+                      value={
+                        selectedProof.amountPaid
+                          ? formatPKR(selectedProof.amountPaid)
+                          : "Not provided"
+                      }
+                    />
                     <CompactMeta label="Attempts" value={String(proofAttempts.length)} />
                     <CompactMeta
                       label="Commission"
-                      value={formatPKR(selectedCommissionRows.reduce((sum, row) => sum + row.commissionAmount, 0))}
+                      value={formatPKR(
+                        selectedCommissionRows.reduce((sum, row) => sum + row.commissionAmount, 0),
+                      )}
                     />
                   </div>
 
@@ -336,10 +427,16 @@ export default function AdminPaymentsPage() {
                         onClick={() => setDetailTab(tab)}
                         className={cn(
                           "inline-flex h-9 items-center rounded-full px-3 text-xs font-semibold transition-colors",
-                          detailTab === tab ? "bg-foreground text-background" : "bg-surface text-muted-foreground hover:text-foreground",
+                          detailTab === tab
+                            ? "bg-foreground text-background"
+                            : "bg-surface text-muted-foreground hover:text-foreground",
                         )}
                       >
-                        {tab === "REVIEW" ? "Review" : tab === "ORDER" ? "Order context" : "Activity"}
+                        {tab === "REVIEW"
+                          ? "Review"
+                          : tab === "ORDER"
+                            ? "Order context"
+                            : "Activity"}
                       </button>
                     ))}
                   </div>
@@ -367,7 +464,9 @@ export default function AdminPaymentsPage() {
                             {proofAttempts.map((attempt) => (
                               <div key={attempt.id} className="px-3 py-2.5">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
-                                  <div className="text-sm font-semibold text-foreground">{attempt.transactionReference}</div>
+                                  <div className="text-sm font-semibold text-foreground">
+                                    {attempt.transactionReference}
+                                  </div>
                                   <ProofTone status={attempt.status} />
                                 </div>
                                 <div className="mt-1 text-[11px] text-muted-foreground">
@@ -381,12 +480,23 @@ export default function AdminPaymentsPage() {
 
                       <div className="space-y-3">
                         <div className="grid gap-3 rounded-[18px] border border-border/60 bg-surface p-3 sm:grid-cols-2">
-                          <CompactMeta label="Reference" value={selectedProof.transactionReference} />
-                          <CompactMeta label="Method" value={selectedPayment.method.replaceAll("_", " ")} />
-                          <CompactMeta label="Submitted" value={new Date(selectedProof.createdAt).toLocaleString()} />
+                          <CompactMeta
+                            label="Reference"
+                            value={selectedProof.transactionReference}
+                          />
+                          <CompactMeta
+                            label="Method"
+                            value={selectedPayment.method.replaceAll("_", " ")}
+                          />
+                          <CompactMeta
+                            label="Submitted"
+                            value={new Date(selectedProof.createdAt).toLocaleString()}
+                          />
                           <CompactMeta
                             label="Customer note"
-                            value={selectedProof.note?.trim() ? selectedProof.note : "No note added"}
+                            value={
+                              selectedProof.note?.trim() ? selectedProof.note : "No note added"
+                            }
                           />
                         </div>
 
@@ -400,7 +510,8 @@ export default function AdminPaymentsPage() {
 
                         <div className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-border/60 bg-surface p-3">
                           <div className="text-xs text-muted-foreground">
-                            Approving the proof confirms the order and hands fulfilment back to the seller.
+                            Approving the proof confirms the order and hands fulfilment back to the
+                            seller.
                           </div>
                           <div className="flex flex-wrap gap-2">
                             <button
@@ -410,7 +521,11 @@ export default function AdminPaymentsPage() {
                                   approveProof({ proofId: selectedProof.id, adminNote });
                                   toast.success("Payment proof approved.");
                                 } catch (error) {
-                                  toast.error(error instanceof Error ? error.message : "Unable to approve proof.");
+                                  toast.error(
+                                    error instanceof Error
+                                      ? error.message
+                                      : "Unable to approve proof.",
+                                  );
                                 }
                               }}
                               disabled={selectedProof.status !== "SUBMITTED"}
@@ -426,7 +541,11 @@ export default function AdminPaymentsPage() {
                                   rejectProof({ proofId: selectedProof.id, adminNote });
                                   toast.success("Payment proof rejected.");
                                 } catch (error) {
-                                  toast.error(error instanceof Error ? error.message : "Unable to reject proof.");
+                                  toast.error(
+                                    error instanceof Error
+                                      ? error.message
+                                      : "Unable to reject proof.",
+                                  );
                                 }
                               }}
                               disabled={selectedProof.status !== "SUBMITTED"}
@@ -445,29 +564,43 @@ export default function AdminPaymentsPage() {
                     <div className="mt-3 space-y-3">
                       <div className="grid gap-3 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
                         <div className="rounded-[18px] border border-border/60 bg-surface p-3">
-                          <div className="text-sm font-semibold text-foreground">Seller handoff</div>
+                          <div className="text-sm font-semibold text-foreground">
+                            Seller handoff
+                          </div>
                           <div className="mt-2 text-xs text-muted-foreground">
                             Sellers only take over after the manual proof is approved.
                           </div>
                           <div className="mt-3">
-                            <SellerFulfillmentGrid state={state} fulfillments={selectedOrder.sellerFulfillments} />
+                            <SellerFulfillmentGrid
+                              state={state}
+                              fulfillments={selectedOrder.sellerFulfillments}
+                            />
                           </div>
                         </div>
 
                         <div className="rounded-[18px] border border-border/60 bg-surface p-3">
-                          <div className="text-sm font-semibold text-foreground">Commission split</div>
+                          <div className="text-sm font-semibold text-foreground">
+                            Commission split
+                          </div>
                           <div className="mt-3 divide-y divide-border/60">
                             {selectedCommissionRows.map((row) => (
-                              <div key={`${row.orderId}-${row.sellerSlug}`} className="py-3 first:pt-0 last:pb-0">
+                              <div
+                                key={`${row.orderId}-${row.sellerSlug}`}
+                                className="py-3 first:pt-0 last:pb-0"
+                              >
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <div className="min-w-0">
-                                    <div className="text-sm font-semibold text-foreground">{row.sellerName}</div>
+                                    <div className="text-sm font-semibold text-foreground">
+                                      {row.sellerName}
+                                    </div>
                                     <div className="mt-1 text-[11px] text-muted-foreground">
                                       {formatPKR(row.grossAmount)} gross
                                     </div>
                                   </div>
                                   <div className="text-right">
-                                    <div className="text-sm font-black text-foreground">{formatPKR(row.commissionAmount)}</div>
+                                    <div className="text-sm font-black text-foreground">
+                                      {formatPKR(row.commissionAmount)}
+                                    </div>
                                     <div className="mt-1 text-[11px] text-muted-foreground">
                                       {row.commissionRate}% commission
                                     </div>
@@ -491,7 +624,9 @@ export default function AdminPaymentsPage() {
                   {detailTab === "ACTIVITY" ? (
                     <div className="mt-3 overflow-hidden rounded-[18px] border border-border/60 bg-surface">
                       {auditTrail.length === 0 ? (
-                        <div className="px-4 py-6 text-sm text-muted-foreground">No audit activity recorded yet.</div>
+                        <div className="px-4 py-6 text-sm text-muted-foreground">
+                          No audit activity recorded yet.
+                        </div>
                       ) : (
                         <div className="divide-y divide-border/60">
                           {auditTrail.map((entry) => {
@@ -504,10 +639,13 @@ export default function AdminPaymentsPage() {
                                       {entry.action.replaceAll("_", " ")}
                                     </div>
                                     <div className="mt-1 text-[11px] text-muted-foreground">
-                                      {actor?.name ?? "System"} · {new Date(entry.createdAt).toLocaleString()}
+                                      {actor?.name ?? "System"} ·{" "}
+                                      {new Date(entry.createdAt).toLocaleString()}
                                     </div>
                                     {entry.note ? (
-                                      <div className="mt-2 text-sm text-muted-foreground">{entry.note}</div>
+                                      <div className="mt-2 text-sm text-muted-foreground">
+                                        {entry.note}
+                                      </div>
                                     ) : null}
                                   </div>
                                   <AdminPill>{entry.actorRole}</AdminPill>
@@ -572,19 +710,15 @@ function InlineStat({
 
   return (
     <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card px-3 py-2">
-      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</span>
+      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </span>
       <span className={cn("rounded-full px-2.5 py-1 text-xs font-bold", toneClasses)}>{value}</span>
     </div>
   );
 }
 
-function CompactField({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+function CompactField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -595,16 +729,12 @@ function CompactField({
   );
 }
 
-function CompactMeta({
-  label,
-  value,
-}: {
-  label: string;
-  value: ReactNode;
-}) {
+function CompactMeta({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="rounded-xl border border-border/60 bg-background px-3 py-2.5">
-      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{label}</div>
+      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </div>
       <div className="mt-1 text-sm font-semibold text-foreground">{value}</div>
     </div>
   );

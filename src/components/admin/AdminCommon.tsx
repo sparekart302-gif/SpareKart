@@ -64,18 +64,14 @@ export function AdminField({
         {label}
       </div>
       {hint ? <div className="mt-0.5 text-xs leading-5 text-muted-foreground">{hint}</div> : null}
-      <div className="mt-1.5 [&_input]:min-h-10 [&_input]:rounded-xl [&_select]:min-h-10 [&_select]:rounded-xl [&_textarea]:rounded-xl">{children}</div>
+      <div className="mt-1.5 [&_input]:min-h-10 [&_input]:rounded-xl [&_select]:min-h-10 [&_select]:rounded-xl [&_textarea]:rounded-xl">
+        {children}
+      </div>
     </label>
   );
 }
 
-export function AdminKeyValue({
-  label,
-  value,
-}: {
-  label: string;
-  value: ReactNode;
-}) {
+export function AdminKeyValue({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex flex-col gap-1 border-b border-border/60 py-2.5 last:border-b-0 last:pb-0 first:pt-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <div className="text-xs font-medium text-muted-foreground">{label}</div>

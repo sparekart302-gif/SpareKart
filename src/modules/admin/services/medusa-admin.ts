@@ -114,7 +114,12 @@ export function createMedusaAdminService(config: MedusaAdminClientConfig) {
       });
     },
 
-    listOrders(query?: { status?: string; payment_status?: string; seller_id?: string; q?: string }) {
+    listOrders(query?: {
+      status?: string;
+      payment_status?: string;
+      seller_id?: string;
+      q?: string;
+    }) {
       return medusaRequest(config, withQuery("/admin/sparekart/orders", query));
     },
 

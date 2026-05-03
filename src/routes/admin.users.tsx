@@ -27,7 +27,12 @@ import { UserManagementDialog } from "@/components/admin/UserManagementDialog";
 import { getUserOrderHistory, getUserPaymentHistory } from "@/modules/marketplace/admin-selectors";
 import { canAccessAdminScope } from "@/modules/marketplace/permissions";
 import { useMarketplace } from "@/modules/marketplace/store";
-import type { AdminUserInput, AppRole, UserStatus, MarketplaceUser } from "@/modules/marketplace/types";
+import type {
+  AdminUserInput,
+  AppRole,
+  UserStatus,
+  MarketplaceUser,
+} from "@/modules/marketplace/types";
 
 const userRoleOptions: AppRole[] = ["CUSTOMER", "SELLER", "ADMIN", "SUPER_ADMIN"];
 const userStatusOptions: UserStatus[] = ["ACTIVE", "SUSPENDED", "INVITED"];
@@ -144,7 +149,10 @@ export default function AdminUsersPage() {
         />
 
         <OperationsWorkspace>
-          <OperationsPanel title="User directory" description="Table-first management with role tabs, filters, pagination, and contextual actions.">
+          <OperationsPanel
+            title="User directory"
+            description="Table-first management with role tabs, filters, pagination, and contextual actions."
+          >
             <OperationsToolbar>
               <div className="grid gap-2">
                 <OperationsTabs
@@ -159,7 +167,11 @@ export default function AdminUsersPage() {
                     })),
                   ]}
                 />
-                <OperationsSearch value={query} onChange={setQuery} placeholder="Search by name, email, or phone" />
+                <OperationsSearch
+                  value={query}
+                  onChange={setQuery}
+                  placeholder="Search by name, email, or phone"
+                />
               </div>
               <OperationsSelect
                 value={statusFilter}
@@ -197,16 +209,34 @@ export default function AdminUsersPage() {
                       <div className="mt-0.5 text-xs text-muted-foreground">{user.email}</div>
                     </OperationsTd>
                     <OperationsTd>
-                      <AdminPill tone={user.role.includes("ADMIN") ? "info" : user.role === "SELLER" ? "warning" : "default"}>
+                      <AdminPill
+                        tone={
+                          user.role.includes("ADMIN")
+                            ? "info"
+                            : user.role === "SELLER"
+                              ? "warning"
+                              : "default"
+                        }
+                      >
                         {user.role.replaceAll("_", " ")}
                       </AdminPill>
                     </OperationsTd>
                     <OperationsTd>
-                      <AdminPill tone={user.status === "ACTIVE" ? "success" : user.status === "SUSPENDED" ? "danger" : "warning"}>
+                      <AdminPill
+                        tone={
+                          user.status === "ACTIVE"
+                            ? "success"
+                            : user.status === "SUSPENDED"
+                              ? "danger"
+                              : "warning"
+                        }
+                      >
                         {user.status}
                       </AdminPill>
                     </OperationsTd>
-                    <OperationsTd className="whitespace-nowrap text-xs text-muted-foreground">{formatShortDate(user.createdAt)}</OperationsTd>
+                    <OperationsTd className="whitespace-nowrap text-xs text-muted-foreground">
+                      {formatShortDate(user.createdAt)}
+                    </OperationsTd>
                     <OperationsTd>
                       <div className="flex justify-end gap-2">
                         <button
@@ -243,12 +273,30 @@ export default function AdminUsersPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-black text-foreground">{user.name}</div>
-                      <div className="mt-1 truncate text-xs text-muted-foreground">{user.email}</div>
+                      <div className="mt-1 truncate text-xs text-muted-foreground">
+                        {user.email}
+                      </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        <AdminPill tone={user.role.includes("ADMIN") ? "info" : user.role === "SELLER" ? "warning" : "default"}>
+                        <AdminPill
+                          tone={
+                            user.role.includes("ADMIN")
+                              ? "info"
+                              : user.role === "SELLER"
+                                ? "warning"
+                                : "default"
+                          }
+                        >
                           {user.role.replaceAll("_", " ")}
                         </AdminPill>
-                        <AdminPill tone={user.status === "ACTIVE" ? "success" : user.status === "SUSPENDED" ? "danger" : "warning"}>
+                        <AdminPill
+                          tone={
+                            user.status === "ACTIVE"
+                              ? "success"
+                              : user.status === "SUSPENDED"
+                                ? "danger"
+                                : "warning"
+                          }
+                        >
                           {user.status}
                         </AdminPill>
                       </div>
@@ -270,7 +318,10 @@ export default function AdminUsersPage() {
 
             {filteredUsers.length === 0 ? (
               <div className="p-3">
-                <AdminEmptyState title="No users found" body="Try adjusting your search or filters." />
+                <AdminEmptyState
+                  title="No users found"
+                  body="Try adjusting your search or filters."
+                />
               </div>
             ) : null}
 
@@ -290,7 +341,9 @@ export default function AdminUsersPage() {
               selectedUser ? (
                 <>
                   <AdminPill>{selectedUser.role.replaceAll("_", " ")}</AdminPill>
-                  <AdminPill tone={selectedUser.status === "ACTIVE" ? "success" : "danger"}>{selectedUser.status}</AdminPill>
+                  <AdminPill tone={selectedUser.status === "ACTIVE" ? "success" : "danger"}>
+                    {selectedUser.status}
+                  </AdminPill>
                 </>
               ) : null
             }
@@ -305,7 +358,12 @@ export default function AdminUsersPage() {
                 </button>
               ) : null
             }
-            empty={<AdminEmptyState title="Pick a user" body="Open a user from the table to see order and payment history." />}
+            empty={
+              <AdminEmptyState
+                title="Pick a user"
+                body="Open a user from the table to see order and payment history."
+              />
+            }
           >
             {selectedUser ? (
               <div className="space-y-3">
@@ -315,9 +373,18 @@ export default function AdminUsersPage() {
                 </div>
                 <div className="rounded-[14px] border border-border/70 bg-background p-3">
                   <OperationsKeyValue label="Phone" value={selectedUser.phone} />
-                  <OperationsKeyValue label="Joined" value={formatShortDate(selectedUser.createdAt)} />
-                  <OperationsKeyValue label="Seller slug" value={selectedUser.sellerSlug ?? "Not linked"} />
-                  <OperationsKeyValue label="Admin title" value={selectedUser.adminTitle ?? "Not assigned"} />
+                  <OperationsKeyValue
+                    label="Joined"
+                    value={formatShortDate(selectedUser.createdAt)}
+                  />
+                  <OperationsKeyValue
+                    label="Seller slug"
+                    value={selectedUser.sellerSlug ?? "Not linked"}
+                  />
+                  <OperationsKeyValue
+                    label="Admin title"
+                    value={selectedUser.adminTitle ?? "Not assigned"}
+                  />
                 </div>
                 <Link
                   href={`/admin/users/${selectedUser.id}`}

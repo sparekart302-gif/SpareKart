@@ -71,7 +71,9 @@ export function calculateOrderCommission(
       const orderAmount = item.unitPrice * item.quantity;
       const product = state.managedProducts.find((candidate) => candidate.id === item.productId);
       const categorySlug = product?.category ?? "general";
-      const categoryRecord = state.managedCategories.find((category) => category.slug === categorySlug);
+      const categoryRecord = state.managedCategories.find(
+        (category) => category.slug === categorySlug,
+      );
       const productOverride = product?.commissionRateOverride;
       const commissionRate = getCommissionRateForCategory(categorySlug, {
         categoryRate: categoryRecord?.commissionRate,
@@ -127,7 +129,7 @@ export function buildCommissionRecordsForOrder(
 export function calculateSellerCommissions(
   state: MarketplaceState,
   orders: MarketplaceOrder[],
-  seller: SellerRecord
+  seller: SellerRecord,
 ): CommissionRecord[] {
   return orders.flatMap((order) => calculateOrderCommission(state, order, seller));
 }
@@ -136,13 +138,16 @@ export function calculateSellerCommissions(
  * Calculate deduction summary for a seller
  */
 export function calculateCommissionDeductionSummary(
-  commissions: CommissionRecord[]
+  commissions: CommissionRecord[],
 ): CommissionDeductionSummary {
-  const byCategory = new Map<string, {
-    orderCount: number;
-    rate: number;
-    amount: number;
-  }>();
+  const byCategory = new Map<
+    string,
+    {
+      orderCount: number;
+      rate: number;
+      amount: number;
+    }
+  >();
 
   let totalOrderAmount = 0;
   let totalCommissionAmount = 0;
@@ -185,11 +190,11 @@ export function createPayoutFromCommissions(
   sellerId: string,
   commissions: CommissionRecord[],
   orderIds: string[],
-  period: "WEEKLY" | "MONTHLY" | "CUSTOM" = "MONTHLY"
+  period: "WEEKLY" | "MONTHLY" | "CUSTOM" = "MONTHLY",
 ): SellerPayout {
   const totalEarnings = commissions.reduce((sum, c) => sum + c.orderAmount, 0);
   const totalCommissionDeducted = commissions.reduce((sum, c) => sum + c.commissionAmount, 0);
-  
+
   const now = new Date();
   const payoutId = `payout-${sellerSlug}-${now.getTime()}`;
 
@@ -203,7 +208,7 @@ export function createPayoutFromCommissions(
     totalEarnings,
     totalCommissionDeducted,
     netAmount: totalEarnings - totalCommissionDeducted,
-    commissionIds: commissions.map(c => c.id),
+    commissionIds: commissions.map((c) => c.id),
     orderIds,
     status: "DRAFT" as PayoutStatus,
     createdAt: now.toISOString(),
@@ -218,32 +223,40 @@ export function generateSellerEarningsSummary(
   sellerSlug: string,
   commissions: CommissionRecord[],
   payouts: SellerPayout[],
-  currentMonth: Date = new Date()
+  currentMonth: Date = new Date(),
 ): SellerEarningsSummary {
   const allEarnings = commissions.reduce((sum, c) => sum + c.orderAmount, 0);
   const allCommissions = commissions.reduce((sum, c) => sum + c.commissionAmount, 0);
-  
+
   const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
   const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
-  
-  const currentMonthCommissions = commissions.filter(c => {
+
+  const currentMonthCommissions = commissions.filter((c) => {
     const calcDate = new Date(c.calculatedAt);
     return calcDate >= monthStart && calcDate <= monthEnd;
   });
-  
+
   const currentMonthEarnings = currentMonthCommissions.reduce((sum, c) => sum + c.orderAmount, 0);
-  const currentMonthCommissionDeducted = currentMonthCommissions.reduce((sum, c) => sum + c.commissionAmount, 0);
-  
-  const paidPayouts = payouts.filter(p => p.status === "PAID");
+  const currentMonthCommissionDeducted = currentMonthCommissions.reduce(
+    (sum, c) => sum + c.commissionAmount,
+    0,
+  );
+
+  const paidPayouts = payouts.filter((p) => p.status === "PAID");
   const totalPaidCommissions = paidPayouts.reduce((sum, p) => sum + p.totalCommissionDeducted, 0);
-  
-  const scheduledPayouts = payouts.filter(p => p.status === "DRAFT" || p.status === "PENDING_APPROVAL");
+
+  const scheduledPayouts = payouts.filter(
+    (p) => p.status === "DRAFT" || p.status === "PENDING_APPROVAL",
+  );
   const scheduledAmount = scheduledPayouts.reduce((sum, p) => sum + p.netAmount, 0);
-  
-  const pendingEarnings = allEarnings - allCommissions - (paidPayouts.reduce((sum, p) => sum + p.netAmount, 0) + scheduledAmount);
-  
-  const nextPayout = scheduledPayouts.sort((a, b) => 
-    new Date(a.periodEndDate).getTime() - new Date(b.periodEndDate).getTime()
+
+  const pendingEarnings =
+    allEarnings -
+    allCommissions -
+    (paidPayouts.reduce((sum, p) => sum + p.netAmount, 0) + scheduledAmount);
+
+  const nextPayout = scheduledPayouts.sort(
+    (a, b) => new Date(a.periodEndDate).getTime() - new Date(b.periodEndDate).getTime(),
   )[0];
 
   return {
@@ -265,12 +278,14 @@ export function generateSellerEarningsSummary(
 export function generateCommissionReport(
   allCommissions: CommissionRecord[],
   allPayouts: SellerPayout[],
-  sellerMap: Map<string, SellerRecord>
+  sellerMap: Map<string, SellerRecord>,
 ): CommissionReport {
   const totalEarned = allCommissions.reduce((sum, c) => sum + c.commissionAmount, 0);
-  const paidPayouts = allPayouts.filter(p => p.status === "PAID");
+  const paidPayouts = allPayouts.filter((p) => p.status === "PAID");
   const totalPaid = paidPayouts.reduce((sum, p) => sum + p.totalCommissionDeducted, 0);
-  const pendingPayouts = allPayouts.filter(p => p.status !== "PAID" && p.status !== "FAILED" && p.status !== "CANCELED");
+  const pendingPayouts = allPayouts.filter(
+    (p) => p.status !== "PAID" && p.status !== "FAILED" && p.status !== "CANCELED",
+  );
   const totalPending = pendingPayouts.reduce((sum, p) => sum + p.totalCommissionDeducted, 0);
 
   // Top sellers by commission
@@ -308,7 +323,7 @@ export function generateCommissionReport(
     category,
     totalCommission: data.commission,
     orderCount: data.orders,
-    averageRate: data.orders > 0 ? data.commission / data.orders * 100 : 0, // As percentage
+    averageRate: data.orders > 0 ? (data.commission / data.orders) * 100 : 0, // As percentage
   }));
 
   return {
@@ -318,9 +333,12 @@ export function generateCommissionReport(
     activeSellers: commissionBySlug.size,
     topSellersByCommission,
     commissionByCategory: byCategory,
-    recentPayouts: paidPayouts.sort((a, b) => 
-      new Date(b.paidAt || b.updatedAt).getTime() - new Date(a.paidAt || a.updatedAt).getTime()
-    ).slice(0, 10),
+    recentPayouts: paidPayouts
+      .sort(
+        (a, b) =>
+          new Date(b.paidAt || b.updatedAt).getTime() - new Date(a.paidAt || a.updatedAt).getTime(),
+      )
+      .slice(0, 10),
     pendingVerifications: 0, // Will be filled by data
   };
 }
@@ -344,10 +362,10 @@ export function getDefaultPayoutCycleConfig(): PayoutCycleConfig {
 export function shouldGeneratePayout(
   commissions: CommissionRecord[],
   lastPayout: SellerPayout | undefined,
-  config: PayoutCycleConfig
+  config: PayoutCycleConfig,
 ): boolean {
   if (!config.enabled) return false;
-  
+
   if (commissions.length === 0) return false;
 
   const totalAmount = commissions.reduce((sum, c) => sum + c.deductedAmount, 0);

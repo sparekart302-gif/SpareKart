@@ -3,13 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import {
-  ChevronRight,
-  Eye,
-  Home,
-  LogOut,
-  Menu,
-} from "lucide-react";
+import { ChevronRight, Eye, Home, LogOut, Menu } from "lucide-react";
 import { BrandLogo } from "@/components/marketplace/BrandLogo";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Link } from "@/components/navigation/Link";
@@ -131,16 +125,22 @@ export function SellerShell({
                   : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
               }`}
             >
-              <Icon className={`h-4 w-4 shrink-0 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"}`} />
+              <Icon
+                className={`h-4 w-4 shrink-0 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"}`}
+              />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold">{label}</div>
                 {description ? (
-                  <div className={`mt-0.5 truncate text-[11px] ${active ? "text-primary-foreground/72" : "text-muted-foreground"}`}>
+                  <div
+                    className={`mt-0.5 truncate text-[11px] ${active ? "text-primary-foreground/72" : "text-muted-foreground"}`}
+                  >
                     {description}
                   </div>
                 ) : null}
               </div>
-              <ChevronRight className={`h-3.5 w-3.5 shrink-0 ${active ? "opacity-90" : "opacity-0 group-hover:opacity-40"}`} />
+              <ChevronRight
+                className={`h-3.5 w-3.5 shrink-0 ${active ? "opacity-90" : "opacity-0 group-hover:opacity-40"}`}
+              />
             </button>
           );
         })}
@@ -148,7 +148,9 @@ export function SellerShell({
 
       <div className="border-t border-border/70 px-3 py-3">
         <div className="rounded-[16px] border border-border/70 bg-muted/20 p-2.5">
-          <div className="truncate text-sm font-black text-foreground">{currentUser?.name ?? seller.name}</div>
+          <div className="truncate text-sm font-black text-foreground">
+            {currentUser?.name ?? seller.name}
+          </div>
           <div className="mt-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">
             Seller account
           </div>
@@ -234,18 +236,16 @@ export function SellerShell({
             </div>
           </header>
 
-          <main className="flex-1 px-3.5 py-3.5 sm:px-4 lg:min-h-0 lg:overflow-y-auto lg:px-5 lg:py-4">{children}</main>
+          <main className="flex-1 px-3.5 py-3.5 sm:px-4 lg:min-h-0 lg:overflow-y-auto lg:px-5 lg:py-4">
+            {children}
+          </main>
         </div>
       </div>
     </div>
   );
 }
 
-function QuickStat({
-  label,
-  value,
-  tone = "default",
-}: SellerShellStat) {
+function QuickStat({ label, value, tone = "default" }: SellerShellStat) {
   const toneClasses =
     tone === "success"
       ? "bg-success/8 border-success/15"

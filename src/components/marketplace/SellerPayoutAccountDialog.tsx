@@ -9,10 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  formatPayoutLabel,
-  getPayoutMethodOptions,
-} from "@/modules/marketplace/payout-display";
+import { formatPayoutLabel, getPayoutMethodOptions } from "@/modules/marketplace/payout-display";
 import type { SellerPayoutAccountInput } from "@/modules/marketplace/types";
 
 const scheduleOptions = ["MANUAL_REQUEST", "WEEKLY", "MONTHLY"] as const;
@@ -132,7 +129,10 @@ export function SellerPayoutAccountDialog({
                 ))}
               </select>
             </AdminField>
-            <AdminField label="Internal note" hint="Optional note for finance review or payout preference.">
+            <AdminField
+              label="Internal note"
+              hint="Optional note for finance review or payout preference."
+            >
               <input
                 value={draft.notes ?? ""}
                 onChange={(event) => update("notes", event.target.value)}

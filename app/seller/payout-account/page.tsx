@@ -7,8 +7,7 @@ export const metadata: Metadata = buildPageMetadata({
   title: "Payout Account — SpareKart Seller",
   description:
     "Add or update seller payout bank, wallet, and account details for SpareKart settlement releases.",
-  openGraphDescription:
-    "SpareKart seller payout account settings.",
+  openGraphDescription: "SpareKart seller payout account settings.",
 });
 
 export default function Page() {

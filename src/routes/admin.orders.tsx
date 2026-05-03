@@ -21,11 +21,11 @@ import {
   OperationsToolbar,
   OperationsWorkspace,
 } from "@/components/admin/OperationsUI";
+import { OrderTimeline, SellerFulfillmentGrid } from "@/components/marketplace/OrderProgressUI";
 import {
-  OrderTimeline,
-  SellerFulfillmentGrid,
-} from "@/components/marketplace/OrderProgressUI";
-import { getCommissionRowsForOrder, getCommissionSummary } from "@/modules/marketplace/admin-selectors";
+  getCommissionRowsForOrder,
+  getCommissionSummary,
+} from "@/modules/marketplace/admin-selectors";
 import { getOrderTimeline } from "@/modules/marketplace/selectors";
 import { getCODRemittanceByOrderId } from "@/modules/marketplace/settlements";
 import { useMarketplace } from "@/modules/marketplace/store";
@@ -58,9 +58,12 @@ export default function AdminOrdersPage() {
     return state.orders
       .filter((order) => {
         const customer = state.users.find((user) => user.id === order.customerUserId);
-        const searchable = `${order.orderNumber} ${customer?.name ?? ""} ${customer?.email ?? ""} ${order.items.map((item) => item.title).join(" ")}`.toLowerCase();
-        return (!query.trim() || searchable.includes(query.trim().toLowerCase())) &&
-          (statusFilter === "ALL" || order.status === statusFilter);
+        const searchable =
+          `${order.orderNumber} ${customer?.name ?? ""} ${customer?.email ?? ""} ${order.items.map((item) => item.title).join(" ")}`.toLowerCase();
+        return (
+          (!query.trim() || searchable.includes(query.trim().toLowerCase())) &&
+          (statusFilter === "ALL" || order.status === statusFilter)
+        );
       })
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
   }, [query, state.orders, state.users, statusFilter]);
@@ -76,9 +79,15 @@ export default function AdminOrdersPage() {
   }, [filteredOrders, selectedOrderId]);
 
   const selectedOrder = filteredOrders.find((order) => order.id === selectedOrderId);
-  const selectedPayment = selectedOrder ? state.payments.find((payment) => payment.id === selectedOrder.paymentId) : undefined;
-  const selectedCustomer = selectedOrder ? state.users.find((user) => user.id === selectedOrder.customerUserId) : undefined;
-  const selectedCommissionRows = selectedOrder ? getCommissionRowsForOrder(state, selectedOrder.id) : [];
+  const selectedPayment = selectedOrder
+    ? state.payments.find((payment) => payment.id === selectedOrder.paymentId)
+    : undefined;
+  const selectedCustomer = selectedOrder
+    ? state.users.find((user) => user.id === selectedOrder.customerUserId)
+    : undefined;
+  const selectedCommissionRows = selectedOrder
+    ? getCommissionRowsForOrder(state, selectedOrder.id)
+    : [];
   const selectedSettlements = selectedOrder
     ? state.sellerSettlements.filter((settlement) => settlement.orderId === selectedOrder.id)
     : [];
@@ -88,14 +97,22 @@ export default function AdminOrdersPage() {
   const selectedRemittance = selectedOrder
     ? getCODRemittanceByOrderId(state, selectedOrder.id)
     : undefined;
-  const selectedTimeline = selectedOrder ? getOrderTimeline(state, selectedOrder.id).slice(0, 8) : [];
+  const selectedTimeline = selectedOrder
+    ? getOrderTimeline(state, selectedOrder.id).slice(0, 8)
+    : [];
   const commissionSummary = getCommissionSummary(state);
   const totalPages = Math.max(Math.ceil(filteredOrders.length / ORDERS_PER_PAGE), 1);
-  const paginatedOrders = filteredOrders.slice((page - 1) * ORDERS_PER_PAGE, page * ORDERS_PER_PAGE);
+  const paginatedOrders = filteredOrders.slice(
+    (page - 1) * ORDERS_PER_PAGE,
+    page * ORDERS_PER_PAGE,
+  );
   const totals = {
     total: state.orders.length,
-    active: state.orders.filter((order) => !["DELIVERED", "CANCELED"].includes(order.status)).length,
-    awaitingVerification: state.orders.filter((order) => order.status === "AWAITING_PAYMENT_VERIFICATION").length,
+    active: state.orders.filter((order) => !["DELIVERED", "CANCELED"].includes(order.status))
+      .length,
+    awaitingVerification: state.orders.filter(
+      (order) => order.status === "AWAITING_PAYMENT_VERIFICATION",
+    ).length,
     delivered: state.orders.filter((order) => order.status === "DELIVERED").length,
     commission: commissionSummary.totalCommission,
   };
@@ -114,14 +131,35 @@ export default function AdminOrdersPage() {
         />
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <AdminCompactStat label="All orders" value={String(totals.total)} helper="Marketplace total" />
-          <AdminCompactStat label="Open orders" value={String(totals.active)} helper="Still active in the pipeline" tone="warning" />
-          <AdminCompactStat label="Awaiting verification" value={String(totals.awaitingVerification)} helper="Manual payment orders" />
-          <AdminCompactStat label="Commission tracked" value={formatPKR(totals.commission)} helper="Marketplace share across orders" tone="success" />
+          <AdminCompactStat
+            label="All orders"
+            value={String(totals.total)}
+            helper="Marketplace total"
+          />
+          <AdminCompactStat
+            label="Open orders"
+            value={String(totals.active)}
+            helper="Still active in the pipeline"
+            tone="warning"
+          />
+          <AdminCompactStat
+            label="Awaiting verification"
+            value={String(totals.awaitingVerification)}
+            helper="Manual payment orders"
+          />
+          <AdminCompactStat
+            label="Commission tracked"
+            value={formatPKR(totals.commission)}
+            helper="Marketplace share across orders"
+            tone="success"
+          />
         </section>
 
         <OperationsWorkspace>
-          <OperationsPanel title="Order queue" description="Status-first order operations with search, pagination, and side-panel inspection.">
+          <OperationsPanel
+            title="Order queue"
+            description="Status-first order operations with search, pagination, and side-panel inspection."
+          >
             <OperationsToolbar>
               <div className="grid gap-2">
                 <OperationsTabs
@@ -136,7 +174,11 @@ export default function AdminOrdersPage() {
                         : state.orders.filter((order) => order.status === status).length,
                   }))}
                 />
-                <OperationsSearch value={query} onChange={setQuery} placeholder="Search orders, customers, or products" />
+                <OperationsSearch
+                  value={query}
+                  onChange={setQuery}
+                  placeholder="Search orders, customers, or products"
+                />
               </div>
               <OperationsSelect
                 value={statusFilter}
@@ -179,11 +221,17 @@ export default function AdminOrdersPage() {
                     >
                       <OperationsTd>
                         <div className="font-black text-foreground">{order.orderNumber}</div>
-                        <div className="mt-0.5 text-xs text-muted-foreground">{new Date(order.createdAt).toLocaleString()}</div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">
+                          {new Date(order.createdAt).toLocaleString()}
+                        </div>
                       </OperationsTd>
                       <OperationsTd>
-                        <div className="font-semibold text-foreground">{customer?.name ?? "Customer"}</div>
-                        <div className="mt-0.5 text-xs text-muted-foreground">{customer?.email ?? order.shippingAddress.city}</div>
+                        <div className="font-semibold text-foreground">
+                          {customer?.name ?? "Customer"}
+                        </div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">
+                          {customer?.email ?? order.shippingAddress.city}
+                        </div>
                       </OperationsTd>
                       <OperationsTd>
                         <OrderTone status={order.status} />
@@ -191,11 +239,17 @@ export default function AdminOrdersPage() {
                       <OperationsTd>
                         <div className="flex flex-col gap-1">
                           {payment ? <PaymentTone status={payment.status} /> : null}
-                          <span className="text-xs text-muted-foreground">{payment?.method.replaceAll("_", " ") ?? order.paymentMethod}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {payment?.method.replaceAll("_", " ") ?? order.paymentMethod}
+                          </span>
                         </div>
                       </OperationsTd>
-                      <OperationsTd className="text-right font-black tabular-nums text-foreground">{formatPKR(order.totals.total)}</OperationsTd>
-                      <OperationsTd className="text-right font-semibold tabular-nums text-muted-foreground">{formatPKR(commissionAmount)}</OperationsTd>
+                      <OperationsTd className="text-right font-black tabular-nums text-foreground">
+                        {formatPKR(order.totals.total)}
+                      </OperationsTd>
+                      <OperationsTd className="text-right font-semibold tabular-nums text-muted-foreground">
+                        {formatPKR(commissionAmount)}
+                      </OperationsTd>
                     </OperationsRow>
                   );
                 })}
@@ -214,10 +268,16 @@ export default function AdminOrdersPage() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-black text-foreground">{order.orderNumber}</div>
-                        <div className="mt-1 truncate text-xs text-muted-foreground">{customer?.name ?? order.shippingAddress.fullName}</div>
+                        <div className="truncate text-sm font-black text-foreground">
+                          {order.orderNumber}
+                        </div>
+                        <div className="mt-1 truncate text-xs text-muted-foreground">
+                          {customer?.name ?? order.shippingAddress.fullName}
+                        </div>
                       </div>
-                      <div className="text-right text-sm font-black tabular-nums text-foreground">{formatPKR(order.totals.total)}</div>
+                      <div className="text-right text-sm font-black tabular-nums text-foreground">
+                        {formatPKR(order.totals.total)}
+                      </div>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       <OrderTone status={order.status} />
@@ -230,7 +290,10 @@ export default function AdminOrdersPage() {
 
             {filteredOrders.length === 0 ? (
               <div className="p-3">
-                <AdminEmptyState title="No orders found" body="Try adjusting the search or status filter." />
+                <AdminEmptyState
+                  title="No orders found"
+                  body="Try adjusting the search or status filter."
+                />
               </div>
             ) : null}
 
@@ -270,11 +333,14 @@ export default function AdminOrdersPage() {
                 </button>
               ) : null
             }
-            empty={<AdminEmptyState title="Select an order" body="Choose an order from the queue to open operational details." />}
+            empty={
+              <AdminEmptyState
+                title="Select an order"
+                body="Choose an order from the queue to open operational details."
+              />
+            }
           >
-            {!selectedOrder || !selectedPayment || !selectedCustomer ? (
-              null
-            ) : (
+            {!selectedOrder || !selectedPayment || !selectedCustomer ? null : (
               <div className="space-y-4">
                 <section className="grid gap-3 lg:grid-cols-2">
                   <div className="rounded-[14px] border border-border/70 bg-background p-3">
@@ -282,26 +348,54 @@ export default function AdminOrdersPage() {
                     <div className="mt-2">
                       <OperationsKeyValue label="Customer" value={selectedCustomer.name} />
                       <OperationsKeyValue label="Phone" value={selectedCustomer.phone} />
-                      <OperationsKeyValue label="Address" value={`${selectedOrder.shippingAddress.addressLine}, ${selectedOrder.shippingAddress.city}`} />
-                      <OperationsKeyValue label="Province" value={selectedOrder.shippingAddress.province} />
+                      <OperationsKeyValue
+                        label="Address"
+                        value={`${selectedOrder.shippingAddress.addressLine}, ${selectedOrder.shippingAddress.city}`}
+                      />
+                      <OperationsKeyValue
+                        label="Province"
+                        value={selectedOrder.shippingAddress.province}
+                      />
                     </div>
                   </div>
                   <div className="rounded-[14px] border border-border/70 bg-background p-3">
                     <div className="text-sm font-bold text-foreground">Payment and totals</div>
                     <div className="mt-2">
-                      <OperationsKeyValue label="Payment method" value={selectedPayment.method.replaceAll("_", " ")} />
-                      <OperationsKeyValue label="Payment status" value={selectedPayment.status.replaceAll("_", " ")} />
+                      <OperationsKeyValue
+                        label="Payment method"
+                        value={selectedPayment.method.replaceAll("_", " ")}
+                      />
+                      <OperationsKeyValue
+                        label="Payment status"
+                        value={selectedPayment.status.replaceAll("_", " ")}
+                      />
                       <OperationsKeyValue
                         label="COD remittance"
-                        value={selectedRemittance ? selectedRemittance.status.replaceAll("_", " ") : "Not applicable"}
+                        value={
+                          selectedRemittance
+                            ? selectedRemittance.status.replaceAll("_", " ")
+                            : "Not applicable"
+                        }
                       />
-                      <OperationsKeyValue label="Subtotal" value={formatPKR(selectedOrder.totals.subtotal)} />
-                      <OperationsKeyValue label="Shipping" value={formatPKR(selectedOrder.totals.shipping)} />
-                      <OperationsKeyValue label="Total" value={formatPKR(selectedOrder.totals.total)} />
+                      <OperationsKeyValue
+                        label="Subtotal"
+                        value={formatPKR(selectedOrder.totals.subtotal)}
+                      />
+                      <OperationsKeyValue
+                        label="Shipping"
+                        value={formatPKR(selectedOrder.totals.shipping)}
+                      />
+                      <OperationsKeyValue
+                        label="Total"
+                        value={formatPKR(selectedOrder.totals.total)}
+                      />
                       <OperationsKeyValue
                         label="Platform commission"
                         value={formatPKR(
-                          selectedCommissionRows.reduce((sum, row) => sum + row.commissionAmount, 0),
+                          selectedCommissionRows.reduce(
+                            (sum, row) => sum + row.commissionAmount,
+                            0,
+                          ),
                         )}
                       />
                     </div>
@@ -312,7 +406,10 @@ export default function AdminOrdersPage() {
                   <div className="text-sm font-bold text-foreground">Items in this order</div>
                   <div className="mt-2 space-y-2">
                     {selectedOrder.items.map((item) => (
-                      <div key={`${selectedOrder.id}-${item.productId}`} className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card px-3 py-2">
+                      <div
+                        key={`${selectedOrder.id}-${item.productId}`}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card px-3 py-2"
+                      >
                         <div>
                           <div className="text-sm font-semibold text-foreground">{item.title}</div>
                           <div className="mt-1 text-xs text-muted-foreground">
@@ -332,17 +429,27 @@ export default function AdminOrdersPage() {
                     <div className="text-sm font-bold text-foreground">Commission breakdown</div>
                     <div className="mt-2 space-y-2">
                       {selectedCommissionRows.map((row) => (
-                        <div key={`${row.orderId}-${row.sellerSlug}`} className="rounded-xl border border-border/60 bg-card px-3 py-2">
+                        <div
+                          key={`${row.orderId}-${row.sellerSlug}`}
+                          className="rounded-xl border border-border/60 bg-card px-3 py-2"
+                        >
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
-                              <div className="text-sm font-semibold text-foreground">{row.sellerName}</div>
+                              <div className="text-sm font-semibold text-foreground">
+                                {row.sellerName}
+                              </div>
                               <div className="mt-1 text-xs text-muted-foreground">
-                                {formatPKR(row.grossAmount)} gross · {row.status.replaceAll("_", " ")}
+                                {formatPKR(row.grossAmount)} gross ·{" "}
+                                {row.status.replaceAll("_", " ")}
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-sm font-black text-foreground">{formatPKR(row.commissionAmount)}</div>
-                              <div className="mt-1 text-xs text-muted-foreground">{row.commissionRate}% commission</div>
+                              <div className="text-sm font-black text-foreground">
+                                {formatPKR(row.commissionAmount)}
+                              </div>
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                {row.commissionRate}% commission
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -356,7 +463,8 @@ export default function AdminOrdersPage() {
                       Seller fulfilment handoff
                     </div>
                     <div className="mt-2 rounded-xl border border-border/60 bg-card px-3 py-2 text-xs leading-5 text-muted-foreground">
-                      Admins verify payments and monitor progress. Sellers own the transition from confirmed to processing, shipped, delivered, or canceled.
+                      Admins verify payments and monitor progress. Sellers own the transition from
+                      confirmed to processing, shipped, delivered, or canceled.
                     </div>
                     <div className="mt-4">
                       <SellerFulfillmentGrid
@@ -395,10 +503,19 @@ export default function AdminOrdersPage() {
                               </AdminPill>
                             </div>
                             <div className="mt-2 grid gap-2 sm:grid-cols-4">
-                              <MetricStat label="Gross" value={formatPKR(settlement.grossSaleAmount)} />
-                              <MetricStat label="Commission" value={formatPKR(settlement.commissionAmount)} />
+                              <MetricStat
+                                label="Gross"
+                                value={formatPKR(settlement.grossSaleAmount)}
+                              />
+                              <MetricStat
+                                label="Commission"
+                                value={formatPKR(settlement.commissionAmount)}
+                              />
                               <MetricStat label="Fees" value={formatPKR(settlement.feeAmount)} />
-                              <MetricStat label="Net" value={formatPKR(settlement.netPayableAmount)} />
+                              <MetricStat
+                                label="Net"
+                                value={formatPKR(settlement.netPayableAmount)}
+                              />
                             </div>
                           </div>
                         ))
@@ -421,9 +538,13 @@ export default function AdminOrdersPage() {
                           >
                             <div className="flex flex-wrap items-start justify-between gap-3">
                               <div>
-                                <div className="text-sm font-semibold text-foreground">{payout.id}</div>
+                                <div className="text-sm font-semibold text-foreground">
+                                  {payout.id}
+                                </div>
                                 <div className="mt-1 text-xs text-muted-foreground">
-                                  {payout.sellerSlug} · {payout.payoutMethod?.replaceAll("_", " ") ?? "Payout destination pending"}
+                                  {payout.sellerSlug} ·{" "}
+                                  {payout.payoutMethod?.replaceAll("_", " ") ??
+                                    "Payout destination pending"}
                                 </div>
                               </div>
                               <AdminPill tone={getPayoutTone(payout.status)}>
@@ -432,8 +553,14 @@ export default function AdminOrdersPage() {
                             </div>
                             <div className="mt-2 grid gap-2 sm:grid-cols-3">
                               <MetricStat label="Net payout" value={formatPKR(payout.netAmount)} />
-                              <MetricStat label="Commission" value={formatPKR(payout.totalCommissionDeducted)} />
-                              <MetricStat label="Reference" value={payout.transactionReference ?? "Not recorded"} />
+                              <MetricStat
+                                label="Commission"
+                                value={formatPKR(payout.totalCommissionDeducted)}
+                              />
+                              <MetricStat
+                                label="Reference"
+                                value={payout.transactionReference ?? "Not recorded"}
+                              />
                             </div>
                           </div>
                         ))
@@ -481,7 +608,11 @@ function PaymentTone({ status }: { status: PaymentStatus }) {
   return <AdminPill tone={tone}>{status.replaceAll("_", " ")}</AdminPill>;
 }
 
-function downloadInvoice(order: MarketplaceOrder, payment: { method: string; status: string }, customer: { name: string; email: string }) {
+function downloadInvoice(
+  order: MarketplaceOrder,
+  payment: { method: string; status: string },
+  customer: { name: string; email: string },
+) {
   if (typeof window === "undefined") {
     return;
   }

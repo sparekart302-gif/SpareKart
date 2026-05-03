@@ -84,7 +84,10 @@ export function SingleImageUploadField({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor={inputId} className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        <label
+          htmlFor={inputId}
+          className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground"
+        >
           {label}
         </label>
         {value ? (
@@ -102,14 +105,23 @@ export function SingleImageUploadField({
       <div className="rounded-[22px] border border-dashed border-border bg-surface p-4 shadow-[var(--shadow-soft)]">
         {displaySrc ? (
           <div className="space-y-3">
-            <div className={cn("overflow-hidden rounded-[18px] bg-card", previewClassName ?? "aspect-[4/3]")}>
+            <div
+              className={cn(
+                "overflow-hidden rounded-[18px] bg-card",
+                previewClassName ?? "aspect-[4/3]",
+              )}
+            >
               <img src={displaySrc} alt={label} className="h-full w-full object-cover" />
             </div>
             <label
               htmlFor={inputId}
               className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl bg-card px-4 text-sm font-semibold text-foreground shadow-[var(--shadow-soft)]"
             >
-              {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+              {isUploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <UploadCloud className="h-4 w-4" />
+              )}
               {isUploading ? "Uploading..." : "Replace image"}
             </label>
           </div>
@@ -222,7 +234,10 @@ export function MultipleImageUploadField({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor={inputId} className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        <label
+          htmlFor={inputId}
+          className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground"
+        >
           {label}
         </label>
         <span className="text-[11px] font-semibold text-muted-foreground">
@@ -234,8 +249,17 @@ export function MultipleImageUploadField({
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {values.map((imageUrl, index) => (
             <div key={imageUrl} className="space-y-2">
-              <div className={cn("overflow-hidden rounded-[18px] bg-card", previewClassName ?? "aspect-square")}>
-                <img src={imageUrl} alt={`${label} ${index + 1}`} className="h-full w-full object-cover" />
+              <div
+                className={cn(
+                  "overflow-hidden rounded-[18px] bg-card",
+                  previewClassName ?? "aspect-square",
+                )}
+              >
+                <img
+                  src={imageUrl}
+                  alt={`${label} ${index + 1}`}
+                  className="h-full w-full object-cover"
+                />
               </div>
               <button
                 type="button"
@@ -250,8 +274,17 @@ export function MultipleImageUploadField({
 
           {localPreviews.map((previewUrl) => (
             <div key={previewUrl} className="space-y-2">
-              <div className={cn("relative overflow-hidden rounded-[18px] bg-card", previewClassName ?? "aspect-square")}>
-                <img src={previewUrl} alt="Uploading preview" className="h-full w-full object-cover opacity-70" />
+              <div
+                className={cn(
+                  "relative overflow-hidden rounded-[18px] bg-card",
+                  previewClassName ?? "aspect-square",
+                )}
+              >
+                <img
+                  src={previewUrl}
+                  alt="Uploading preview"
+                  className="h-full w-full object-cover opacity-70"
+                />
                 <div className="absolute inset-0 grid place-items-center bg-black/20">
                   <Loader2 className="h-5 w-5 animate-spin text-white" />
                 </div>

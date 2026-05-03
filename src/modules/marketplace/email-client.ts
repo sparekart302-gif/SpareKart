@@ -55,7 +55,9 @@ function getSellerRecipients(state: MarketplaceState, order: MarketplaceState["o
         return null;
       }
 
-      const seller = state.sellersDirectory.find((candidate) => candidate.slug === sellerSlug) ?? getSeller(sellerSlug);
+      const seller =
+        state.sellersDirectory.find((candidate) => candidate.slug === sellerSlug) ??
+        getSeller(sellerSlug);
 
       return {
         email: sellerOwner.email,
@@ -144,10 +146,15 @@ export function queueOrderCreatedEmails(state: MarketplaceState, orderId: string
       trackingUrl: `${getSiteUrl()}/order-tracking`,
       sellerWorkspaceBaseUrl: `${getSiteUrl()}/seller/orders`,
       items: order.items.map((item) => {
-        const seller = state.sellersDirectory.find((candidate) => candidate.slug === item.sellerSlug) ?? getSeller(item.sellerSlug);
-        const sellerOwner = "ownerUserId" in seller && seller.ownerUserId
-          ? state.users.find((user) => user.id === seller.ownerUserId)
-          : state.users.find((user) => user.sellerSlug === item.sellerSlug && user.role === "SELLER");
+        const seller =
+          state.sellersDirectory.find((candidate) => candidate.slug === item.sellerSlug) ??
+          getSeller(item.sellerSlug);
+        const sellerOwner =
+          "ownerUserId" in seller && seller.ownerUserId
+            ? state.users.find((user) => user.id === seller.ownerUserId)
+            : state.users.find(
+                (user) => user.sellerSlug === item.sellerSlug && user.role === "SELLER",
+              );
 
         return {
           title: item.title,
@@ -163,7 +170,11 @@ export function queueOrderCreatedEmails(state: MarketplaceState, orderId: string
   });
 }
 
-export function queueOrderStatusEmail(state: MarketplaceState, orderId: string, status: OrderStatus) {
+export function queueOrderStatusEmail(
+  state: MarketplaceState,
+  orderId: string,
+  status: OrderStatus,
+) {
   const order = state.orders.find((candidate) => candidate.id === orderId);
 
   if (!order) {
@@ -176,15 +187,20 @@ export function queueOrderStatusEmail(state: MarketplaceState, orderId: string, 
     return;
   }
 
-  const sellerRecipients =
-    ["CONFIRMED", "AWAITING_PAYMENT_PROOF", "AWAITING_PAYMENT_VERIFICATION", "CANCELED", "RETURNED"].includes(status)
-      ? getSellerRecipients(state, order).map((seller) => ({
-          email: seller.email,
-          name: seller.name,
-          summary: getSellerStatusSummary(order.orderNumber, seller.sellerName, status),
-          workspaceUrl: seller.workspaceUrl,
-        }))
-      : [];
+  const sellerRecipients = [
+    "CONFIRMED",
+    "AWAITING_PAYMENT_PROOF",
+    "AWAITING_PAYMENT_VERIFICATION",
+    "CANCELED",
+    "RETURNED",
+  ].includes(status)
+    ? getSellerRecipients(state, order).map((seller) => ({
+        email: seller.email,
+        name: seller.name,
+        summary: getSellerStatusSummary(order.orderNumber, seller.sellerName, status),
+        workspaceUrl: seller.workspaceUrl,
+      }))
+    : [];
 
   postEmail({
     type: "ORDER_STATUS_CHANGED",

@@ -29,7 +29,7 @@ mongoose.set("strictQuery", true);
 export async function connectToMongo() {
   const env = getServerEnv();
 
-  if (!env.MONGODB_URI) {
+  if (!env.mongodbConfigured || !env.MONGODB_URI) {
     throw new MongoApiError("MongoDB is not configured. Set MONGODB_URI first.", {
       status: 500,
       code: "MONGODB_NOT_CONFIGURED",

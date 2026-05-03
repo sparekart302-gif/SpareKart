@@ -6,8 +6,7 @@ export const metadata: Metadata = buildPageMetadata({
   title: "Checkout — SpareKart",
   description:
     "Complete your secure marketplace order. Cash on Delivery, Bank Transfer, Easypaisa and JazzCash supported.",
-  openGraphDescription:
-    "Secure checkout with COD, Bank Transfer, Easypaisa and JazzCash.",
+  openGraphDescription: "Secure checkout with COD, Bank Transfer, Easypaisa and JazzCash.",
 });
 
 export default function Page() {

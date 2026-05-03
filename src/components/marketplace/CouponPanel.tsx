@@ -26,9 +26,10 @@ export function CouponPanel({
   const [manualMessageTone, setManualMessageTone] = useState<"error" | "success" | "idle">("idle");
   const cartActorId = getCartActorId(currentUser);
   const canUseCoupons = !currentUser || currentUser.role === "CUSTOMER";
-  const couponState = canUseCoupons && cartActorId
-    ? getCartCouponState(state, cartActorId)
-    : { status: "none" as const, code: "", discount: 0, eligibleSubtotal: 0 };
+  const couponState =
+    canUseCoupons && cartActorId
+      ? getCartCouponState(state, cartActorId)
+      : { status: "none" as const, code: "", discount: 0, eligibleSubtotal: 0 };
 
   useEffect(() => {
     setCode(canUseCoupons ? couponState.code : "");
@@ -45,7 +46,7 @@ export function CouponPanel({
     return null;
   }
 
-  const handleApply = (nextCode = code) => {
+  const handleApply = async (nextCode = code) => {
     const normalizedCode = nextCode.trim().toUpperCase();
     const preview = getCartCouponState(state, cartActorId, normalizedCode);
 
@@ -62,7 +63,7 @@ export function CouponPanel({
     }
 
     try {
-      applyCouponCode(normalizedCode);
+      await applyCouponCode(normalizedCode);
       setManualMessage(`${preview.coupon.code} applied successfully.`);
       setManualMessageTone("success");
     } catch (error) {
@@ -70,9 +71,9 @@ export function CouponPanel({
     }
   };
 
-  const handleRemove = () => {
+  const handleRemove = async () => {
     try {
-      removeCouponCode();
+      await removeCouponCode();
       setCode("");
       setManualMessage("");
       setManualMessageTone("idle");
@@ -122,7 +123,7 @@ export function CouponPanel({
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => handleApply()}
+            onClick={() => void handleApply()}
             className="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground sm:flex-none"
           >
             Apply
@@ -130,7 +131,7 @@ export function CouponPanel({
           {couponState.code ? (
             <button
               type="button"
-              onClick={handleRemove}
+              onClick={() => void handleRemove()}
               className="inline-flex h-11 items-center justify-center rounded-xl bg-surface px-4 text-sm font-semibold text-foreground shadow-[var(--shadow-soft)]"
             >
               Remove

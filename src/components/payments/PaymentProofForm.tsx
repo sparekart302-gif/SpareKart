@@ -1,18 +1,10 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Check, Image as ImageIcon, Upload } from "lucide-react";
+import { Check, Image as ImageIcon, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import type { PaymentProofSubmission } from "@/modules/marketplace/types";
-
-function readFileAsDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("Unable to read payment proof."));
-    reader.readAsDataURL(file);
-  });
-}
+import { uploadImageAsset } from "@/modules/uploads/client";
 
 export function PaymentProofForm({
   maxSizeBytes,
@@ -28,6 +20,7 @@ export function PaymentProofForm({
   const [amountPaid, setAmountPaid] = useState("");
   const [paymentDateTime, setPaymentDateTime] = useState("");
   const [note, setNote] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleSubmit = async () => {
     if (!selectedFile) {
@@ -41,11 +34,15 @@ export function PaymentProofForm({
     }
 
     try {
-      const screenshotUrl = await readFileAsDataUrl(selectedFile);
+      setIsUploading(true);
+      const asset = await uploadImageAsset({
+        file: selectedFile,
+        kind: "payment-proof",
+      });
 
       onSubmit({
-        screenshotUrl,
-        screenshotName: selectedFile.name,
+        screenshotUrl: asset.url,
+        screenshotName: asset.fileName,
         transactionReference,
         amountPaid: amountPaid ? Number(amountPaid) : undefined,
         paymentDateTime: paymentDateTime || undefined,
@@ -59,6 +56,8 @@ export function PaymentProofForm({
       setNote("");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to upload payment proof.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -71,7 +70,9 @@ export function PaymentProofForm({
         </p>
       </div>
 
-      <label className={`block cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition-all sm:p-8 ${selectedFile ? "border-success bg-success/5" : "border-border bg-surface hover:border-accent hover:bg-accent-soft"}`}>
+      <label
+        className={`block cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition-all sm:p-8 ${selectedFile ? "border-success bg-success/5" : "border-border bg-surface hover:border-accent hover:bg-accent-soft"}`}
+      >
         <input
           type="file"
           accept="image/*,.pdf"
@@ -89,11 +90,15 @@ export function PaymentProofForm({
         ) : (
           <div className="space-y-2">
             <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-card shadow-[var(--shadow-soft)]">
-              <Upload className="h-5 w-5 text-muted-foreground" />
+              {isUploading ? (
+                <Loader2 className="h-5 w-5 animate-spin text-accent" />
+              ) : (
+                <Upload className="h-5 w-5 text-muted-foreground" />
+              )}
             </div>
             <div className="text-sm font-bold">Drop your screenshot here or click to browse</div>
             <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-              <ImageIcon className="h-3.5 w-3.5" /> JPG, PNG, or PDF
+              <ImageIcon className="h-3.5 w-3.5" /> JPG, PNG, WEBP, or GIF
             </div>
           </div>
         )}
@@ -141,9 +146,10 @@ export function PaymentProofForm({
       <button
         type="button"
         onClick={handleSubmit}
+        disabled={isUploading}
         className="flex h-11 w-full items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
       >
-        {submitLabel}
+        {isUploading ? "Uploading proof..." : submitLabel}
       </button>
     </div>
   );

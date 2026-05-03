@@ -21,7 +21,9 @@ export const PAYMENT_VERIFICATION_ROLES = ["ADMIN", "SUPER_ADMIN"] as const;
  * Check if user can verify payments
  */
 export function canVerifyPayments(user: MarketplaceUser | undefined): boolean {
-  return user ? PAYMENT_VERIFICATION_ROLES.includes(user.role as typeof PAYMENT_VERIFICATION_ROLES[number]) : false;
+  return user
+    ? PAYMENT_VERIFICATION_ROLES.includes(user.role as (typeof PAYMENT_VERIFICATION_ROLES)[number])
+    : false;
 }
 
 /**
@@ -32,7 +34,7 @@ export function verifyCODPayment(
   payment: PaymentRecord,
   verificationRequest: CODPaymentVerificationRequest,
   adminUser: MarketplaceUser,
-  decision: "APPROVE" | "REJECT"
+  decision: "APPROVE" | "REJECT",
 ): {
   updatedOrder: MarketplaceOrder;
   updatedPayment: PaymentRecord;
@@ -72,7 +74,7 @@ function approvePayment(
   order: MarketplaceOrder,
   payment: PaymentRecord,
   verification: CODPaymentVerificationRequest,
-  adminUser: MarketplaceUser
+  adminUser: MarketplaceUser,
 ): {
   updatedOrder: MarketplaceOrder;
   updatedPayment: PaymentRecord;
@@ -99,17 +101,17 @@ function approvePayment(
 
   // Calculate commissions for the order (for all sellers in this order)
   const commissions: CommissionRecord[] = [];
-  const sellerSlugs = Array.from(new Set(order.items.map(item => item.sellerSlug)));
+  const sellerSlugs = Array.from(new Set(order.items.map((item) => item.sellerSlug)));
 
   for (const sellerSlug of sellerSlugs) {
     // Note: In real implementation, you'd fetch seller data
     // For now, we'll create commission records with default rates
-    const sellerItems = order.items.filter(item => item.sellerSlug === sellerSlug);
+    const sellerItems = order.items.filter((item) => item.sellerSlug === sellerSlug);
     const categoryMap = new Map<string, number>();
 
     for (const item of sellerItems) {
       const category = item.brand || "general"; // Use category or brand as fallback
-      categoryMap.set(category, (categoryMap.get(category) || 0) + (item.unitPrice * item.quantity));
+      categoryMap.set(category, (categoryMap.get(category) || 0) + item.unitPrice * item.quantity);
     }
 
     // Create commission for each category
@@ -149,7 +151,7 @@ function rejectPayment(
   order: MarketplaceOrder,
   payment: PaymentRecord,
   verification: CODPaymentVerificationRequest,
-  adminUser: MarketplaceUser
+  adminUser: MarketplaceUser,
 ): {
   updatedOrder: MarketplaceOrder;
   updatedPayment: PaymentRecord;
@@ -185,30 +187,30 @@ function rejectPayment(
  */
 export function generatePaymentVerificationReport(
   orders: MarketplaceOrder[],
-  payments: Map<string, PaymentRecord>
+  payments: Map<string, PaymentRecord>,
 ) {
-  const pending = orders.filter(order => {
+  const pending = orders.filter((order) => {
     const payment = payments.get(order.paymentId);
     return payment?.method === "COD" && payment?.status === "PENDING";
   });
 
-  const awaitingVerification = orders.filter(order => {
+  const awaitingVerification = orders.filter((order) => {
     const payment = payments.get(order.paymentId);
     return payment?.method === "COD" && payment?.status === "UNDER_REVIEW";
   });
 
-  const verified = orders.filter(order => {
+  const verified = orders.filter((order) => {
     const payment = payments.get(order.paymentId);
     return payment?.method === "COD" && payment?.status === "PAID";
   });
 
-  const rejected = orders.filter(order => {
+  const rejected = orders.filter((order) => {
     const payment = payments.get(order.paymentId);
     return payment?.method === "COD" && payment?.status === "REJECTED";
   });
 
   return {
-    totalCODOrders: orders.filter(o => {
+    totalCODOrders: orders.filter((o) => {
       const p = payments.get(o.paymentId);
       return p?.method === "COD";
     }).length,
@@ -230,7 +232,7 @@ export function batchVerifyCODPayments(
   orders: MarketplaceOrder[],
   payments: Map<string, PaymentRecord>,
   adminUser: MarketplaceUser,
-  decisions: Map<string, "APPROVE" | "REJECT">
+  decisions: Map<string, "APPROVE" | "REJECT">,
 ) {
   const results: {
     orderId: string;
@@ -265,7 +267,7 @@ export function batchVerifyCODPayments(
         deliveryDateTime: new Date().toISOString(),
       },
       adminUser,
-      decision
+      decision,
     );
 
     results.push({
@@ -286,7 +288,7 @@ export function batchVerifyCODPayments(
 export function holdPaymentForReview(
   payment: PaymentRecord,
   reason: string,
-  adminUser: MarketplaceUser
+  adminUser: MarketplaceUser,
 ): PaymentRecord {
   if (!canVerifyPayments(adminUser)) {
     throw new Error("Unauthorized: Only admins can hold payments.");
@@ -305,17 +307,17 @@ export function holdPaymentForReview(
 export function releasePaymentFromHold(
   payment: PaymentRecord,
   decision: "APPROVE" | "REJECT",
-  adminUser: MarketplaceUser
+  adminUser: MarketplaceUser,
 ): PaymentRecord {
   if (!canVerifyPayments(adminUser)) {
     throw new Error("Unauthorized: Only admins can release held payments.");
   }
 
-  const newStatus = decision === "APPROVE" ? "PAID" : "REJECTED";
+  const newStatus: PaymentRecord["status"] = decision === "APPROVE" ? "PAID" : "REJECTED";
 
   return {
     ...payment,
-    status: newStatus as any,
+    status: newStatus,
     updatedAt: new Date().toISOString(),
   };
 }

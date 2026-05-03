@@ -23,6 +23,7 @@ import {
 } from "./store";
 import { hashPassword, verifyPassword } from "./password";
 import type {
+  AuthSessionUser,
   AuthTokenRecord,
   AuthUserRecord,
   LoginInput,
@@ -346,6 +347,28 @@ function assertEmailVerified(user: AuthUserRecord) {
   }
 }
 
+function assertUserCanSignIn(user: Pick<AuthUserRecord, "status">) {
+  if (user.status !== "ACTIVE") {
+    throw new AuthApiError("This account is not active for sign-in.", {
+      status: 403,
+      code: "ACCOUNT_INACTIVE",
+    });
+  }
+}
+
+function assertRoleAllowed(
+  user: Pick<AuthSessionUser, "role">,
+  roles: AuthSessionUser["role"][],
+  message: string,
+) {
+  if (!roles.includes(user.role)) {
+    throw new AuthApiError(message, {
+      status: 403,
+      code: "INSUFFICIENT_ROLE",
+    });
+  }
+}
+
 export async function signupWithEmailPassword(input: SignupInput) {
   const parsed = signupSchema.parse(input);
   const store = await getAuthStore();
@@ -412,6 +435,7 @@ export async function loginWithEmailPassword(input: LoginInput, device?: Session
     });
   }
 
+  assertUserCanSignIn(user);
   assertEmailVerified(user);
   const session = await issueSession(user, device);
   return {
@@ -423,6 +447,14 @@ export async function loginWithEmailPassword(input: LoginInput, device?: Session
 
 export async function loginWithGoogleCode(code: string, device?: SessionDeviceMeta) {
   const googleProfile = await exchangeGoogleCodeForProfile(code);
+
+  if (!googleProfile.email_verified) {
+    throw new AuthApiError("Google did not return a verified email address for this account.", {
+      status: 403,
+      code: "GOOGLE_EMAIL_NOT_VERIFIED",
+    });
+  }
+
   const normalizedEmail = normalizeAuthEmail(googleProfile.email);
   let store = await getAuthStore();
   let user = findAuthUserByEmail(store, normalizedEmail);
@@ -479,6 +511,7 @@ export async function loginWithGoogleCode(code: string, device?: SessionDeviceMe
     });
   }
 
+  assertUserCanSignIn(user);
   const session = await issueSession(user, device);
 
   if (isNewUser) {
@@ -535,6 +568,11 @@ export async function getCurrentSessionUser() {
   const user = store.users.find((candidate) => candidate.id === session.userId);
 
   if (!user) {
+    await clearSessionCookie();
+    return null;
+  }
+
+  if (user.status !== "ACTIVE") {
     await clearSessionCookie();
     return null;
   }
@@ -697,6 +735,7 @@ export async function confirmPasswordReset(
     });
   }
 
+  assertUserCanSignIn(freshUser);
   assertEmailVerified(freshUser);
   const session = await issueSession(freshUser, device);
   return {
@@ -704,4 +743,33 @@ export async function confirmPasswordReset(
     accessToken: session.accessToken,
     expiresAt: session.expiresAt,
   };
+}
+
+export async function requireCurrentSessionUser() {
+  const user = await getCurrentSessionUser();
+
+  if (!user) {
+    throw new AuthApiError("Authentication is required for this action.", {
+      status: 401,
+      code: "AUTH_REQUIRED",
+    });
+  }
+
+  return user;
+}
+
+export async function requireAdminSessionUser() {
+  const user = await requireCurrentSessionUser();
+  assertRoleAllowed(user, ["ADMIN", "SUPER_ADMIN"], "Admin access is required for this action.");
+  return user;
+}
+
+export async function requireSellerOrAdminSessionUser() {
+  const user = await requireCurrentSessionUser();
+  assertRoleAllowed(
+    user,
+    ["SELLER", "ADMIN", "SUPER_ADMIN"],
+    "Seller or admin access is required for this action.",
+  );
+  return user;
 }

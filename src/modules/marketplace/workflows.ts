@@ -1,8 +1,4 @@
-import { products } from "@/data/marketplace";
-import {
-  isHostedImageReference,
-  isReviewImageReference,
-} from "@/modules/uploads/shared";
+import { isHostedImageReference, isReviewImageReference } from "@/modules/uploads/shared";
 import { normalizeSellerWhatsAppInput } from "./whatsapp";
 import {
   createOrRefreshOrderCommissions,
@@ -116,11 +112,7 @@ function createDefaultCustomerAccount(userId: string, city: string, createdAt: s
   };
 }
 
-function resolveCartOwnerId(
-  state: MarketplaceState,
-  actorUserId: string,
-  actionLabel: string,
-) {
+function resolveCartOwnerId(state: MarketplaceState, actorUserId: string, actionLabel: string) {
   if (!actorUserId) {
     return GUEST_CART_USER_ID;
   }
@@ -147,8 +139,7 @@ function upsertGuestCheckoutCustomer(
 
   const guestUserId = existingGuest?.id ?? createId("guest-customer");
   const guestEmail =
-    input.guestEmail?.trim().toLowerCase() ||
-    `${guestUserId}@guest.sparekart.local`;
+    input.guestEmail?.trim().toLowerCase() || `${guestUserId}@guest.sparekart.local`;
 
   const guestUser = {
     id: guestUserId,
@@ -170,21 +161,16 @@ function upsertGuestCheckoutCustomer(
         : [...state.users, guestUser],
       customerAccounts: {
         ...state.customerAccounts,
-        [guestUserId]: state.customerAccounts[guestUserId] ?? createDefaultCustomerAccount(
-          guestUserId,
-          input.shippingAddress.city.trim(),
-          createdAt,
-        ),
+        [guestUserId]:
+          state.customerAccounts[guestUserId] ??
+          createDefaultCustomerAccount(guestUserId, input.shippingAddress.city.trim(), createdAt),
       },
     },
     guestUser,
   };
 }
 
-function getReviewEligibleOrders(
-  state: MarketplaceState,
-  userId: string,
-) {
+function getReviewEligibleOrders(state: MarketplaceState, userId: string) {
   return state.orders
     .filter((order) => order.customerUserId === userId && order.status === "DELIVERED")
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
@@ -200,7 +186,9 @@ function validateReviewImages(imageUrls?: string[]) {
 function resolveReviewActor(
   state: MarketplaceState,
   actorUserId: string,
-  orderLookup?: StoreReviewSubmissionInput["orderLookup"] | ProductReviewSubmissionInput["orderLookup"],
+  orderLookup?:
+    | StoreReviewSubmissionInput["orderLookup"]
+    | ProductReviewSubmissionInput["orderLookup"],
 ) {
   const actor = state.users.find((user) => user.id === actorUserId);
 
@@ -285,7 +273,10 @@ function clearAppliedCouponCode(state: MarketplaceState, userId: string) {
 
 function getSellerActorRecord(state: MarketplaceState, userId: string) {
   const actor = state.users.find((user) => user.id === userId);
-  assert(actor?.role === "SELLER" && actor.sellerSlug, "Only sellers can access seller dashboard actions.");
+  assert(
+    actor?.role === "SELLER" && actor.sellerSlug,
+    "Only sellers can access seller dashboard actions.",
+  );
   assert(actor.status === "ACTIVE", "Seller account is not active.");
 
   const seller = state.sellersDirectory.find((item) => item.slug === actor.sellerSlug);
@@ -351,16 +342,19 @@ function syncOrderFinancialLedgerState(
   };
 }
 
-function getOpenSellerPayout(
-  state: MarketplaceState,
-  sellerSlug: string,
-) {
+function getOpenSellerPayout(state: MarketplaceState, sellerSlug: string) {
   return state.sellerPayouts.find(
     (payout) =>
       payout.sellerSlug === sellerSlug &&
-      ["DRAFT", "PENDING_APPROVAL", "APPROVED", "PROCESSING", "HELD", "PENDING", "SCHEDULED"].includes(
-        payout.status,
-      ),
+      [
+        "DRAFT",
+        "PENDING_APPROVAL",
+        "APPROVED",
+        "PROCESSING",
+        "HELD",
+        "PENDING",
+        "SCHEDULED",
+      ].includes(payout.status),
   );
 }
 
@@ -394,17 +388,11 @@ function validateSellerPayoutAccountInput(input: SellerPayoutAccountInput) {
   }
 }
 
-function ensureInventoryAvailable(
-  state: MarketplaceState,
-  order: Pick<MarketplaceOrder, "items">,
-) {
+function ensureInventoryAvailable(state: MarketplaceState, order: Pick<MarketplaceOrder, "items">) {
   order.items.forEach((item) => {
     const available = getInventoryAvailable(state, item.productId);
 
-    assert(
-      available >= item.quantity,
-      `Not enough stock available for ${item.title}.`,
-    );
+    assert(available >= item.quantity, `Not enough stock available for ${item.title}.`);
   });
 }
 
@@ -438,9 +426,7 @@ function addSellerNotifications(
     message?: string;
   },
 ) {
-  const sellerNotifications = Array.from(
-    new Set(order.items.map((item) => item.sellerSlug)),
-  )
+  const sellerNotifications = Array.from(new Set(order.items.map((item) => item.sellerSlug)))
     .map((sellerSlug) =>
       state.users.find((user) => user.role === "SELLER" && user.sellerSlug === sellerSlug),
     )
@@ -459,10 +445,7 @@ function addSellerNotifications(
   return sellerNotifications;
 }
 
-function getSellerUsersForOrder(
-  state: MarketplaceState,
-  order: MarketplaceOrder,
-) {
+function getSellerUsersForOrder(state: MarketplaceState, order: MarketplaceOrder) {
   return Array.from(new Set(order.items.map((item) => item.sellerSlug)))
     .map((sellerSlug) =>
       state.users.find((user) => user.role === "SELLER" && user.sellerSlug === sellerSlug),
@@ -567,9 +550,7 @@ function restockInventoryForSellerItems(
       ...state,
       inventory,
       orders: state.orders.map((candidate) =>
-        candidate.id === order.id
-          ? { ...candidate, updatedAt: createdAt }
-          : candidate,
+        candidate.id === order.id ? { ...candidate, updatedAt: createdAt } : candidate,
       ),
     },
     {
@@ -722,11 +703,8 @@ function restockInventoryForOrder(
   );
 }
 
-function validateProofInput(
-  state: MarketplaceState,
-  proof: PaymentProofSubmission,
-) {
-  assert(proof.screenshotUrl.startsWith("data:"), "Invalid payment proof upload.");
+function validateProofInput(state: MarketplaceState, proof: PaymentProofSubmission) {
+  assert(isHostedImageReference(proof.screenshotUrl), "Invalid payment proof upload.");
   assert(proof.screenshotName.trim().length > 0, "Screenshot file name is required.");
   assert(
     proof.transactionReference.trim().length >= 4,
@@ -738,16 +716,10 @@ function validateProofInput(
   }
 
   if (proof.paymentDateTime) {
-    assert(
-      !Number.isNaN(Date.parse(proof.paymentDateTime)),
-      "Payment date/time must be valid.",
-    );
+    assert(!Number.isNaN(Date.parse(proof.paymentDateTime)), "Payment date/time must be valid.");
   }
 
-  assert(
-    proof.screenshotUrl.length <= state.paymentSettings.proofMaxSizeBytes * 1.5,
-    "Payment proof is too large.",
-  );
+  assert(state.paymentSettings.proofMaxSizeBytes > 0, "Payment proof uploads are not configured.");
 }
 
 function createProofRecord(
@@ -797,16 +769,16 @@ function createCODCollectionProofRecord(
   createdAt: string,
 ) {
   validateProofInput(state, proofInput);
-  assert(payment.method === "COD", "COD collection proof can only be used for cash on delivery orders.");
-  assert(order.status === "DELIVERED", "COD collection proof can only be submitted after delivery.");
   assert(
-    proofInput.deliveryPartnerName.trim().length >= 2,
-    "Delivery partner name is required.",
+    payment.method === "COD",
+    "COD collection proof can only be used for cash on delivery orders.",
   );
   assert(
-    proofInput.deliveryPartnerPhone.trim().length >= 8,
-    "Delivery partner phone is required.",
+    order.status === "DELIVERED",
+    "COD collection proof can only be submitted after delivery.",
   );
+  assert(proofInput.deliveryPartnerName.trim().length >= 2, "Delivery partner name is required.");
+  assert(proofInput.deliveryPartnerPhone.trim().length >= 8, "Delivery partner phone is required.");
 
   const previousAttempts = state.paymentProofs.filter((proof) => proof.orderId === order.id);
 
@@ -842,7 +814,9 @@ function updateOrderFinancialsAfterVerification(
   createdAt: string,
 ) {
   const previousCommissionIds = new Set(
-    state.commissions.filter((commission) => commission.orderId === order.id).map((commission) => commission.id),
+    state.commissions
+      .filter((commission) => commission.orderId === order.id)
+      .map((commission) => commission.id),
   );
   const previousSettlementStatuses = new Map(
     state.sellerSettlements
@@ -1032,7 +1006,10 @@ function removeOrderFromOpenPayouts(
       orderIds: nextOrderIds,
       commissionIds: nextCommissionIds,
       settlementIds: nextSettlementIds,
-      totalEarnings: nextSettlements.reduce((sum, settlement) => sum + settlement.grossSaleAmount, 0),
+      totalEarnings: nextSettlements.reduce(
+        (sum, settlement) => sum + settlement.grossSaleAmount,
+        0,
+      ),
       totalCommissionDeducted: nextSettlements.reduce(
         (sum, settlement) => sum + settlement.commissionAmount,
         0,
@@ -1269,11 +1246,14 @@ export function addItemToCart(
   productId: string,
   qty = 1,
 ) {
-  const cartOwnerId = resolveCartOwnerId(state, actorUserId, "Only customers or guest shoppers can add items to cart.");
+  const cartOwnerId = resolveCartOwnerId(
+    state,
+    actorUserId,
+    "Only customers or guest shoppers can add items to cart.",
+  );
 
   const product =
-    state.managedProducts.find((candidate) => candidate.id === productId) ??
-    products.find((candidate) => candidate.id === productId);
+    state.managedProducts.find((candidate) => candidate.id === productId);
   assert(product, "Product not found.");
   assert(qty > 0, "Quantity must be at least 1.");
 
@@ -1285,9 +1265,7 @@ export function addItemToCart(
   const nextQty = Math.min((existingLine?.qty ?? 0) + qty, available);
 
   const nextLines = existingLine
-    ? existingLines.map((line) =>
-        line.productId === productId ? { ...line, qty: nextQty } : line,
-      )
+    ? existingLines.map((line) => (line.productId === productId ? { ...line, qty: nextQty } : line))
     : [...existingLines, { productId, qty: Math.min(qty, available) }];
 
   return {
@@ -1305,7 +1283,11 @@ export function updateCartLineQuantity(
   productId: string,
   qty: number,
 ) {
-  const cartOwnerId = resolveCartOwnerId(state, actorUserId, "Only customers or guest shoppers can update the cart.");
+  const cartOwnerId = resolveCartOwnerId(
+    state,
+    actorUserId,
+    "Only customers or guest shoppers can update the cart.",
+  );
 
   const available = getInventoryAvailable(state, productId);
   const safeQty = Math.max(1, Math.min(qty, available));
@@ -1321,12 +1303,12 @@ export function updateCartLineQuantity(
   };
 }
 
-export function removeCartLine(
-  state: MarketplaceState,
-  actorUserId: string,
-  productId: string,
-) {
-  const cartOwnerId = resolveCartOwnerId(state, actorUserId, "Only customers or guest shoppers can update the cart.");
+export function removeCartLine(state: MarketplaceState, actorUserId: string, productId: string) {
+  const cartOwnerId = resolveCartOwnerId(
+    state,
+    actorUserId,
+    "Only customers or guest shoppers can update the cart.",
+  );
   const nextLines = (state.cartsByUserId[cartOwnerId] ?? []).filter(
     (line) => line.productId !== productId,
   );
@@ -1349,7 +1331,11 @@ export function applyCouponCodeToCart(
   actorUserId: string,
   rawCode: string,
 ) {
-  const cartOwnerId = resolveCartOwnerId(state, actorUserId, "Only customers or guest shoppers can apply coupons.");
+  const cartOwnerId = resolveCartOwnerId(
+    state,
+    actorUserId,
+    "Only customers or guest shoppers can apply coupons.",
+  );
 
   const code = rawCode.trim().toUpperCase();
   assert(code, "Enter a coupon code first.");
@@ -1367,11 +1353,12 @@ export function applyCouponCodeToCart(
   return nextState;
 }
 
-export function removeCouponCodeFromCart(
-  state: MarketplaceState,
-  actorUserId: string,
-) {
-  const cartOwnerId = resolveCartOwnerId(state, actorUserId, "Only customers or guest shoppers can remove coupons.");
+export function removeCouponCodeFromCart(state: MarketplaceState, actorUserId: string) {
+  const cartOwnerId = resolveCartOwnerId(
+    state,
+    actorUserId,
+    "Only customers or guest shoppers can remove coupons.",
+  );
 
   return {
     ...state,
@@ -1588,7 +1575,10 @@ export function requestSellerPayout(
   const payoutAccount = seller.payoutAccount;
 
   assert(payoutAccount, "Add payout account details before requesting a payout.");
-  assert(payoutAccount.status === "VERIFIED", "Your payout account must be verified before requesting a payout.");
+  assert(
+    payoutAccount.status === "VERIFIED",
+    "Your payout account must be verified before requesting a payout.",
+  );
   assert(!seller.payoutHold, "Seller payouts are temporarily on hold for this store.");
 
   const openPayout = getOpenSellerPayout(state, seller.slug);
@@ -1598,10 +1588,7 @@ export function requestSellerPayout(
       openPayout.requestType !== "SELLER_REQUEST" &&
       ["DRAFT", "PENDING", "SCHEDULED"].includes(openPayout.status);
 
-    assert(
-      canConvertScheduledPayout,
-      "You already have an open payout in progress.",
-    );
+    assert(canConvertScheduledPayout, "You already have an open payout in progress.");
 
     const nextPayout = {
       ...openPayout,
@@ -1771,9 +1758,14 @@ export function saveSellerOwnedProduct(
   }
 
   const productId = input.id ?? createId("product");
-  const categoryExists = state.managedCategories.some((category) => category.slug === input.category);
+  const categoryExists = state.managedCategories.some(
+    (category) => category.slug === input.category,
+  );
   assert(categoryExists, "Selected category does not exist.");
-  assert(input.images.length > 0 && input.images[0]?.trim(), "At least one product image is required.");
+  assert(
+    input.images.length > 0 && input.images[0]?.trim(),
+    "At least one product image is required.",
+  );
   input.images.forEach((imageUrl) => {
     assert(isHostedImageReference(imageUrl), "Each product image must be a valid uploaded image.");
   });
@@ -1786,14 +1778,12 @@ export function saveSellerOwnedProduct(
   const requestedStatus: MarketplaceState["managedProducts"][number]["moderationStatus"] =
     input.moderationStatus === "DRAFT" ? "DRAFT" : "ACTIVE";
   const moderationStatus: MarketplaceState["managedProducts"][number]["moderationStatus"] =
-    existing?.moderationStatus === "FLAGGED"
-      ? "DRAFT"
-      : requestedStatus;
+    existing?.moderationStatus === "FLAGGED" ? "DRAFT" : requestedStatus;
 
   const reviewRequired =
     existing?.moderationStatus === "FLAGGED"
       ? true
-      : input.reviewRequired ?? existing?.reviewRequired ?? false;
+      : (input.reviewRequired ?? existing?.reviewRequired ?? false);
 
   const nextProduct: MarketplaceState["managedProducts"][number] = {
     ...input,
@@ -1851,7 +1841,10 @@ export function adjustSellerOwnedInventory(
   const createdAt = nowIso();
   const product = state.managedProducts.find((item) => item.id === input.productId);
   assert(product, "Product not found.");
-  assert(product.sellerSlug === seller.slug, "You can only adjust inventory for your own products.");
+  assert(
+    product.sellerSlug === seller.slug,
+    "You can only adjust inventory for your own products.",
+  );
   const current = state.inventory[input.productId];
   assert(current, "Inventory record not found.");
 
@@ -2023,7 +2016,7 @@ export function submitStoreReview(
   );
   const eligibleOrder = verifiedOrder
     ? eligibleOrders.find((order) => order.id === verifiedOrder.id)
-    : eligibleOrders.find(
+    : (eligibleOrders.find(
         (order) =>
           !state.managedStoreReviews.some(
             (review) =>
@@ -2031,7 +2024,7 @@ export function submitStoreReview(
               review.sellerSlug === seller.slug &&
               review.orderId === order.id,
           ),
-      ) ?? eligibleOrders[0];
+      ) ?? eligibleOrders[0]);
   assert(eligibleOrder, "You can review this store only after a delivered order.");
   assert(
     !state.managedStoreReviews.some(
@@ -2134,9 +2127,7 @@ export function saveCustomerAddress(
   assert(nextAddress.postalCode.length >= 4, "Postal code is required.");
 
   let addresses = account.addresses.some((address) => address.id === addressId)
-    ? account.addresses.map((address) =>
-        address.id === addressId ? nextAddress : address,
-      )
+    ? account.addresses.map((address) => (address.id === addressId ? nextAddress : address))
     : [...account.addresses, nextAddress];
 
   if (nextAddress.isDefault) {
@@ -2222,9 +2213,7 @@ export function saveCustomerVehicle(
   assert(nextVehicle.engine.length >= 2, "Vehicle engine is required.");
 
   let savedVehicles = account.savedVehicles.some((vehicle) => vehicle.id === vehicleId)
-    ? account.savedVehicles.map((vehicle) =>
-        vehicle.id === vehicleId ? nextVehicle : vehicle,
-      )
+    ? account.savedVehicles.map((vehicle) => (vehicle.id === vehicleId ? nextVehicle : vehicle))
     : [...account.savedVehicles, nextVehicle];
 
   if (nextVehicle.isPrimary) {
@@ -2290,7 +2279,10 @@ export function toggleWishlistProduct(
 ) {
   const actor = state.users.find((user) => user.id === actorUserId);
   assert(isCustomer(actor), "Only customers can manage wishlist items.");
-  assert(products.some((product) => product.id === productId), "Product not found.");
+  assert(
+    state.managedProducts.some((product) => product.id === productId && !product.deletedAt),
+    "Product not found.",
+  );
 
   const account = getCustomerAccountRecord(state, actorUserId);
   const wishlistProductIds = account.wishlistProductIds.includes(productId)
@@ -2334,10 +2326,7 @@ export function updateCustomerPreferences(
   };
 }
 
-export function markAllNotificationsRead(
-  state: MarketplaceState,
-  actorUserId: string,
-) {
+export function markAllNotificationsRead(state: MarketplaceState, actorUserId: string) {
   const actor = state.users.find((user) => user.id === actorUserId);
   assert(isCustomer(actor), "Only customers can manage account notifications.");
 
@@ -2392,13 +2381,11 @@ export function placeOrderFromCheckout(
   assert(input.shippingAddress.province.trim(), "Province is required.");
   assert(input.shippingAddress.postalCode.trim(), "Postal code is required.");
 
-  const groupedSellerSlugs = Array.from(
-    new Set(cartDetailedLines.map((item) => item.seller.slug)),
-  );
+  const groupedSellerSlugs = Array.from(new Set(cartDetailedLines.map((item) => item.seller.slug)));
 
   assert(
     groupedSellerSlugs.every((sellerSlug) =>
-        input.sellerShippingSelections.some((selection) => selection.sellerSlug === sellerSlug),
+      input.sellerShippingSelections.some((selection) => selection.sellerSlug === sellerSlug),
     ),
     "Shipping selection is missing for one or more sellers.",
   );
@@ -2476,9 +2463,7 @@ export function placeOrderFromCheckout(
     proofIds: [],
     activeProofId: null,
     instructionsSnapshot:
-      paymentMethod === "COD"
-        ? undefined
-        : state.paymentSettings.manualInstructions[paymentMethod],
+      paymentMethod === "COD" ? undefined : state.paymentSettings.manualInstructions[paymentMethod],
     createdAt,
     updatedAt: createdAt,
   };
@@ -2548,7 +2533,13 @@ export function placeOrderFromCheckout(
       updatedAt: createdAt,
     });
 
-    nextState = commitInventoryForOrder(nextState, order, checkoutUserId, createdAt, "ORDER_CONFIRMED");
+    nextState = commitInventoryForOrder(
+      nextState,
+      order,
+      checkoutUserId,
+      createdAt,
+      "ORDER_CONFIRMED",
+    );
     nextState = appendStateArtifacts(nextState, {
       notifications: [
         createNotification({
@@ -2579,7 +2570,14 @@ export function placeOrderFromCheckout(
   }
 
   if (input.paymentProof) {
-    const proof = createProofRecord(nextState, payment, order, checkoutUserId, input.paymentProof, createdAt);
+    const proof = createProofRecord(
+      nextState,
+      payment,
+      order,
+      checkoutUserId,
+      input.paymentProof,
+      createdAt,
+    );
 
     nextState = {
       ...nextState,
@@ -2610,7 +2608,14 @@ export function placeOrderFromCheckout(
       createdAt,
     );
 
-    nextState = addProofSubmittedArtifacts(nextState, checkoutUserId, order, payment, proof, createdAt);
+    nextState = addProofSubmittedArtifacts(
+      nextState,
+      checkoutUserId,
+      order,
+      payment,
+      proof,
+      createdAt,
+    );
 
     return { state: nextState, orderId };
   }
@@ -2771,7 +2776,8 @@ export function submitCODCollectionProof(
   const discrepancyDelta = roundMoney(receivedAmount - order.totals.total);
   const discrepancyStatus =
     discrepancyDelta === 0 ? "NONE" : discrepancyDelta < 0 ? "SHORT" : "OVER";
-  const remittanceStatus = discrepancyStatus === "NONE" ? "REMITTED_TO_MARKETPLACE" : "ISSUE_FLAGGED";
+  const remittanceStatus =
+    discrepancyStatus === "NONE" ? "REMITTED_TO_MARKETPLACE" : "ISSUE_FLAGGED";
 
   let nextState: MarketplaceState = {
     ...state,
@@ -2810,7 +2816,14 @@ export function submitCODCollectionProof(
     ),
   };
 
-  nextState = addCODProofSubmittedArtifacts(nextState, actorUserId, order, payment, proof, createdAt);
+  nextState = addCODProofSubmittedArtifacts(
+    nextState,
+    actorUserId,
+    order,
+    payment,
+    proof,
+    createdAt,
+  );
 
   return { state: nextState, proofId: proof.id };
 }
@@ -2865,7 +2878,8 @@ export function approvePaymentProof(
           ? {
               ...entry,
               status: "REMITTANCE_CONFIRMED",
-              discrepancyStatus: entry.discrepancyStatus === "UNRESOLVED" ? "NONE" : entry.discrepancyStatus,
+              discrepancyStatus:
+                entry.discrepancyStatus === "UNRESOLVED" ? "NONE" : entry.discrepancyStatus,
               confirmedByUserId: actorUserId,
               confirmedAt: approvedAt,
               receiptReference: input.adminNote?.trim() || entry.receiptReference,
@@ -2875,16 +2889,16 @@ export function approvePaymentProof(
           : entry,
       ),
       payments: nextState.payments.map((candidate) =>
-      candidate.id === payment.id
-        ? {
-            ...candidate,
-            status: "PAID",
-            verifiedByUserId: actorUserId,
-            verifiedAt: approvedAt,
-            commissionCalculatedAt: approvedAt,
-            updatedAt: approvedAt,
-          }
-        : candidate,
+        candidate.id === payment.id
+          ? {
+              ...candidate,
+              status: "PAID",
+              verifiedByUserId: actorUserId,
+              verifiedAt: approvedAt,
+              commissionCalculatedAt: approvedAt,
+              updatedAt: approvedAt,
+            }
+          : candidate,
       ),
     };
 
@@ -3259,13 +3273,11 @@ export function advanceOrderStatus(
 
   const allowedTransitions = getAllowedSellerOrderTransitions(sellerFulfillment.status);
   assert(
-    allowedTransitions.includes(nextStatus as typeof allowedTransitions[number]),
+    allowedTransitions.includes(nextStatus as (typeof allowedTransitions)[number]),
     `Your store cannot move this order from ${sellerFulfillment.status} to ${nextStatus}.`,
   );
   assert(
-    order.status === "CONFIRMED" ||
-      order.status === "PROCESSING" ||
-      order.status === "SHIPPED",
+    order.status === "CONFIRMED" || order.status === "PROCESSING" || order.status === "SHIPPED",
     "This order is not yet ready for seller fulfilment updates.",
   );
 
@@ -3274,7 +3286,10 @@ export function advanceOrderStatus(
   const nextOrder = updateSellerFulfillmentStatus(
     order,
     actor.sellerSlug,
-    nextStatus as Extract<OrderStatus, "CONFIRMED" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELED">,
+    nextStatus as Extract<
+      OrderStatus,
+      "CONFIRMED" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELED"
+    >,
     updatedAt,
   );
   const sellerRecord = state.sellersDirectory.find((seller) => seller.slug === actor.sellerSlug);
@@ -3356,15 +3371,21 @@ export function advanceOrderStatus(
           createNotification({
             userId: adminUser.id,
             type:
-              nextOrder.status === "DELIVERED" && payment.method === "COD" && payment.status !== "PAID"
+              nextOrder.status === "DELIVERED" &&
+              payment.method === "COD" &&
+              payment.status !== "PAID"
                 ? "COD_REMITTANCE_PENDING"
                 : notificationConfig.type,
             title:
-              nextOrder.status === "DELIVERED" && payment.method === "COD" && payment.status !== "PAID"
+              nextOrder.status === "DELIVERED" &&
+              payment.method === "COD" &&
+              payment.status !== "PAID"
                 ? "COD remittance pending"
                 : `${notificationConfig.title} update`,
             message:
-              nextOrder.status === "DELIVERED" && payment.method === "COD" && payment.status !== "PAID"
+              nextOrder.status === "DELIVERED" &&
+              payment.method === "COD" &&
+              payment.status !== "PAID"
                 ? `${sellerLabel} delivered ${order.orderNumber}. Delivery partner remittance now needs confirmation before seller settlement.`
                 : `${sellerLabel} moved ${order.orderNumber} to ${nextStatus.replaceAll("_", " ")}.`,
             orderId: order.id,

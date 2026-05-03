@@ -1,32 +1,35 @@
 import "server-only";
 
-import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
+import { AuthApiError } from "@/server/auth/errors";
+import { jsonFailure } from "@/server/http/responses";
 import { MongoApiError } from "./errors";
 
 export function jsonMongoError(error: unknown, fallbackMessage: string) {
+  if (error instanceof AuthApiError) {
+    return jsonFailure(error.message, {
+      status: error.status,
+      code: error.code,
+      extra: error.details,
+    });
+  }
+
   if (error instanceof MongoApiError) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error.message,
-        code: error.code,
-        ...(error.details ?? {}),
-      },
-      { status: error.status },
-    );
+    return jsonFailure(error.message, {
+      status: error.status,
+      code: error.code,
+      extra: error.details,
+    });
   }
 
   if (error instanceof ZodError) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "Validation failed.",
-        code: "VALIDATION_ERROR",
+    return jsonFailure("Validation failed.", {
+      status: 422,
+      code: "VALIDATION_ERROR",
+      extra: {
         issues: error.flatten(),
       },
-      { status: 422 },
-    );
+    });
   }
 
   if (typeof error === "object" && error !== null && "code" in error && error.code === 11000) {
@@ -35,25 +38,19 @@ export function jsonMongoError(error: unknown, fallbackMessage: string) {
       keyValue?: Record<string, unknown>;
     };
 
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "A record with the same unique field already exists.",
-        code: "DUPLICATE_KEY",
+    return jsonFailure("A record with the same unique field already exists.", {
+      status: 409,
+      code: "DUPLICATE_KEY",
+      extra: {
         keyPattern: duplicateError.keyPattern,
         keyValue: duplicateError.keyValue,
       },
-      { status: 409 },
-    );
+    });
   }
 
-  return NextResponse.json(
-    {
-      ok: false,
-      error: error instanceof Error ? error.message : fallbackMessage,
-    },
-    { status: 500 },
-  );
+  return jsonFailure(error instanceof Error ? error.message : fallbackMessage, {
+    status: 500,
+  });
 }
 
 export function parsePositiveInt(value: string | null, fallback: number, max = 100) {

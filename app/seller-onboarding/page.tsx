@@ -7,8 +7,7 @@ export const metadata: Metadata = buildPageMetadata({
   description:
     "Reach thousands of auto parts buyers across Pakistan. Zero monthly fees, easy onboarding, full marketplace support.",
   openGraphTitle: "Sell on SpareKart",
-  openGraphDescription:
-    "Open your auto parts store on Pakistan's premium marketplace.",
+  openGraphDescription: "Open your auto parts store on Pakistan's premium marketplace.",
 });
 
 export default function Page() {

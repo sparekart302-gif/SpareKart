@@ -6,8 +6,7 @@ export const metadata: Metadata = buildPageMetadata({
   title: "Shop All Auto Parts — SpareKart",
   description:
     "Browse thousands of car spare parts from verified Pakistani sellers. Filter by brand, model, year, price and more.",
-  openGraphDescription:
-    "Browse thousands of car spare parts from verified Pakistani sellers.",
+  openGraphDescription: "Browse thousands of car spare parts from verified Pakistani sellers.",
 });
 
 export default function Page() {

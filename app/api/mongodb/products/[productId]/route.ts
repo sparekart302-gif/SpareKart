@@ -1,6 +1,12 @@
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { jsonMongoError } from "@/server/mongodb/http";
-import { deleteProduct, getProductById, updateProduct } from "@/server/mongodb/services/products";
+import { jsonSuccess } from "@/server/http/responses";
+import { requireAdminSessionUser } from "@/server/auth/service";
+import {
+  deleteMarketplaceProductAdmin,
+  getMarketplaceProductAdmin,
+  updateMarketplaceProductAdmin,
+} from "@/server/marketplace/admin-api";
 
 export const runtime = "nodejs";
 
@@ -13,8 +19,16 @@ type Params = {
 export async function GET(_request: NextRequest, { params }: Params) {
   try {
     const { productId } = await params;
-    const product = await getProductById(productId);
-    return NextResponse.json({ ok: true, item: product });
+    const product = await getMarketplaceProductAdmin(productId);
+    return jsonSuccess(
+      { item: product },
+      {
+        message: "Product fetched successfully.",
+        extra: {
+          item: product,
+        },
+      },
+    );
   } catch (error) {
     return jsonMongoError(error, "Unable to fetch product.");
   }
@@ -22,10 +36,19 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
+    await requireAdminSessionUser();
     const body = await request.json();
     const { productId } = await params;
-    const product = await updateProduct(productId, body);
-    return NextResponse.json({ ok: true, item: product });
+    const product = await updateMarketplaceProductAdmin(productId, body);
+    return jsonSuccess(
+      { item: product },
+      {
+        message: "Product updated successfully.",
+        extra: {
+          item: product,
+        },
+      },
+    );
   } catch (error) {
     return jsonMongoError(error, "Unable to update product.");
   }
@@ -33,9 +56,18 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
+    await requireAdminSessionUser();
     const { productId } = await params;
-    const product = await deleteProduct(productId);
-    return NextResponse.json({ ok: true, item: product });
+    const product = await deleteMarketplaceProductAdmin(productId);
+    return jsonSuccess(
+      { item: product },
+      {
+        message: "Product deleted successfully.",
+        extra: {
+          item: product,
+        },
+      },
+    );
   } catch (error) {
     return jsonMongoError(error, "Unable to delete product.");
   }

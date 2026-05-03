@@ -12,9 +12,12 @@ export default function ResetPasswordPage() {
           <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-accent-soft text-accent">
             <KeyRound className="h-5 w-5" />
           </div>
-          <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Password reset now uses OTP</h1>
+          <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+            Password reset now uses OTP
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Open the recovery screen, request a fresh OTP, and confirm the 6-digit code with your new password.
+            Open the recovery screen, request a fresh OTP, and confirm the 6-digit code with your
+            new password.
           </p>
           <Link
             href="/forgot-password"
@@ -27,4 +30,3 @@ export default function ResetPasswordPage() {
     </PageLayout>
   );
 }
-

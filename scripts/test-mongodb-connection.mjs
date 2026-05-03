@@ -6,8 +6,25 @@ import mongoose from "mongoose";
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB_NAME || "sparekart";
 
+function isPlaceholderValue(value) {
+  return Boolean(
+    value &&
+    (/cluster\.example/i.test(value) ||
+      /username:password/i.test(value) ||
+      /replace-with/i.test(value) ||
+      /<[^>]+>/.test(value)),
+  );
+}
+
 if (!uri) {
   console.error("MONGODB_URI is missing. Add it to your local .env file first.");
+  process.exit(1);
+}
+
+if (isPlaceholderValue(uri)) {
+  console.error(
+    "MONGODB_URI is still using a placeholder value. Replace it with a real Atlas connection string first.",
+  );
   process.exit(1);
 }
 

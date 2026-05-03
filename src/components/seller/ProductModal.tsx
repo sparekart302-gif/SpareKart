@@ -141,7 +141,9 @@ export function ProductModal({
               <FieldShell label="Badge">
                 <select
                   value={productDraft.badge}
-                  onChange={(e) => handleFieldChange("badge", e.target.value as SellerProductDraft["badge"])}
+                  onChange={(e) =>
+                    handleFieldChange("badge", e.target.value as SellerProductDraft["badge"])
+                  }
                   className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-primary/50"
                 >
                   {productBadges.map((badge) => (
@@ -194,7 +196,9 @@ export function ProductModal({
               <FieldShell label="Status">
                 <select
                   value={productDraft.status}
-                  onChange={(e) => handleFieldChange("status", e.target.value as SellerProductDraft["status"])}
+                  onChange={(e) =>
+                    handleFieldChange("status", e.target.value as SellerProductDraft["status"])
+                  }
                   className="h-11 w-full rounded-xl bg-surface px-3 text-sm shadow-[var(--shadow-soft)] focus:outline-none focus:ring-2 focus:ring-primary/50"
                 >
                   <option value="ACTIVE">Publish</option>
@@ -283,7 +287,8 @@ export function ProductModal({
                 />
               </FieldShell>
               <p className="mt-2 text-xs text-muted-foreground">
-                Use one vehicle fitment per line. For year ranges, use dash (2017-2021). For multiple years, use commas (2018, 2019, 2020).
+                Use one vehicle fitment per line. For year ranges, use dash (2017-2021). For
+                multiple years, use commas (2018, 2019, 2020).
               </p>
             </div>
           </div>

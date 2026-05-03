@@ -137,10 +137,7 @@ export function ensureOrderLifecycle(order: MarketplaceOrder): MarketplaceOrder 
   };
 }
 
-export function getSellerFulfillmentForOrder(
-  order: MarketplaceOrder,
-  sellerSlug?: string,
-) {
+export function getSellerFulfillmentForOrder(order: MarketplaceOrder, sellerSlug?: string) {
   if (!sellerSlug) {
     return undefined;
   }
@@ -164,10 +161,7 @@ export function getAllowedSellerOrderTransitions(status: OrderStatus) {
   return transitions[status];
 }
 
-export function canSellerManageOrder(
-  order: MarketplaceOrder,
-  sellerSlug?: string,
-) {
+export function canSellerManageOrder(order: MarketplaceOrder, sellerSlug?: string) {
   const fulfillment = getSellerFulfillmentForOrder(order, sellerSlug);
 
   if (!fulfillment) {
@@ -266,9 +260,7 @@ export function deriveOrderStatusFromFulfillments(
   }
 
   if (
-    activeFulfillments.every((fulfillment) =>
-      ["SHIPPED", "DELIVERED"].includes(fulfillment.status),
-    )
+    activeFulfillments.every((fulfillment) => ["SHIPPED", "DELIVERED"].includes(fulfillment.status))
   ) {
     return "SHIPPED";
   }
@@ -286,16 +278,12 @@ export function deriveOrderStatusFromFulfillments(
   }
 
   if (
-    activeFulfillments.some(
-      (fulfillment) => fulfillment.status === "AWAITING_PAYMENT_VERIFICATION",
-    )
+    activeFulfillments.some((fulfillment) => fulfillment.status === "AWAITING_PAYMENT_VERIFICATION")
   ) {
     return "AWAITING_PAYMENT_VERIFICATION";
   }
 
-  if (
-    activeFulfillments.some((fulfillment) => fulfillment.status === "AWAITING_PAYMENT_PROOF")
-  ) {
+  if (activeFulfillments.some((fulfillment) => fulfillment.status === "AWAITING_PAYMENT_PROOF")) {
     return "AWAITING_PAYMENT_PROOF";
   }
 
@@ -342,8 +330,11 @@ export function formatOrderLifecycleEvent(entry: AuditEntry, actorName?: string)
         detail: "Please submit a valid payment proof. Try again from My Orders.",
         category: "danger",
       };
-    case "ORDER_STATUS_CHANGED":
-      const statusMessages: Record<string, { title: string; detail: string; category: "success" | "warning" | "danger" | "default" }> = {
+    case "ORDER_STATUS_CHANGED": {
+      const statusMessages: Record<
+        string,
+        { title: string; detail: string; category: "success" | "warning" | "danger" | "default" }
+      > = {
         CONFIRMED: {
           title: "Order confirmed",
           detail: "Your payment is confirmed. Sellers are preparing your items.",
@@ -388,6 +379,7 @@ export function formatOrderLifecycleEvent(entry: AuditEntry, actorName?: string)
         detail: message.detail,
         category: message.category,
       };
+    }
     default:
       return null; // Hide unknown/internal events
   }

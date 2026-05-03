@@ -54,7 +54,8 @@ export function ProductModerationDialog({
             Product Moderation
           </DialogTitle>
           <DialogDescription>
-            Adjust marketplace visibility, category mapping, and discovery tags without editing seller-owned pricing or inventory.
+            Adjust marketplace visibility, category mapping, and discovery tags without editing
+            seller-owned pricing or inventory.
           </DialogDescription>
         </DialogHeader>
 
@@ -133,7 +134,10 @@ export function ProductModerationDialog({
                 </select>
               </AdminField>
 
-              <AdminField label="Discovery tags" hint="Comma-separated search and taxonomy support tags.">
+              <AdminField
+                label="Discovery tags"
+                hint="Comma-separated search and taxonomy support tags."
+              >
                 <input
                   value={tagInput}
                   onChange={(event) => onTagInputChange(event.target.value)}
@@ -142,7 +146,10 @@ export function ProductModerationDialog({
                 />
               </AdminField>
 
-              <AdminField label="Commission override (%)" hint="Optional product-level override. Leave empty to use the category rate.">
+              <AdminField
+                label="Commission override (%)"
+                hint="Optional product-level override. Leave empty to use the category rate."
+              >
                 <input
                   type="number"
                   min="0"
@@ -182,7 +189,12 @@ export function ProductModerationDialog({
                 <div className="text-sm font-black text-foreground">Listing health</div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <HealthChip label="Images" active={draft.images.length > 0} />
-                  <HealthChip label="Category mapped" active={Boolean(categories.find((category) => category.slug === draft.category))} />
+                  <HealthChip
+                    label="Category mapped"
+                    active={Boolean(
+                      categories.find((category) => category.slug === draft.category),
+                    )}
+                  />
                   <HealthChip label="Discovery tags" active={normalizeTags(tagInput).length >= 2} />
                   <HealthChip label="Badge set" active={Boolean(draft.badge)} />
                 </div>

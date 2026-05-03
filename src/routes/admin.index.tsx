@@ -87,10 +87,16 @@ export default function AdminDashboardPage() {
           description="Monitor revenue, operational queues, seller approvals, inventory pressure, and moderation from a tighter mobile-first control workspace."
           actions={
             <>
-              <Link href="/admin/payments" className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">
+              <Link
+                href="/admin/payments"
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
+              >
                 Verify payments
               </Link>
-              <Link href="/admin/sellers" className="inline-flex h-10 items-center justify-center rounded-xl bg-surface px-4 text-sm font-semibold shadow-[var(--shadow-soft)]">
+              <Link
+                href="/admin/sellers"
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-surface px-4 text-sm font-semibold shadow-[var(--shadow-soft)]"
+              >
                 Review sellers
               </Link>
             </>
@@ -117,7 +123,10 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
                 <div className="mt-5 grid grid-cols-2 gap-2">
-                  <HeroMiniMetric label="Commission" value={formatCompactPKR(summary.platformCommissionRevenue)} />
+                  <HeroMiniMetric
+                    label="Commission"
+                    value={formatCompactPKR(summary.platformCommissionRevenue)}
+                  />
                   <HeroMiniMetric label="Urgent tasks" value={formatCompactNumber(urgentCount)} />
                 </div>
               </div>
@@ -201,7 +210,11 @@ export default function AdminDashboardPage() {
         </section>
 
         <section className="grid gap-3 xl:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)]">
-          <AdminPanel title="Sales performance" description="Six-month revenue and order movement." className="min-h-full">
+          <AdminPanel
+            title="Sales performance"
+            description="Six-month revenue and order movement."
+            className="min-h-full"
+          >
             <div className="grid gap-4 p-0 lg:grid-cols-2">
               <AdminMiniBars
                 rows={salesSeries.map((entry) => ({
@@ -224,7 +237,9 @@ export default function AdminDashboardPage() {
           <div className="grid gap-3">
             <AdminPanel title="Order status mix" description="Current order pipeline distribution.">
               {orderDistribution.length === 0 ? (
-                <div className="text-sm text-muted-foreground">Order distribution will appear once marketplace orders are created.</div>
+                <div className="text-sm text-muted-foreground">
+                  Order distribution will appear once marketplace orders are created.
+                </div>
               ) : (
                 <AdminMiniBars
                   rows={orderDistribution.map((entry) => ({
@@ -243,19 +258,43 @@ export default function AdminDashboardPage() {
               )}
             </AdminPanel>
 
-            <AdminPanel title="Live signals" description="Key marketplace pressure points right now.">
+            <AdminPanel
+              title="Live signals"
+              description="Key marketplace pressure points right now."
+            >
               <div className="grid gap-2 sm:grid-cols-2">
-                <SignalRow label="Users" value={formatCompactNumber(summary.totalUsers)} Icon={Users2} />
-                <SignalRow label="Approvals" value={formatCompactNumber(summary.pendingSellerApprovals)} Icon={Store} />
-                <SignalRow label="Payments" value={formatCompactNumber(summary.pendingPayments)} Icon={CreditCard} />
-                <SignalRow label="Moderation" value={formatCompactNumber(summary.flaggedReviews + summary.flaggedProducts)} Icon={ShieldCheck} />
+                <SignalRow
+                  label="Users"
+                  value={formatCompactNumber(summary.totalUsers)}
+                  Icon={Users2}
+                />
+                <SignalRow
+                  label="Approvals"
+                  value={formatCompactNumber(summary.pendingSellerApprovals)}
+                  Icon={Store}
+                />
+                <SignalRow
+                  label="Payments"
+                  value={formatCompactNumber(summary.pendingPayments)}
+                  Icon={CreditCard}
+                />
+                <SignalRow
+                  label="Moderation"
+                  value={formatCompactNumber(summary.flaggedReviews + summary.flaggedProducts)}
+                  Icon={ShieldCheck}
+                />
               </div>
             </AdminPanel>
           </div>
         </section>
 
-        <section className={`grid gap-3 ${isSuperAdmin ? "xl:grid-cols-[0.95fr_1.05fr_0.9fr]" : "xl:grid-cols-2"}`}>
-          <AdminPanel title="Catalog growth" description="New catalog supply and seller applications.">
+        <section
+          className={`grid gap-3 ${isSuperAdmin ? "xl:grid-cols-[0.95fr_1.05fr_0.9fr]" : "xl:grid-cols-2"}`}
+        >
+          <AdminPanel
+            title="Catalog growth"
+            description="New catalog supply and seller applications."
+          >
             <AdminMiniBars
               rows={catalogSeries.map((entry) => ({
                 label: `${entry.label} catalog`,
@@ -266,7 +305,10 @@ export default function AdminDashboardPage() {
           </AdminPanel>
 
           {isSuperAdmin && (
-            <AdminPanel title="Recent activity" description="Auditable admin and marketplace events.">
+            <AdminPanel
+              title="Recent activity"
+              description="Auditable admin and marketplace events."
+            >
               <div className="divide-y divide-border/60">
                 {recentActivity.length === 0 ? (
                   <div className="text-sm text-muted-foreground">No audit activity yet.</div>
@@ -275,12 +317,16 @@ export default function AdminDashboardPage() {
                     <div key={entry.id} className="px-0 py-3 first:pt-0 last:pb-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <AdminPill tone="info">{entry.action.replaceAll("_", " ")}</AdminPill>
-                        <span className="text-[11px] text-muted-foreground">{formatDateTime(entry.createdAt)}</span>
+                        <span className="text-[11px] text-muted-foreground">
+                          {formatDateTime(entry.createdAt)}
+                        </span>
                       </div>
                       <div className="mt-2 text-sm font-semibold text-foreground">
                         {entry.actor?.name ?? "System action"}
                       </div>
-                      {entry.note ? <p className="mt-1 text-sm leading-5 text-muted-foreground">{entry.note}</p> : null}
+                      {entry.note ? (
+                        <p className="mt-1 text-sm leading-5 text-muted-foreground">{entry.note}</p>
+                      ) : null}
                     </div>
                   ))
                 )}
@@ -288,7 +334,10 @@ export default function AdminDashboardPage() {
             </AdminPanel>
           )}
 
-          <AdminPanel title="Admin notifications" description="Updates routed to the active admin session.">
+          <AdminPanel
+            title="Admin notifications"
+            description="Updates routed to the active admin session."
+          >
             <div className="divide-y divide-border/60">
               {notifications.length === 0 ? (
                 <div className="text-sm text-muted-foreground">No recent admin notifications.</div>
@@ -300,8 +349,12 @@ export default function AdminDashboardPage() {
                         <Bell className="h-3.5 w-3.5 text-accent" />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-sm font-bold text-foreground">{notification.title}</div>
-                        <p className="mt-1 text-sm leading-5 text-muted-foreground">{notification.message}</p>
+                        <div className="text-sm font-bold text-foreground">
+                          {notification.title}
+                        </div>
+                        <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                          {notification.message}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -354,7 +407,9 @@ function formatDateTime(value: string) {
 function HeroMiniMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[14px] border border-white/12 bg-white/10 px-3 py-2.5">
-      <div className="truncate text-[9px] font-black uppercase tracking-[0.16em] text-white/58">{label}</div>
+      <div className="truncate text-[9px] font-black uppercase tracking-[0.16em] text-white/58">
+        {label}
+      </div>
       <div className="mt-1 truncate text-sm font-black tabular-nums text-white">{value}</div>
     </div>
   );
@@ -384,7 +439,9 @@ function CommandMetric({
     <div className="min-w-0 bg-primary px-3 py-3.5 sm:px-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="truncate text-[9px] font-black uppercase tracking-[0.16em] text-white/55">{label}</div>
+          <div className="truncate text-[9px] font-black uppercase tracking-[0.16em] text-white/55">
+            {label}
+          </div>
           <div className="mt-1 truncate text-[1.35rem] font-black leading-none tracking-[-0.05em] tabular-nums text-white sm:text-[1.55rem]">
             {value}
           </div>
@@ -427,7 +484,9 @@ function QueueCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="truncate text-[10px] font-black uppercase tracking-[0.15em] opacity-75">{label}</div>
+          <div className="truncate text-[10px] font-black uppercase tracking-[0.15em] opacity-75">
+            {label}
+          </div>
           <div className="mt-1 text-2xl font-black leading-none tracking-[-0.05em] tabular-nums text-foreground">
             {formatCompactNumber(value)}
           </div>
@@ -441,22 +500,16 @@ function QueueCard({
   );
 }
 
-function SignalRow({
-  label,
-  value,
-  Icon,
-}: {
-  label: string;
-  value: string;
-  Icon: typeof Users2;
-}) {
+function SignalRow({ label, value, Icon }: { label: string; value: string; Icon: typeof Users2 }) {
   return (
     <div className="flex items-center gap-3 rounded-[14px] border border-border/60 bg-background px-3 py-2.5">
       <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-border/60 bg-card">
         <Icon className="h-4 w-4 text-accent" />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
+        <div className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">
+          {label}
+        </div>
         <div className="truncate text-base font-black tabular-nums text-foreground">{value}</div>
       </div>
     </div>

@@ -1,4 +1,3 @@
-import { getSeller, products } from "@/data/marketplace";
 import { formatOrderLifecycleEvent, getSellerFulfillmentForOrder } from "./order-management";
 import type {
   AuditEntry,
@@ -31,7 +30,7 @@ export function getMarketplaceSellerBySlug(state: MarketplaceState, sellerSlug?:
     return undefined;
   }
 
-  return state.sellersDirectory.find((seller) => seller.slug === sellerSlug) ?? getSeller(sellerSlug);
+  return state.sellersDirectory.find((seller) => seller.slug === sellerSlug);
 }
 
 export function getMarketplaceProductById(state: MarketplaceState, productId?: string) {
@@ -39,8 +38,7 @@ export function getMarketplaceProductById(state: MarketplaceState, productId?: s
     return undefined;
   }
 
-  return state.managedProducts.find((product) => product.id === productId) ??
-    products.find((product) => product.id === productId);
+  return state.managedProducts.find((product) => product.id === productId);
 }
 
 export function getMarketplaceProductBySlug(state: MarketplaceState, slug?: string) {
@@ -48,8 +46,78 @@ export function getMarketplaceProductBySlug(state: MarketplaceState, slug?: stri
     return undefined;
   }
 
-  return state.managedProducts.find((product) => product.slug === slug) ??
-    products.find((product) => product.slug === slug);
+  return state.managedProducts.find((product) => product.slug === slug);
+}
+
+export function getActiveMarketplaceProducts(state: MarketplaceState) {
+  return state.managedProducts.filter(
+    (product) => product.moderationStatus === "ACTIVE" && !product.deletedAt,
+  );
+}
+
+export function getActiveMarketplaceCategories(state: MarketplaceState) {
+  const countByCategory = new Map<string, number>();
+
+  getActiveMarketplaceProducts(state).forEach((product) => {
+    countByCategory.set(product.category, (countByCategory.get(product.category) ?? 0) + 1);
+  });
+
+  return state.managedCategories
+    .filter((category) => category.active)
+    .map((category) => ({
+      ...category,
+      productCount: countByCategory.get(category.slug) ?? category.productCount ?? 0,
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name));
+}
+
+export function getActiveMarketplaceSellers(state: MarketplaceState) {
+  const countBySeller = new Map<string, number>();
+
+  getActiveMarketplaceProducts(state).forEach((product) => {
+    countBySeller.set(product.sellerSlug, (countBySeller.get(product.sellerSlug) ?? 0) + 1);
+  });
+
+  return state.sellersDirectory
+    .filter((seller) => seller.status === "ACTIVE" || seller.status === "PENDING_APPROVAL")
+    .map((seller) => ({
+      ...seller,
+      productCount: countBySeller.get(seller.slug) ?? seller.productCount ?? 0,
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name));
+}
+
+export function getMarketplaceBrands(state: MarketplaceState) {
+  const brands = new Map<
+    string,
+    {
+      slug: string;
+      name: string;
+      productCount: number;
+    }
+  >();
+
+  getActiveMarketplaceProducts(state).forEach((product) => {
+    const slug = product.brand
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    const current = brands.get(slug);
+
+    if (current) {
+      current.productCount += 1;
+      return;
+    }
+
+    brands.set(slug, {
+      slug,
+      name: product.brand,
+      productCount: 1,
+    });
+  });
+
+  return Array.from(brands.values()).sort((left, right) => left.name.localeCompare(right.name));
 }
 
 export function getCartLines(state: MarketplaceState, userId: string) {
@@ -81,8 +149,8 @@ export function getCartDetailedLines(state: MarketplaceState, userId: string) {
     })
     .filter(Boolean) as {
     line: CartLine;
-    product: (typeof products)[number];
-    seller: ReturnType<typeof getSeller>;
+    product: NonNullable<ReturnType<typeof getMarketplaceProductById>>;
+    seller: NonNullable<ReturnType<typeof getMarketplaceSellerBySlug>>;
     availableStock: number;
   }[];
 }
@@ -92,7 +160,7 @@ export function getCartGroups(state: MarketplaceState, userId: string) {
   const groups = new Map<
     string,
     {
-      seller: ReturnType<typeof getSeller>;
+      seller: NonNullable<ReturnType<typeof getMarketplaceSellerBySlug>>;
       items: typeof detailedLines;
     }
   >();
@@ -135,18 +203,11 @@ function getCartSubtotal(state: MarketplaceState, userId: string) {
   );
 }
 
-function getEligibleCouponSubtotal(
-  state: MarketplaceState,
-  userId: string,
-  coupon: CouponRecord,
-) {
+function getEligibleCouponSubtotal(state: MarketplaceState, userId: string, coupon: CouponRecord) {
   const detailedLines = getCartDetailedLines(state, userId);
 
   if (coupon.scope === "ORDER") {
-    return detailedLines.reduce(
-      (sum, item) => sum + item.product.price * item.line.qty,
-      0,
-    );
+    return detailedLines.reduce((sum, item) => sum + item.product.price * item.line.qty, 0);
   }
 
   const eligibleCategories = new Set(coupon.eligibleCategorySlugs ?? []);
@@ -173,14 +234,8 @@ function formatEligibleCategoryList(state: MarketplaceState, coupon: CouponRecor
   return categoryNames.join(", ");
 }
 
-export function getCartCouponState(
-  state: MarketplaceState,
-  userId: string,
-  codeOverride?: string,
-) {
-  const appliedCode = normalizeCouponCode(
-    codeOverride ?? state.appliedCouponCodesByUserId[userId],
-  );
+export function getCartCouponState(state: MarketplaceState, userId: string, codeOverride?: string) {
+  const appliedCode = normalizeCouponCode(codeOverride ?? state.appliedCouponCodesByUserId[userId]);
 
   if (!appliedCode) {
     return {
@@ -287,9 +342,7 @@ export function getCartCouponState(
   }
 
   const rawDiscount =
-    coupon.type === "FIXED"
-      ? coupon.value
-      : Math.round((eligibleSubtotal * coupon.value) / 100);
+    coupon.type === "FIXED" ? coupon.value : Math.round((eligibleSubtotal * coupon.value) / 100);
   const discount = Math.min(
     rawDiscount,
     eligibleSubtotal,
@@ -460,7 +513,7 @@ export function getWishlistProducts(state: MarketplaceState, userId?: string) {
 
   return account.wishlistProductIds
     .map((productId) => getMarketplaceProductById(state, productId))
-    .filter(Boolean) as (typeof products)[number][];
+    .filter(Boolean) as NonNullable<ReturnType<typeof getMarketplaceProductById>>[];
 }
 
 export function getOrdersForSeller(state: MarketplaceState, sellerSlug?: string) {
@@ -485,10 +538,7 @@ function normalizeLookupValue(value?: string) {
   return value?.trim().toLowerCase().replace(/\s+/g, "") ?? "";
 }
 
-export function lookupOrderByReference(
-  state: MarketplaceState,
-  input: GuestOrderLookupInput,
-) {
+export function lookupOrderByReference(state: MarketplaceState, input: GuestOrderLookupInput) {
   const normalizedOrderNumber = input.orderNumber.trim().toUpperCase();
   const normalizedContact = normalizeLookupValue(input.contact);
 
@@ -641,14 +691,7 @@ export function getOrderCustomer(state: MarketplaceState, order: MarketplaceOrde
   return getUserById(state, order.customerUserId);
 }
 
-export function getProductSnapshot(productId: string) {
-  return products.find((product) => product.id === productId);
-}
-
-export function getProofCustomer(
-  state: MarketplaceState,
-  proof: PaymentProof,
-) {
+export function getProofCustomer(state: MarketplaceState, proof: PaymentProof) {
   return getUserById(state, proof.submittedByUserId);
 }
 

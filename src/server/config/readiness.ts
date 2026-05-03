@@ -1,6 +1,9 @@
 import "server-only";
 
 import { getServerEnv } from "./env";
+import { MarketplaceStateModel } from "@/server/mongodb/models/marketplace";
+import { connectToMongo } from "@/server/mongodb/connection";
+import { probeRuntimeDirectory } from "@/server/runtime/storage";
 
 export type ReadinessStatus = "pass" | "warn" | "fail";
 
@@ -11,6 +14,8 @@ export type ReadinessCheck = {
   detail: string;
 };
 
+export type DeploymentReadiness = Awaited<ReturnType<typeof getDeploymentReadiness>>;
+
 function createCheck(
   id: string,
   label: string,
@@ -20,16 +25,32 @@ function createCheck(
   return { id, label, status, detail };
 }
 
-export function getDeploymentReadiness() {
+export async function getDeploymentReadiness() {
   const env = getServerEnv();
   const checks: ReadinessCheck[] = [];
+  const runtimeProbe = await probeRuntimeDirectory();
+  let marketplaceStateAvailable = false;
+  const usesLocalhostSiteUrl =
+    env.NEXT_PUBLIC_SITE_URL.includes("localhost") ||
+    env.NEXT_PUBLIC_SITE_URL.includes("127.0.0.1");
+
+  if (env.mongodbConfigured) {
+    try {
+      await connectToMongo();
+      marketplaceStateAvailable = Boolean(await MarketplaceStateModel.exists({ _id: "primary" }));
+    } catch {
+      marketplaceStateAvailable = false;
+    }
+  }
 
   checks.push(
     createCheck(
       "site-url",
       "Public site URL",
-      "pass",
-      `Using ${env.NEXT_PUBLIC_SITE_URL} for auth links, email CTAs, and metadata.`,
+      env.NODE_ENV === "production" && usesLocalhostSiteUrl ? "warn" : "pass",
+      env.NODE_ENV === "production" && usesLocalhostSiteUrl
+        ? `NEXT_PUBLIC_SITE_URL is still set to ${env.NEXT_PUBLIC_SITE_URL}. Replace it with your live domain before deployment.`
+        : `Using ${env.NEXT_PUBLIC_SITE_URL} for auth links, email CTAs, and metadata.`,
     ),
   );
 
@@ -40,6 +61,15 @@ export function getDeploymentReadiness() {
         "Transactional email delivery",
         "pass",
         `Resend is configured with ${env.RESEND_FROM_EMAIL}.`,
+      ),
+    );
+  } else if (env.resendPartiallyConfigured) {
+    checks.push(
+      createCheck(
+        "email-delivery",
+        "Transactional email delivery",
+        env.NODE_ENV === "production" ? "fail" : "warn",
+        "Resend is partially configured. Set both RESEND_API_KEY and RESEND_FROM_EMAIL together.",
       ),
     );
   } else {
@@ -59,10 +89,16 @@ export function getDeploymentReadiness() {
     createCheck(
       "server-runtime",
       "Server runtime storage",
-      env.NODE_ENV === "production" && !env.SPAREKART_RUNTIME_DIR ? "warn" : "pass",
-      env.SPAREKART_RUNTIME_DIR
-        ? `Server-side auth/email runtime files will be stored in ${env.runtimeRoot}.`
-        : "Using the default .sparekart-runtime directory inside the app root. Set SPAREKART_RUNTIME_DIR on hosted environments so auth/email runtime files live on a known writable path.",
+      runtimeProbe.ok
+        ? env.NODE_ENV === "production" && !env.SPAREKART_RUNTIME_DIR
+          ? "warn"
+          : "pass"
+        : "fail",
+      runtimeProbe.ok
+        ? env.SPAREKART_RUNTIME_DIR
+          ? `Server-side auth/email runtime files are writable in ${env.runtimeRoot}.`
+          : "Using the default .sparekart-runtime directory inside the app root. Set SPAREKART_RUNTIME_DIR on hosted environments so auth/email runtime files live on a known writable path."
+        : `Runtime storage is not writable at ${runtimeProbe.path}: ${runtimeProbe.error}`,
     ),
   );
 
@@ -70,10 +106,10 @@ export function getDeploymentReadiness() {
     createCheck(
       "mongodb",
       "MongoDB Atlas configuration",
-      env.MONGODB_URI ? "pass" : "warn",
-      env.MONGODB_URI
+      env.mongodbConfigured ? "pass" : env.NODE_ENV === "production" ? "fail" : "warn",
+      env.mongodbConfigured
         ? `MongoDB is configured${env.MONGODB_DB_NAME ? ` with database ${env.MONGODB_DB_NAME}` : ""}.`
-        : "MONGODB_URI is not set yet. Mongoose CRUD routes will not connect until MongoDB Atlas credentials are configured.",
+        : "MONGODB_URI is not set yet or is still using a placeholder. MongoDB-backed routes will not connect until Atlas credentials are configured.",
     ),
   );
 
@@ -81,7 +117,7 @@ export function getDeploymentReadiness() {
     createCheck(
       "runtime-persistence",
       "Auth and email runtime persistence",
-      env.mongodbConfigured ? "pass" : "warn",
+      env.mongodbConfigured ? "pass" : env.NODE_ENV === "production" ? "warn" : "warn",
       env.mongodbConfigured
         ? "Auth sessions, verification tokens, and email queue records are stored in MongoDB."
         : "Auth sessions, verification tokens, and the email queue are still using local runtime files because MongoDB is not configured.",
@@ -92,10 +128,18 @@ export function getDeploymentReadiness() {
     createCheck(
       "google-oauth",
       "Google OAuth login",
-      env.googleConfigured ? "pass" : env.NODE_ENV === "production" ? "warn" : "warn",
+      env.googleConfigured
+        ? "pass"
+        : env.googlePartiallyConfigured
+          ? env.NODE_ENV === "production"
+            ? "fail"
+            : "warn"
+          : "warn",
       env.googleConfigured
         ? "Google OAuth credentials are configured for customer and account sign-in."
-        : "Google OAuth is not configured yet. Email/password login works, but Google sign-in buttons will redirect back with a configuration error.",
+        : env.googlePartiallyConfigured
+          ? "Google OAuth is partially configured. Set both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET together."
+          : "Google OAuth is not configured yet. Email/password login works, but Google sign-in buttons will redirect back with a configuration error.",
     ),
   );
 
@@ -103,7 +147,11 @@ export function getDeploymentReadiness() {
     createCheck(
       "jwt-auth",
       "JWT authentication",
-      env.NODE_ENV === "production" && env.jwtUsesDefault ? "fail" : env.jwtUsesDefault ? "warn" : "pass",
+      env.NODE_ENV === "production" && env.jwtUsesDefault
+        ? "fail"
+        : env.jwtUsesDefault
+          ? "warn"
+          : "pass",
       env.jwtUsesDefault
         ? env.NODE_ENV === "production"
           ? "JWT_SECRET is using the default development secret. Replace it with a long random production secret before deployment."
@@ -114,29 +162,61 @@ export function getDeploymentReadiness() {
 
   checks.push(
     createCheck(
+      "seed-auth",
+      "Seed admin credentials",
+      env.seedPasswordConfigured && env.superAdminPasswordConfigured
+        ? "pass"
+        : env.NODE_ENV === "production"
+          ? "fail"
+          : "warn",
+      env.seedPasswordConfigured && env.superAdminPasswordConfigured
+        ? "Seeded local accounts and seeded super admin credentials are configured."
+        : "SPAREKART_SEED_PASSWORD and SPAREKART_SUPER_ADMIN_PASSWORD should be set so seeded local accounts can be initialized safely.",
+    ),
+  );
+
+  checks.push(
+    createCheck(
       "marketplace-state",
       "Marketplace shared state",
-      "warn",
-      "Catalog, cart, and order workflow state is still browser-local for the current demo build. Local testing works, but multi-user production rollout should move marketplace state to shared backend persistence.",
+      env.mongodbConfigured ? (marketplaceStateAvailable ? "pass" : "warn") : env.NODE_ENV === "production" ? "fail" : "warn",
+      env.mongodbConfigured
+        ? marketplaceStateAvailable
+          ? "Catalog, users, carts, orders, order items, payment proofs, inventory, notifications, reviews, and admin logs are stored in MongoDB. Guest cart localStorage remains only as a safe browser convenience until checkout persists the order."
+          : "MongoDB is configured but the marketplace snapshot has not been materialized yet. It will be created on first marketplace request."
+        : "Marketplace persistence requires MongoDB. Configure MONGODB_URI so catalog, order, and customer state does not remain local-only.",
     ),
   );
 
   const failures = checks.filter((check) => check.status === "fail");
   const warnings = checks.filter((check) => check.status === "warn");
+  const overallStatus: "ready" | "warning" | "not_ready" =
+    failures.length > 0 ? "not_ready" : warnings.length > 0 ? "warning" : "ready";
 
   return {
     ok: failures.length === 0,
+    status: overallStatus,
     environment: env.NODE_ENV,
     recommendedHost:
-      env.MONGODB_URI || env.SPAREKART_RUNTIME_DIR
+      env.mongodbConfigured || env.SPAREKART_RUNTIME_DIR
         ? "Any Node-capable host with persistent storage and server support."
         : "For the current runtime, prefer a Node host with a writable persistent disk over fully serverless deployment.",
+    services: {
+      mongoConfigured: env.mongodbConfigured,
+      resendConfigured: env.resendConfigured,
+      googleConfigured: env.googleConfigured,
+      runtimeWritable: runtimeProbe.ok,
+      jwtUsesDefault: env.jwtUsesDefault,
+    },
     checks,
     summary: {
       passed: checks.filter((check) => check.status === "pass").length,
       warnings: warnings.length,
       failures: failures.length,
     },
+    knownLimitations: checks
+      .filter((check) => check.status !== "pass")
+      .map((check) => check.detail),
     generatedAt: new Date().toISOString(),
   };
 }

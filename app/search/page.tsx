@@ -4,8 +4,7 @@ import { buildPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Search Results — SpareKart",
-  description:
-    "Search across thousands of car spare parts from verified Pakistani sellers.",
+  description: "Search across thousands of car spare parts from verified Pakistani sellers.",
   openGraphTitle: "Search — SpareKart",
   openGraphDescription: "Search auto parts across SpareKart.",
 });
@@ -22,16 +21,11 @@ export default async function Page({
   const queryFromUrl =
     typeof resolvedSearchParams.q === "string"
       ? resolvedSearchParams.q
-      : resolvedSearchParams.q?.[0] ?? "";
+      : (resolvedSearchParams.q?.[0] ?? "");
   const categoryFromUrl =
     typeof resolvedSearchParams.category === "string"
       ? resolvedSearchParams.category
-      : resolvedSearchParams.category?.[0] ?? "all";
+      : (resolvedSearchParams.category?.[0] ?? "all");
 
-  return (
-    <SearchPage
-      queryFromUrl={queryFromUrl}
-      categoryFromUrl={categoryFromUrl}
-    />
-  );
+  return <SearchPage queryFromUrl={queryFromUrl} categoryFromUrl={categoryFromUrl} />;
 }

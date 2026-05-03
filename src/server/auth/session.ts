@@ -22,4 +22,3 @@ export function buildSessionCookieOptions(expiresAt: Date) {
     expires: expiresAt,
   };
 }
-

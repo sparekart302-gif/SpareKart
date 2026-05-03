@@ -22,10 +22,7 @@ import type {
   SellerRecord,
   SystemSettings,
 } from "./types";
-import {
-  CATEGORY_COMMISSION_RATES,
-  getDefaultPayoutCycleConfig,
-} from "./commission-management";
+import { CATEGORY_COMMISSION_RATES, getDefaultPayoutCycleConfig } from "./commission-management";
 import { ensureOrderLifecycle } from "./order-management";
 
 const marketplaceAdminScopes: AdminScope[] = [
@@ -142,7 +139,7 @@ export const marketplaceUsers: MarketplaceUser[] = [
   {
     id: "user-superadmin-bilal",
     name: "SpareKart Super Admin",
-    email: "sparekart302@gmail.com",
+    email: "superadmin@sparekart.local",
     phone: "+92 300 9998877",
     role: "SUPER_ADMIN",
     status: "ACTIVE",
@@ -232,12 +229,11 @@ function buildCustomerAccounts(users: MarketplaceUser[]): Record<string, Custome
           label: "Home",
           fullName: user.name,
           phone: user.phone,
-          addressLine:
-            isAhmed
-              ? "House 12, Street 5, Block A"
-              : isSara
-                ? "Flat 8, Gulberg Residencia"
-                : "House 19, G-11 Markaz",
+          addressLine: isAhmed
+            ? "House 12, Street 5, Block A"
+            : isSara
+              ? "Flat 8, Gulberg Residencia"
+              : "House 19, G-11 Markaz",
           city: isAhmed ? "Karachi" : isSara ? "Lahore" : "Islamabad",
           province: isAhmed ? "Sindh" : isSara ? "Punjab" : "Islamabad Capital Territory",
           postalCode: isAhmed ? "74000" : isSara ? "54000" : "44000",
@@ -248,12 +244,11 @@ function buildCustomerAccounts(users: MarketplaceUser[]): Record<string, Custome
           label: isAhmed ? "Workshop" : "Office",
           fullName: user.name,
           phone: user.phone,
-          addressLine:
-            isAhmed
-              ? "Plot 7, Korangi Industrial Area"
-              : isSara
-                ? "Shop 19, Montgomery Road"
-                : "Unit 4, Blue Area Service Road",
+          addressLine: isAhmed
+            ? "Plot 7, Korangi Industrial Area"
+            : isSara
+              ? "Shop 19, Montgomery Road"
+              : "Unit 4, Blue Area Service Road",
           city: isAhmed ? "Karachi" : isSara ? "Lahore" : "Islamabad",
           province: isAhmed ? "Sindh" : isSara ? "Punjab" : "Islamabad Capital Territory",
           postalCode: isAhmed ? "74900" : isSara ? "54000" : "44010",
@@ -327,9 +322,7 @@ function buildManagedCategories(): ManagedCategory[] {
   return categories.map((category, index) => ({
     ...category,
     active: index !== 7,
-    commissionRate:
-      CATEGORY_COMMISSION_RATES[category.slug] ??
-      12,
+    commissionRate: CATEGORY_COMMISSION_RATES[category.slug] ?? 12,
     createdAt: `2024-${String((index % 9) + 1).padStart(2, "0")}-10T09:00:00.000Z`,
     updatedAt: `2026-04-${String((index % 18) + 1).padStart(2, "0")}T11:30:00.000Z`,
   }));
@@ -414,8 +407,10 @@ function buildSellersDirectory(): SellerRecord[] {
             ? "Rejected after incomplete documentation review."
             : undefined,
       approvedByUserId: index < 3 || index === 6 ? "user-superadmin-bilal" : undefined,
-      approvedAt: index < 3 || index === 6 ? `2025-0${(index % 5) + 1}-18T10:00:00.000Z` : undefined,
-      flaggedReason: index === 4 ? "High cancellation rate and repeated customer complaints." : undefined,
+      approvedAt:
+        index < 3 || index === 6 ? `2025-0${(index % 5) + 1}-18T10:00:00.000Z` : undefined,
+      flaggedReason:
+        index === 4 ? "High cancellation rate and repeated customer complaints." : undefined,
       permissions: {
         canFeatureProducts: tier !== "STANDARD",
         canRunCampaigns: tier === "ENTERPRISE",
@@ -423,8 +418,7 @@ function buildSellersDirectory(): SellerRecord[] {
       },
       socialLinks: {
         website: `https://${seller.slug}.sparekart.pk`,
-        whatsapp:
-          index < 4 ? `https://wa.me/92${String(3001234000 + index).slice(1)}` : undefined,
+        whatsapp: index < 4 ? `https://wa.me/92${String(3001234000 + index).slice(1)}` : undefined,
         instagram: index % 2 === 0 ? `https://instagram.com/${seller.slug}` : undefined,
         facebook: index % 3 === 0 ? `https://facebook.com/${seller.slug}` : undefined,
       },
@@ -511,12 +505,7 @@ function buildCommissionRules(
 function buildManagedProductReviews(): ManagedProductReview[] {
   return productReviews.map((review, index) => ({
     ...review,
-    moderationStatus:
-      index % 10 === 0
-        ? "FLAGGED"
-        : index % 7 === 0
-          ? "PENDING"
-          : "APPROVED",
+    moderationStatus: index % 10 === 0 ? "FLAGGED" : index % 7 === 0 ? "PENDING" : "APPROVED",
     reportedCount: index % 10 === 0 ? 3 : index % 7 === 0 ? 1 : 0,
     createdAt: `2026-03-${String((index % 24) + 1).padStart(2, "0")}T10:00:00.000Z`,
     moderatedAt: index % 7 === 0 ? undefined : "2026-04-10T10:30:00.000Z",
@@ -533,20 +522,13 @@ function buildManagedProductReviews(): ManagedProductReview[] {
 function buildManagedStoreReviews(): ManagedStoreReview[] {
   return storeReviews.map((review, index) => ({
     ...review,
-    moderationStatus:
-      index % 9 === 0
-        ? "FLAGGED"
-        : index % 6 === 0
-          ? "PENDING"
-          : "APPROVED",
+    moderationStatus: index % 9 === 0 ? "FLAGGED" : index % 6 === 0 ? "PENDING" : "APPROVED",
     reportedCount: index % 9 === 0 ? 2 : index % 6 === 0 ? 1 : 0,
     createdAt: `2026-03-${String((index % 24) + 1).padStart(2, "0")}T12:00:00.000Z`,
     moderatedAt: index % 6 === 0 ? undefined : "2026-04-08T15:00:00.000Z",
     moderatedByUserId: index % 6 === 0 ? undefined : "user-admin-haris",
     moderatorNote:
-      index % 9 === 0
-        ? "Needs manual validation due to repeated reporting."
-        : undefined,
+      index % 9 === 0 ? "Needs manual validation due to repeated reporting." : undefined,
   }));
 }
 
@@ -735,12 +717,10 @@ export function buildInitialMarketplaceState(): MarketplaceState {
     managedStoreReviews: buildManagedStoreReviews(),
     coupons: buildCoupons(),
     systemSettings,
-    cartsByUserId: Object.fromEntries(
-      [
-        ...users.map((user) => [user.id, user.id === "user-customer-ahmed" ? sampleCart : []]),
-        ["guest-session", [] as typeof sampleCart],
-      ],
-    ),
+    cartsByUserId: Object.fromEntries([
+      ...users.map((user) => [user.id, user.id === "user-customer-ahmed" ? sampleCart : []]),
+      ["guest-session", [] as typeof sampleCart],
+    ]),
     appliedCouponCodesByUserId: Object.fromEntries([
       ...users.map((user) => [user.id, ""]),
       ["guest-session", ""],
@@ -762,8 +742,49 @@ export function buildInitialMarketplaceState(): MarketplaceState {
   };
 }
 
-export function normalizeMarketplaceState(raw: Partial<MarketplaceState>): MarketplaceState {
+export function buildEmptyMarketplaceState(): MarketplaceState {
   const initial = buildInitialMarketplaceState();
+
+  return {
+    ...initial,
+    currentUserId: "",
+    users: [],
+    customerAccounts: {},
+    managedCategories: [],
+    sellersDirectory: [],
+    managedProducts: [],
+    managedProductReviews: [],
+    managedStoreReviews: [],
+    coupons: [],
+    cartsByUserId: {
+      "guest-session": [],
+    },
+    appliedCouponCodesByUserId: {
+      "guest-session": "",
+    },
+    orders: [],
+    payments: [],
+    paymentProofs: [],
+    commissionRules: [],
+    commissions: [],
+    codRemittances: [],
+    sellerSettlements: [],
+    sellerPayouts: [],
+    notifications: [],
+    auditTrail: [],
+    inventory: {},
+    inventoryMovements: [],
+  };
+}
+
+export function normalizeMarketplaceState(
+  raw: Partial<MarketplaceState>,
+  options?: {
+    seedDefaults?: boolean;
+  },
+): MarketplaceState {
+  const initial =
+    options?.seedDefaults === false ? buildEmptyMarketplaceState() : buildInitialMarketplaceState();
 
   const users = mergeByKey(
     initial.users,
@@ -851,11 +872,7 @@ export function normalizeMarketplaceState(raw: Partial<MarketplaceState>): Marke
       raw.managedProductReviews,
       "id",
     ),
-    managedStoreReviews: mergeByKey(
-      initial.managedStoreReviews,
-      raw.managedStoreReviews,
-      "id",
-    ),
+    managedStoreReviews: mergeByKey(initial.managedStoreReviews, raw.managedStoreReviews, "id"),
     coupons: mergeByKey(initial.coupons, raw.coupons, "id"),
     systemSettings: {
       ...initial.systemSettings,

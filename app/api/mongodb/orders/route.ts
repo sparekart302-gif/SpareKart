@@ -1,13 +1,19 @@
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { jsonMongoError, parseBooleanParam, parsePositiveInt } from "@/server/mongodb/http";
-import { createOrder, listOrders } from "@/server/mongodb/services/orders";
+import { jsonSuccess } from "@/server/http/responses";
+import { requireAdminSessionUser } from "@/server/auth/service";
+import {
+  assertMarketplaceOrderMutationUnsupported,
+  listMarketplaceOrdersAdmin,
+} from "@/server/marketplace/admin-api";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
+    await requireAdminSessionUser();
     const { searchParams } = request.nextUrl;
-    const result = await listOrders({
+    const result = await listMarketplaceOrdersAdmin({
       page: parsePositiveInt(searchParams.get("page"), 1),
       limit: parsePositiveInt(searchParams.get("limit"), 20),
       search: searchParams.get("search") ?? undefined,
@@ -17,7 +23,10 @@ export async function GET(request: NextRequest) {
       isGuest: parseBooleanParam(searchParams.get("isGuest")),
     });
 
-    return NextResponse.json({ ok: true, ...result });
+    return jsonSuccess(result, {
+      message: "Orders fetched successfully.",
+      extra: result,
+    });
   } catch (error) {
     return jsonMongoError(error, "Unable to fetch orders.");
   }
@@ -25,9 +34,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const order = await createOrder(body);
-    return NextResponse.json({ ok: true, item: order }, { status: 201 });
+    await requireAdminSessionUser();
+    await request.json();
+    assertMarketplaceOrderMutationUnsupported();
   } catch (error) {
     return jsonMongoError(error, "Unable to create order.");
   }

@@ -15,10 +15,7 @@ import {
   describePayoutRecordDestination,
   formatPayoutLabel,
 } from "@/modules/marketplace/payout-display";
-import type {
-  PayoutStatus,
-  SellerPayout,
-} from "@/modules/marketplace/types";
+import type { PayoutStatus, SellerPayout } from "@/modules/marketplace/types";
 
 const payoutStatuses: PayoutStatus[] = [
   "DRAFT",
@@ -87,30 +84,36 @@ export function PayoutStatusDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto p-0">
         <DialogHeader className="sticky top-0 z-10 border-b border-border bg-card px-5 py-4 sm:px-6">
-          <DialogTitle className="text-xl font-black tracking-tight">
-            Manage payout
-          </DialogTitle>
+          <DialogTitle className="text-xl font-black tracking-tight">Manage payout</DialogTitle>
           <DialogDescription>
-            Approve, hold, reject, or complete a seller payout after reviewing the settlement details.
+            Approve, hold, reject, or complete a seller payout after reviewing the settlement
+            details.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 px-5 py-5 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-border/60 bg-surface px-4 py-3">
             <div>
-              <div className="text-sm font-black text-foreground">{sellerName ?? payout.sellerSlug}</div>
+              <div className="text-sm font-black text-foreground">
+                {sellerName ?? payout.sellerSlug}
+              </div>
               <div className="mt-1 text-xs text-muted-foreground">
                 {payout.id} · {formatPayoutLabel(payout.requestType ?? "AUTO_SCHEDULED")}
               </div>
             </div>
-            <AdminPill tone={getPayoutTone(payout.status)}>{formatPayoutLabel(payout.status)}</AdminPill>
+            <AdminPill tone={getPayoutTone(payout.status)}>
+              {formatPayoutLabel(payout.status)}
+            </AdminPill>
           </div>
 
           <div className="rounded-[18px] border border-border/60 p-4">
             <div className="text-sm font-black text-foreground">Settlement snapshot</div>
             <div className="mt-3 divide-y divide-border/60">
               <AdminKeyValue label="Net amount" value={payout.netAmount.toLocaleString("en-PK")} />
-              <AdminKeyValue label="Commission deducted" value={payout.totalCommissionDeducted.toLocaleString("en-PK")} />
+              <AdminKeyValue
+                label="Commission deducted"
+                value={payout.totalCommissionDeducted.toLocaleString("en-PK")}
+              />
               <AdminKeyValue label="Orders" value={String(payout.orderIds.length)} />
               <AdminKeyValue label="Destination" value={describePayoutRecordDestination(payout)} />
               <AdminKeyValue label="Method" value={formatPayoutLabel(payout.payoutMethod)} />

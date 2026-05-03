@@ -4,10 +4,7 @@ import { getUploadedImage } from "@/server/uploads/service";
 
 export const runtime = "nodejs";
 
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ assetId: string }> },
-) {
+export async function GET(request: NextRequest, context: { params: Promise<{ assetId: string }> }) {
   try {
     const { assetId } = await context.params;
     const asset = await getUploadedImage(assetId);

@@ -1,6 +1,4 @@
-export {
-  ORDER_API_ENDPOINTS,
-} from "./order-management";
+export { ORDER_API_ENDPOINTS } from "./order-management";
 
 export type {
   AdminPaymentDashboardApiParams,

@@ -2,13 +2,37 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ShoppingCart, User, Menu, MapPin, Heart, ChevronDown, Store, Wrench, ShieldCheck, Package } from "lucide-react";
+import {
+  Search,
+  ShoppingCart,
+  User,
+  Menu,
+  MapPin,
+  Heart,
+  ChevronDown,
+  Store,
+  Wrench,
+  ShieldCheck,
+  Package,
+} from "lucide-react";
 import { Link } from "@/components/navigation/Link";
 import { BrandLogo } from "@/components/marketplace/BrandLogo";
-import { categories } from "@/data/marketplace";
-import { getCartActorId, getCartQuantity, getRoleHomePath } from "@/modules/marketplace/selectors";
+import {
+  getActiveMarketplaceCategories,
+  getCartActorId,
+  getCartQuantity,
+  getRoleHomePath,
+} from "@/modules/marketplace/selectors";
 import { useMarketplace } from "@/modules/marketplace/store";
-import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,17 +49,22 @@ export function Navbar() {
   const [categoriesMenuOpen, setCategoriesMenuOpen] = useState(false);
   const router = useRouter();
   const { state, currentUser } = useMarketplace();
+  const categories = getActiveMarketplaceCategories(state);
   const cartActorId = getCartActorId(currentUser);
   const cartQuantity = cartActorId ? getCartQuantity(state, cartActorId) : 0;
   const accountHref = getRoleHomePath(currentUser);
-  const accountLabel =
-    !currentUser ? "Sign In"
-    : currentUser.role === "CUSTOMER" ? "My Account"
-    : currentUser.role === "SELLER" ? "Seller Portal"
-    : "Admin Portal";
-  const utilityLabel =
-    !currentUser ? "Sign In"
-    : currentUser.role === "CUSTOMER" ? "My Account" : "Open Dashboard";
+  const accountLabel = !currentUser
+    ? "Sign In"
+    : currentUser.role === "CUSTOMER"
+      ? "My Account"
+      : currentUser.role === "SELLER"
+        ? "Seller Portal"
+        : "Admin Portal";
+  const utilityLabel = !currentUser
+    ? "Sign In"
+    : currentUser.role === "CUSTOMER"
+      ? "My Account"
+      : "Open Dashboard";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -62,15 +91,26 @@ export function Navbar() {
   };
 
   return (
-    <header className={`sticky top-0 z-50 transition-all ${scrolled ? "backdrop-blur-xl bg-background/85 shadow-[var(--shadow-soft)]" : "bg-background"} border-b border-border`}>
+    <header
+      className={`sticky top-0 z-50 transition-all ${scrolled ? "backdrop-blur-xl bg-background/85 shadow-[var(--shadow-soft)]" : "bg-background"} border-b border-border`}
+    >
       {/* Top utility bar */}
       <div className="hidden md:block bg-primary text-primary-foreground text-xs">
         <div className="container mx-auto px-4 h-9 flex items-center justify-between">
-          <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> Deliver to <span className="font-semibold">All Pakistan</span></div>
+          <div className="flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5" /> Deliver to{" "}
+            <span className="font-semibold">All Pakistan</span>
+          </div>
           <div className="flex items-center gap-5">
-            <Link to="/seller-onboarding" className="hover:text-accent transition-colors">Sell on SpareKart</Link>
-            <Link to="/help" className="hover:text-accent transition-colors">Help</Link>
-            <Link href={accountHref} className="hover:text-accent transition-colors">{utilityLabel}</Link>
+            <Link to="/seller-onboarding" className="hover:text-accent transition-colors">
+              Sell on SpareKart
+            </Link>
+            <Link to="/help" className="hover:text-accent transition-colors">
+              Help
+            </Link>
+            <Link href={accountHref} className="hover:text-accent transition-colors">
+              {utilityLabel}
+            </Link>
           </div>
         </div>
       </div>
@@ -80,7 +120,10 @@ export function Navbar() {
         <div className="md:hidden flex items-center gap-1">
           <Sheet>
             <SheetTrigger asChild>
-              <button className="grid h-9 w-9 place-items-center rounded-xl bg-surface shadow-[var(--shadow-soft)] transition-colors hover:bg-background" aria-label="Open menu">
+              <button
+                className="grid h-9 w-9 place-items-center rounded-xl bg-surface shadow-[var(--shadow-soft)] transition-colors hover:bg-background"
+                aria-label="Open menu"
+              >
                 <Menu className="h-4.5 w-4.5" />
               </button>
             </SheetTrigger>
@@ -95,7 +138,8 @@ export function Navbar() {
                     />
                   </SheetTitle>
                   <SheetDescription>
-                    Browse categories, manage your account, and jump into the marketplace from one place.
+                    Browse categories, manage your account, and jump into the marketplace from one
+                    place.
                   </SheetDescription>
                 </SheetHeader>
 
@@ -108,7 +152,11 @@ export function Navbar() {
                       { to: "/seller-onboarding", label: "Sell", Icon: Store },
                     ].map(({ to, href, label, Icon }) => (
                       <SheetClose asChild key={to ?? href}>
-                        <Link to={to} href={href} className="rounded-2xl bg-surface p-4 shadow-[var(--shadow-soft)] transition-colors hover:bg-accent-soft">
+                        <Link
+                          to={to}
+                          href={href}
+                          className="rounded-2xl bg-surface p-4 shadow-[var(--shadow-soft)] transition-colors hover:bg-accent-soft"
+                        >
                           <div className="grid h-10 w-10 place-items-center rounded-xl bg-background shadow-[var(--shadow-soft)]">
                             <Icon className="h-4 w-4 text-primary" />
                           </div>
@@ -125,7 +173,9 @@ export function Navbar() {
                       </div>
                       <div>
                         <div className="text-sm font-bold">Marketplace Promise</div>
-                        <p className="mt-1 text-xs opacity-80">Verified sellers, fitment support, and COD nationwide.</p>
+                        <p className="mt-1 text-xs opacity-80">
+                          Verified sellers, fitment support, and COD nationwide.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -144,9 +194,13 @@ export function Navbar() {
                           >
                             <div>
                               <div className="text-sm font-semibold">{category.name}</div>
-                              <div className="text-xs text-muted-foreground">{category.description}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {category.description}
+                              </div>
                             </div>
-                            <div className="text-xs font-semibold text-muted-foreground">{category.productCount}</div>
+                            <div className="text-xs font-semibold text-muted-foreground">
+                              {category.productCount}
+                            </div>
                           </Link>
                         </SheetClose>
                       ))}
@@ -159,16 +213,36 @@ export function Navbar() {
                     </div>
                     <div className="grid gap-2 text-sm">
                       <SheetClose asChild>
-                        <Link to="/shop" className="rounded-xl px-3 py-2 hover:bg-card transition-colors">Shop all parts</Link>
+                        <Link
+                          to="/shop"
+                          className="rounded-xl px-3 py-2 hover:bg-card transition-colors"
+                        >
+                          Shop all parts
+                        </Link>
                       </SheetClose>
                       <SheetClose asChild>
-                        <Link to="/compatibility" className="rounded-xl px-3 py-2 hover:bg-card transition-colors">Find parts for your car</Link>
+                        <Link
+                          to="/compatibility"
+                          className="rounded-xl px-3 py-2 hover:bg-card transition-colors"
+                        >
+                          Find parts for your car
+                        </Link>
                       </SheetClose>
                       <SheetClose asChild>
-                        <Link to="/sellers" className="rounded-xl px-3 py-2 hover:bg-card transition-colors">Browse trusted sellers</Link>
+                        <Link
+                          to="/sellers"
+                          className="rounded-xl px-3 py-2 hover:bg-card transition-colors"
+                        >
+                          Browse trusted sellers
+                        </Link>
                       </SheetClose>
                       <SheetClose asChild>
-                        <Link to="/help" className="rounded-xl px-3 py-2 hover:bg-card transition-colors">Help centre</Link>
+                        <Link
+                          to="/help"
+                          className="rounded-xl px-3 py-2 hover:bg-card transition-colors"
+                        >
+                          Help centre
+                        </Link>
                       </SheetClose>
                     </div>
                   </div>
@@ -178,10 +252,7 @@ export function Navbar() {
           </Sheet>
         </div>
 
-        <Link
-          to="/"
-          className="hidden md:flex shrink-0 transition-transform hover:scale-[1.02]"
-        >
+        <Link to="/" className="hidden md:flex shrink-0 transition-transform hover:scale-[1.02]">
           <BrandLogo
             variant="full"
             priority
@@ -212,12 +283,18 @@ export function Navbar() {
             placeholder="Search brake pads, oil filter, headlights…"
             className="flex-1 bg-transparent px-4 py-3 text-sm focus:outline-none placeholder:text-muted-foreground"
           />
-          <button type="submit" className="h-full px-5 gradient-accent rounded-r-xl text-primary font-semibold flex items-center gap-2 hover:opacity-95 transition-opacity">
+          <button
+            type="submit"
+            className="h-full px-5 gradient-accent rounded-r-xl text-primary font-semibold flex items-center gap-2 hover:opacity-95 transition-opacity"
+          >
             <Search className="h-4 w-4" /> <span className="hidden lg:inline">Search</span>
           </button>
         </form>
 
-        <Link to="/" className="md:hidden absolute left-1/2 -translate-x-1/2 transition-transform hover:scale-[1.02]">
+        <Link
+          to="/"
+          className="md:hidden absolute left-1/2 -translate-x-1/2 transition-transform hover:scale-[1.02]"
+        >
           <BrandLogo
             variant="mark"
             priority
@@ -226,7 +303,10 @@ export function Navbar() {
         </Link>
 
         <div className="ml-auto flex items-center gap-1 md:gap-2 md:ml-0">
-          <Link href={accountHref} className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface transition-colors">
+          <Link
+            href={accountHref}
+            className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface transition-colors"
+          >
             <User className="h-5 w-5" />
             <div className="text-left min-w-max">
               <div className="text-[9px] text-muted-foreground leading-none">
@@ -236,13 +316,25 @@ export function Navbar() {
             </div>
           </Link>
           <div className="md:hidden flex items-center gap-1">
-            <Link to="/search" className="grid h-9 w-9 place-items-center rounded-xl bg-surface shadow-[var(--shadow-soft)] transition-colors hover:bg-background" aria-label="Search">
+            <Link
+              to="/search"
+              className="grid h-9 w-9 place-items-center rounded-xl bg-surface shadow-[var(--shadow-soft)] transition-colors hover:bg-background"
+              aria-label="Search"
+            >
               <Search className="h-4 w-4" />
             </Link>
-            <Link href={accountHref} className="grid h-9 w-9 place-items-center rounded-xl bg-surface shadow-[var(--shadow-soft)] transition-colors hover:bg-background" aria-label="Account">
+            <Link
+              href={accountHref}
+              className="grid h-9 w-9 place-items-center rounded-xl bg-surface shadow-[var(--shadow-soft)] transition-colors hover:bg-background"
+              aria-label="Account"
+            >
               <User className="h-4 w-4" />
             </Link>
-            <Link to="/cart" className="relative grid h-9 w-9 place-items-center rounded-xl bg-surface shadow-[var(--shadow-soft)] transition-colors hover:bg-background" aria-label="Cart">
+            <Link
+              to="/cart"
+              className="relative grid h-9 w-9 place-items-center rounded-xl bg-surface shadow-[var(--shadow-soft)] transition-colors hover:bg-background"
+              aria-label="Cart"
+            >
               <ShoppingCart className="h-4 w-4" />
               {cartQuantity > 0 && (
                 <span className="absolute -right-1 -top-1 grid h-4.5 min-w-4.5 place-items-center rounded-full gradient-accent px-1 text-[9px] font-bold text-primary">
@@ -251,7 +343,10 @@ export function Navbar() {
               )}
             </Link>
           </div>
-          <Link to="/cart" className="relative hidden md:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface transition-colors">
+          <Link
+            to="/cart"
+            className="relative hidden md:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface transition-colors"
+          >
             <div className="relative">
               <ShoppingCart className="h-5 w-5" />
               {cartQuantity > 0 && (
@@ -268,7 +363,11 @@ export function Navbar() {
       {/* Categories nav */}
       <div className="hidden md:block border-t border-border bg-surface">
         <div className="container mx-auto flex h-12 items-center gap-2 overflow-visible px-6 lg:h-14 lg:px-8">
-          <DropdownMenu modal={false} open={categoriesMenuOpen} onOpenChange={setCategoriesMenuOpen}>
+          <DropdownMenu
+            modal={false}
+            open={categoriesMenuOpen}
+            onOpenChange={setCategoriesMenuOpen}
+          >
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
@@ -325,8 +424,16 @@ export function Navbar() {
           </DropdownMenu>
           <div className="min-w-0 flex-1 overflow-x-auto scroll-smooth">
             <div className="flex h-full min-w-max items-center gap-1">
-              <Link to="/shop" className="px-3 h-full text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center transition-colors whitespace-nowrap">Shop All</Link>
-              <Link to="/compatibility" className="px-3 h-full text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition-colors whitespace-nowrap">
+              <Link
+                to="/shop"
+                className="px-3 h-full text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center transition-colors whitespace-nowrap"
+              >
+                Shop All
+              </Link>
+              <Link
+                to="/compatibility"
+                className="px-3 h-full text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
+              >
                 <span className="h-1.5 w-1.5 rounded-full bg-accent shrink-0" /> Find Parts
               </Link>
               {categories.slice(0, 5).map((c, index) => (
@@ -339,10 +446,17 @@ export function Navbar() {
                   {c.name}
                 </Link>
               ))}
-              <Link to="/sellers" className="px-3 h-full text-sm font-medium text-muted-foreground hover:text-foreground hidden lg:inline-flex items-center transition-colors whitespace-nowrap">Top Sellers</Link>
+              <Link
+                to="/sellers"
+                className="px-3 h-full text-sm font-medium text-muted-foreground hover:text-foreground hidden lg:inline-flex items-center transition-colors whitespace-nowrap"
+              >
+                Top Sellers
+              </Link>
             </div>
           </div>
-          <div className="hidden shrink-0 items-center gap-1.5 whitespace-nowrap pl-3 text-xs text-muted-foreground lg:flex"><Heart className="h-3.5 w-3.5 text-accent" /> Free shipping over Rs. 5,000</div>
+          <div className="hidden shrink-0 items-center gap-1.5 whitespace-nowrap pl-3 text-xs text-muted-foreground lg:flex">
+            <Heart className="h-3.5 w-3.5 text-accent" /> Free shipping over Rs. 5,000
+          </div>
         </div>
       </div>
     </header>

@@ -15,10 +15,7 @@ import {
   formatPayoutLabel,
   maskSensitiveValue,
 } from "@/modules/marketplace/payout-display";
-import type {
-  SellerPayoutAccountReviewInput,
-  SellerRecord,
-} from "@/modules/marketplace/types";
+import type { SellerPayoutAccountReviewInput, SellerRecord } from "@/modules/marketplace/types";
 
 function getTone(status: string) {
   if (status === "VERIFIED") {
@@ -81,8 +78,14 @@ export function PayoutAccountReviewDialog({
           <div className="rounded-[18px] border border-border/60 p-4">
             <div className="text-sm font-black text-foreground">Destination details</div>
             <div className="mt-3 divide-y divide-border/60">
-              <AdminKeyValue label="Destination" value={describePayoutAccountDestination(payoutAccount)} />
-              <AdminKeyValue label="Schedule" value={formatPayoutLabel(payoutAccount.schedulePreference)} />
+              <AdminKeyValue
+                label="Destination"
+                value={describePayoutAccountDestination(payoutAccount)}
+              />
+              <AdminKeyValue
+                label="Schedule"
+                value={formatPayoutLabel(payoutAccount.schedulePreference)}
+              />
               {payoutAccount.accountTitle ? (
                 <AdminKeyValue label="Account title" value={payoutAccount.accountTitle} />
               ) : null}
@@ -93,7 +96,10 @@ export function PayoutAccountReviewDialog({
                 <AdminKeyValue label="IBAN" value={maskSensitiveValue(payoutAccount.iban, 4, 4)} />
               ) : null}
               {payoutAccount.paypalEmail ? (
-                <AdminKeyValue label="PayPal" value={maskSensitiveValue(payoutAccount.paypalEmail, 2, 9)} />
+                <AdminKeyValue
+                  label="PayPal"
+                  value={maskSensitiveValue(payoutAccount.paypalEmail, 2, 9)}
+                />
               ) : null}
               {payoutAccount.adminNote ? (
                 <AdminKeyValue label="Latest admin note" value={payoutAccount.adminNote} />
@@ -122,7 +128,8 @@ export function PayoutAccountReviewDialog({
             </AdminField>
 
             <div className="rounded-[18px] border border-border/60 bg-surface px-4 py-3 text-sm text-muted-foreground">
-              Verified accounts can receive payouts. Rejected accounts block seller payout requests until updated.
+              Verified accounts can receive payouts. Rejected accounts block seller payout requests
+              until updated.
             </div>
           </div>
 

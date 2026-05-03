@@ -1,7 +1,8 @@
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { jsonError } from "@/server/auth/http";
 import { queueMarketplaceEmail } from "@/server/email/service";
+import { jsonFailure, jsonSuccess } from "@/server/http/responses";
 
 export const runtime = "nodejs";
 
@@ -113,8 +114,27 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const payload = emailRequestSchema.parse(body);
+
+    if (payload.type === "AUTH_TEMPLATE") {
+      return jsonFailure(
+        "AUTH_TEMPLATE emails must be queued from trusted server-side auth flows.",
+        {
+          status: 403,
+          code: "AUTH_TEMPLATE_FORBIDDEN",
+        },
+      );
+    }
+
     await queueMarketplaceEmail(payload);
-    return NextResponse.json({ ok: true, queued: true });
+    return jsonSuccess(
+      { queued: true },
+      {
+        message: "Email queued successfully.",
+        extra: {
+          queued: true,
+        },
+      },
+    );
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "Email request failed.");
   }

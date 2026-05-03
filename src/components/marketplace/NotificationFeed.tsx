@@ -29,7 +29,9 @@ export function NotificationFeed({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-sm font-bold text-foreground">{notification.title}</h3>
-                <span className="text-[11px] text-muted-foreground">{new Date(notification.createdAt).toLocaleString()}</span>
+                <span className="text-[11px] text-muted-foreground">
+                  {new Date(notification.createdAt).toLocaleString()}
+                </span>
               </div>
               <p className="mt-1 text-sm leading-5 text-muted-foreground">{notification.message}</p>
             </div>

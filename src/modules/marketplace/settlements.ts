@@ -94,17 +94,11 @@ export function resolveCommissionRuleForOrderItem(
   };
 }
 
-export function getCODRemittanceByOrderId(
-  state: MarketplaceState,
-  orderId: string,
-) {
+export function getCODRemittanceByOrderId(state: MarketplaceState, orderId: string) {
   return state.codRemittances.find((entry) => entry.orderId === orderId);
 }
 
-export function getLinkedPayoutBySettlementId(
-  state: MarketplaceState,
-  settlementId: string,
-) {
+export function getLinkedPayoutBySettlementId(state: MarketplaceState, settlementId: string) {
   return state.sellerPayouts.find(
     (payout) =>
       payout.settlementIds?.includes(settlementId) &&
@@ -112,10 +106,7 @@ export function getLinkedPayoutBySettlementId(
   );
 }
 
-export function getSettlementPayableAt(
-  deliveredAt: string,
-  holdingPeriodDays: number,
-) {
+export function getSettlementPayableAt(deliveredAt: string, holdingPeriodDays: number) {
   const date = new Date(deliveredAt);
   date.setDate(date.getDate() + holdingPeriodDays);
   return date.toISOString();
@@ -174,7 +165,11 @@ function getAutoCODRemittanceStatus(
     return currentStatus;
   }
 
-  if (currentStatus === "CASH_COLLECTED_BY_PARTNER" || currentStatus === "REMITTED_TO_MARKETPLACE" || currentStatus === "REMITTANCE_CONFIRMED") {
+  if (
+    currentStatus === "CASH_COLLECTED_BY_PARTNER" ||
+    currentStatus === "REMITTED_TO_MARKETPLACE" ||
+    currentStatus === "REMITTANCE_CONFIRMED"
+  ) {
     return currentStatus;
   }
 
@@ -193,13 +188,18 @@ export function deriveSettlementStatus(
   _payableAt?: string,
 ) {
   const payout = getLinkedPayoutBySettlementId(state, settlementId);
-  const remittance = payment.method === "COD" ? getCODRemittanceByOrderId(state, order.id) : undefined;
+  const remittance =
+    payment.method === "COD" ? getCODRemittanceByOrderId(state, order.id) : undefined;
 
   if (order.status === "CANCELED" || order.status === "RETURNED") {
     return "FAILED" as SellerSettlementStatus;
   }
 
-  if (payment.status === "FAILED" || payment.status === "REJECTED" || payment.status === "REFUNDED") {
+  if (
+    payment.status === "FAILED" ||
+    payment.status === "REJECTED" ||
+    payment.status === "REFUNDED"
+  ) {
     return "FAILED" as SellerSettlementStatus;
   }
 
@@ -219,10 +219,7 @@ export function deriveSettlementStatus(
     return "PAYOUT_PROCESSING" as SellerSettlementStatus;
   }
 
-  if (
-    payout &&
-    ["DRAFT", "PENDING_APPROVAL", "PENDING", "SCHEDULED"].includes(payout.status)
-  ) {
+  if (payout && ["DRAFT", "PENDING_APPROVAL", "PENDING", "SCHEDULED"].includes(payout.status)) {
     return "IN_PAYOUT_QUEUE" as SellerSettlementStatus;
   }
 
@@ -257,13 +254,7 @@ export function getEffectiveSettlementStatus(
     return settlement.settlementStatus;
   }
 
-  return deriveSettlementStatus(
-    state,
-    order,
-    payment,
-    settlement.id,
-    settlement.payableAt,
-  );
+  return deriveSettlementStatus(state, order, payment, settlement.id, settlement.payableAt);
 }
 
 export function createOrRefreshSettlementEntries(
@@ -292,14 +283,17 @@ export function createOrRefreshSettlementEntries(
     const grossSaleAmount = roundMoney(item.unitPrice * item.quantity);
     const commissionAmount = roundMoney((grossSaleAmount * percentageRate) / 100);
     const feeAmount = roundMoney(fixedFeeAmount);
-    const netPayableAmount = roundMoney(Math.max(0, grossSaleAmount - commissionAmount - feeAmount));
+    const netPayableAmount = roundMoney(
+      Math.max(0, grossSaleAmount - commissionAmount - feeAmount),
+    );
     const payableAt =
       order.status === "DELIVERED"
         ? getSettlementPayableAt(order.updatedAt, state.payoutCycleConfig.holdingPeriodDays)
         : existing?.payableAt;
     const settlementId = existing?.id ?? `settlement-${order.id}-${item.id}`;
     const payoutId = existing?.payoutId;
-    const remittance = payment.method === "COD" ? getCODRemittanceByOrderId(state, order.id) : undefined;
+    const remittance =
+      payment.method === "COD" ? getCODRemittanceByOrderId(state, order.id) : undefined;
 
     return [
       {
@@ -326,13 +320,7 @@ export function createOrRefreshSettlementEntries(
                 payment.method === "JAZZCASH"
               ? "MANUAL_VERIFIED"
               : "ONLINE",
-        settlementStatus: deriveSettlementStatus(
-          state,
-          order,
-          payment,
-          settlementId,
-          payableAt,
-        ),
+        settlementStatus: deriveSettlementStatus(state, order, payment, settlementId, payableAt),
         createdAt: existing?.createdAt ?? updatedAt,
         updatedAt,
         payableAt,
@@ -348,10 +336,7 @@ export function createOrRefreshSettlementEntries(
   return [...preserved, ...nextEntries];
 }
 
-export function getEligibleSettlementsForSeller(
-  state: MarketplaceState,
-  sellerSlug: string,
-) {
+export function getEligibleSettlementsForSeller(state: MarketplaceState, sellerSlug: string) {
   return state.sellerSettlements.filter(
     (entry) =>
       entry.sellerSlug === sellerSlug &&
@@ -360,10 +345,7 @@ export function getEligibleSettlementsForSeller(
   );
 }
 
-export function getRequestableSettlementBalance(
-  state: MarketplaceState,
-  sellerSlug: string,
-) {
+export function getRequestableSettlementBalance(state: MarketplaceState, sellerSlug: string) {
   return roundMoney(
     getEligibleSettlementsForSeller(state, sellerSlug).reduce(
       (sum, entry) => sum + entry.netPayableAmount,
@@ -392,18 +374,13 @@ export function updateSettlementStatusesForPayout(
       settlementStatus = "READY_FOR_SETTLEMENT";
     } else if (payout.status === "PROCESSING" || payout.status === "APPROVED") {
       settlementStatus = "PAYOUT_PROCESSING";
-    } else if (
-      ["DRAFT", "PENDING_APPROVAL", "PENDING", "SCHEDULED"].includes(payout.status)
-    ) {
+    } else if (["DRAFT", "PENDING_APPROVAL", "PENDING", "SCHEDULED"].includes(payout.status)) {
       settlementStatus = "IN_PAYOUT_QUEUE";
     }
 
     return {
       ...entry,
-      payoutId:
-        payout.status === "FAILED" || payout.status === "CANCELED"
-          ? undefined
-          : payout.id,
+      payoutId: payout.status === "FAILED" || payout.status === "CANCELED" ? undefined : payout.id,
       settlementStatus,
       updatedAt,
     };
@@ -450,18 +427,12 @@ export function buildPayoutFromSettlements(
     payoutPeriod: input.payoutPeriod,
     periodStartDate: input.createdAt,
     periodEndDate: input.createdAt,
-    totalEarnings: roundMoney(
-      settlements.reduce((sum, entry) => sum + entry.grossSaleAmount, 0),
-    ),
+    totalEarnings: roundMoney(settlements.reduce((sum, entry) => sum + entry.grossSaleAmount, 0)),
     totalCommissionDeducted: roundMoney(
       settlements.reduce((sum, entry) => sum + entry.commissionAmount, 0),
     ),
-    totalFees: roundMoney(
-      settlements.reduce((sum, entry) => sum + entry.feeAmount, 0),
-    ),
-    netAmount: roundMoney(
-      settlements.reduce((sum, entry) => sum + entry.netPayableAmount, 0),
-    ),
+    totalFees: roundMoney(settlements.reduce((sum, entry) => sum + entry.feeAmount, 0)),
+    netAmount: roundMoney(settlements.reduce((sum, entry) => sum + entry.netPayableAmount, 0)),
     commissionIds,
     settlementIds,
     orderIds,
@@ -484,10 +455,8 @@ export function buildPayoutFromSettlements(
         : undefined,
     easyPaisaNumber:
       payoutAccount?.method === "EASYPAISA" ? payoutAccount.easyPaisaNumber : undefined,
-    jazzCashNumber:
-      payoutAccount?.method === "JAZZCASH" ? payoutAccount.jazzCashNumber : undefined,
-    paypalEmail:
-      payoutAccount?.method === "PAYPAL" ? payoutAccount.paypalEmail : undefined,
+    jazzCashNumber: payoutAccount?.method === "JAZZCASH" ? payoutAccount.jazzCashNumber : undefined,
+    paypalEmail: payoutAccount?.method === "PAYPAL" ? payoutAccount.paypalEmail : undefined,
     walletId: payoutAccount?.method === "WALLET" ? payoutAccount.walletId : undefined,
     requestType: input.requestType,
     requestedByUserId: input.requestedByUserId,
@@ -499,9 +468,7 @@ export function buildPayoutFromSettlements(
   } satisfies SellerPayout;
 }
 
-export function getSellerSettlementTotals(
-  settlements: SellerSettlement[],
-) {
+export function getSellerSettlementTotals(settlements: SellerSettlement[]) {
   return settlements.reduce(
     (summary, entry) => {
       summary.gross += entry.grossSaleAmount;

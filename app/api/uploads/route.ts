@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { requireSellerOrAdminSessionUser } from "@/server/auth/service";
+import { jsonFailure, jsonSuccess } from "@/server/http/responses";
 import { jsonMongoError } from "@/server/mongodb/http";
 import { saveUploadedImage } from "@/server/uploads/service";
 import type { UploadAssetKind } from "@/modules/uploads/shared";
@@ -10,6 +12,7 @@ const allowedKinds = new Set<UploadAssetKind>([
   "store-logo",
   "store-banner",
   "review",
+  "payment-proof",
 ]);
 
 export async function POST(request: NextRequest) {
@@ -20,23 +23,19 @@ export async function POST(request: NextRequest) {
     const ownerHint = String(formData.get("ownerHint") ?? "").trim() || undefined;
 
     if (!(file instanceof File)) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "Select an image file to upload.",
-        },
-        { status: 400 },
-      );
+      return jsonFailure("Select an image file to upload.", {
+        status: 400,
+      });
     }
 
     if (!allowedKinds.has(kind)) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "Unsupported upload type.",
-        },
-        { status: 400 },
-      );
+      return jsonFailure("Unsupported upload type.", {
+        status: 400,
+      });
+    }
+
+    if (kind !== "review" && kind !== "payment-proof") {
+      await requireSellerOrAdminSessionUser();
     }
 
     const item = await saveUploadedImage({
@@ -45,9 +44,17 @@ export async function POST(request: NextRequest) {
       ownerHint,
     });
 
-    return NextResponse.json({ ok: true, item }, { status: 201 });
+    return jsonSuccess(
+      { item },
+      {
+        status: 201,
+        message: "Image uploaded successfully.",
+        extra: {
+          item,
+        },
+      },
+    );
   } catch (error) {
     return jsonMongoError(error, "Unable to upload image.");
   }
 }
-

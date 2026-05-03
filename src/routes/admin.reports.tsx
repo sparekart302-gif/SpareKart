@@ -2,18 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  AdminCompactStat,
-  AdminScopeGate,
-} from "@/components/admin/AdminCommon";
+import { AdminCompactStat, AdminScopeGate } from "@/components/admin/AdminCommon";
 import { PayoutAccountReviewDialog } from "@/components/admin/PayoutAccountReviewDialog";
 import { PayoutStatusDialog } from "@/components/admin/PayoutStatusDialog";
-import {
-  AdminMiniBars,
-  AdminPageHeader,
-  AdminPanel,
-  AdminPill,
-} from "@/components/admin/AdminUI";
+import { AdminMiniBars, AdminPageHeader, AdminPanel, AdminPill } from "@/components/admin/AdminUI";
 import {
   Dialog,
   DialogContent,
@@ -78,49 +70,52 @@ export default function AdminReportsPage() {
     [rangeFilter, state],
   );
 
-  const visibleSellerRows = useMemo(
-    () => {
-      const sellerRows =
-        sellerFilter === "ALL"
-          ? paymentDashboard.sellerRows
-          : paymentDashboard.sellerRows.filter((row) => row.sellerSlug === sellerFilter);
+  const visibleSellerRows = useMemo(() => {
+    const sellerRows =
+      sellerFilter === "ALL"
+        ? paymentDashboard.sellerRows
+        : paymentDashboard.sellerRows.filter((row) => row.sellerSlug === sellerFilter);
 
-      if (!normalizedFinanceQuery) {
-        return sellerRows;
-      }
+    if (!normalizedFinanceQuery) {
+      return sellerRows;
+    }
 
-      return sellerRows.filter((row) => {
-        const seller = state.sellersDirectory.find((entry) => entry.slug === row.sellerSlug);
-        const sellerText = `${row.sellerName} ${row.sellerSlug} ${seller?.city ?? ""} ${seller?.payoutAccount?.status ?? ""}`;
-        const relatedSettlementText = state.sellerSettlements
-          .filter((settlement) => settlement.sellerSlug === row.sellerSlug)
-          .map((settlement) => `${settlement.orderId} ${settlement.productTitle} ${settlement.settlementStatus}`)
-          .join(" ");
-        const relatedPayoutText = state.sellerPayouts
-          .filter((payout) => payout.sellerSlug === row.sellerSlug)
-          .map((payout) => `${payout.id} ${payout.status} ${payout.transactionReference ?? ""}`)
-          .join(" ");
-        const relatedRemittanceText = state.codRemittances
-          .filter((remittance) => remittance.sellerSlugs.includes(row.sellerSlug))
-          .map((remittance) => `${remittance.orderId} ${remittance.status} ${remittance.remittanceReference ?? ""}`)
-          .join(" ");
+    return sellerRows.filter((row) => {
+      const seller = state.sellersDirectory.find((entry) => entry.slug === row.sellerSlug);
+      const sellerText = `${row.sellerName} ${row.sellerSlug} ${seller?.city ?? ""} ${seller?.payoutAccount?.status ?? ""}`;
+      const relatedSettlementText = state.sellerSettlements
+        .filter((settlement) => settlement.sellerSlug === row.sellerSlug)
+        .map(
+          (settlement) =>
+            `${settlement.orderId} ${settlement.productTitle} ${settlement.settlementStatus}`,
+        )
+        .join(" ");
+      const relatedPayoutText = state.sellerPayouts
+        .filter((payout) => payout.sellerSlug === row.sellerSlug)
+        .map((payout) => `${payout.id} ${payout.status} ${payout.transactionReference ?? ""}`)
+        .join(" ");
+      const relatedRemittanceText = state.codRemittances
+        .filter((remittance) => remittance.sellerSlugs.includes(row.sellerSlug))
+        .map(
+          (remittance) =>
+            `${remittance.orderId} ${remittance.status} ${remittance.remittanceReference ?? ""}`,
+        )
+        .join(" ");
 
-        return matchesFinanceText(
-          `${sellerText} ${relatedSettlementText} ${relatedPayoutText} ${relatedRemittanceText}`,
-          normalizedFinanceQuery,
-        );
-      });
-    },
-    [
-      normalizedFinanceQuery,
-      paymentDashboard.sellerRows,
-      sellerFilter,
-      state.codRemittances,
-      state.sellerPayouts,
-      state.sellerSettlements,
-      state.sellersDirectory,
-    ],
-  );
+      return matchesFinanceText(
+        `${sellerText} ${relatedSettlementText} ${relatedPayoutText} ${relatedRemittanceText}`,
+        normalizedFinanceQuery,
+      );
+    });
+  }, [
+    normalizedFinanceQuery,
+    paymentDashboard.sellerRows,
+    sellerFilter,
+    state.codRemittances,
+    state.sellerPayouts,
+    state.sellerSettlements,
+    state.sellersDirectory,
+  ]);
 
   const visibleSummary = useMemo(
     () =>
@@ -131,10 +126,7 @@ export default function AdminReportsPage() {
           summary.netAfterCommission += row.netAfterCommission;
           summary.awaitingVerification += row.awaitingVerification;
           summary.openPayouts +=
-            row.readyForPayout +
-            row.scheduledPayouts +
-            row.processingPayouts +
-            row.heldPayouts;
+            row.readyForPayout + row.scheduledPayouts + row.processingPayouts + row.heldPayouts;
           summary.paidOut += row.paidOut;
           return summary;
         },
@@ -151,14 +143,9 @@ export default function AdminReportsPage() {
   );
 
   const visibleCommissionRows = useMemo(() => {
-    const rows = getCommissionRows(state).filter((row) =>
-      matchesRange(row.createdAt, rangeFilter),
-    );
+    const rows = getCommissionRows(state).filter((row) => matchesRange(row.createdAt, rangeFilter));
 
-    return (sellerFilter === "ALL"
-      ? rows
-      : rows.filter((row) => row.sellerSlug === sellerFilter)
-    )
+    return (sellerFilter === "ALL" ? rows : rows.filter((row) => row.sellerSlug === sellerFilter))
       .filter((row) =>
         normalizedFinanceQuery
           ? matchesFinanceText(
@@ -175,9 +162,10 @@ export default function AdminReportsPage() {
       .filter((payout) => matchesRange(payout.updatedAt, rangeFilter))
       .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 
-    return (sellerFilter === "ALL"
-      ? payouts
-      : payouts.filter((payout) => payout.sellerSlug === sellerFilter)
+    return (
+      sellerFilter === "ALL"
+        ? payouts
+        : payouts.filter((payout) => payout.sellerSlug === sellerFilter)
     )
       .filter((payout) => {
         if (!normalizedFinanceQuery) {
@@ -191,7 +179,14 @@ export default function AdminReportsPage() {
         );
       })
       .slice(0, activeDesk === "HISTORY" ? 40 : 12);
-  }, [activeDesk, normalizedFinanceQuery, rangeFilter, sellerFilter, state.sellerPayouts, state.sellersDirectory]);
+  }, [
+    activeDesk,
+    normalizedFinanceQuery,
+    rangeFilter,
+    sellerFilter,
+    state.sellerPayouts,
+    state.sellersDirectory,
+  ]);
 
   const visibleRemittances = useMemo(
     () =>
@@ -220,7 +215,13 @@ export default function AdminReportsPage() {
           );
         })
         .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)),
-    [normalizedFinanceQuery, sellerFilter, state.codRemittances, state.orders, state.sellersDirectory],
+    [
+      normalizedFinanceQuery,
+      sellerFilter,
+      state.codRemittances,
+      state.orders,
+      state.sellersDirectory,
+    ],
   );
 
   const visibleSettlementRows = useMemo(
@@ -238,7 +239,9 @@ export default function AdminReportsPage() {
             return true;
           }
 
-          const seller = state.sellersDirectory.find((entry) => entry.slug === settlement.sellerSlug);
+          const seller = state.sellersDirectory.find(
+            (entry) => entry.slug === settlement.sellerSlug,
+          );
           const order = state.orders.find((entry) => entry.id === settlement.orderId);
           const effectiveStatus = getEffectiveSettlementStatus(state, settlement);
 
@@ -282,20 +285,19 @@ export default function AdminReportsPage() {
   const selectedSeller =
     selectedSellerSlug === null
       ? null
-      : state.sellersDirectory.find((seller) => seller.slug === selectedSellerSlug) ?? null;
+      : (state.sellersDirectory.find((seller) => seller.slug === selectedSellerSlug) ?? null);
   const selectedPayout =
     selectedPayoutId === null
       ? null
-      : state.sellerPayouts.find((payout) => payout.id === selectedPayoutId) ?? null;
+      : (state.sellerPayouts.find((payout) => payout.id === selectedPayoutId) ?? null);
   const selectedFinanceSeller =
     sellerDetailSlug === null
       ? null
-      : state.sellersDirectory.find((seller) => seller.slug === sellerDetailSlug) ?? null;
+      : (state.sellersDirectory.find((seller) => seller.slug === sellerDetailSlug) ?? null);
   const selectedFinanceRow =
     sellerDetailSlug === null
       ? null
-      : paymentDashboard.sellerRows.find((row) => row.sellerSlug === sellerDetailSlug) ??
-        null;
+      : (paymentDashboard.sellerRows.find((row) => row.sellerSlug === sellerDetailSlug) ?? null);
   const selectedFinanceSettlements =
     sellerDetailSlug === null
       ? []
@@ -319,13 +321,15 @@ export default function AdminReportsPage() {
           .filter((remittance) => remittance.sellerSlugs.includes(sellerDetailSlug))
           .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
   const deskCounts = {
-    QUEUE: visibleSellerRows.filter(
-      (row) => row.awaitingVerification > 0 || row.readyForPayout > 0,
-    ).length,
+    QUEUE: visibleSellerRows.filter((row) => row.awaitingVerification > 0 || row.readyForPayout > 0)
+      .length,
     COD: visibleRemittances.filter((remittance) =>
-      ["DELIVERED_AWAITING_COLLECTION_CONFIRMATION", "CASH_COLLECTED_BY_PARTNER", "REMITTED_TO_MARKETPLACE", "ISSUE_FLAGGED"].includes(
-        remittance.status,
-      ),
+      [
+        "DELIVERED_AWAITING_COLLECTION_CONFIRMATION",
+        "CASH_COLLECTED_BY_PARTNER",
+        "REMITTED_TO_MARKETPLACE",
+        "ISSUE_FLAGGED",
+      ].includes(remittance.status),
     ).length,
     PAYOUTS: visiblePayouts.filter((payout) =>
       ["DRAFT", "PENDING_APPROVAL", "APPROVED", "PROCESSING", "HELD", "FAILED"].includes(
@@ -340,10 +344,7 @@ export default function AdminReportsPage() {
     setReviewDraft({
       sellerSlug: seller.slug,
       status: seller.payoutAccount?.status === "REJECTED" ? "REJECTED" : "VERIFIED",
-      adminNote:
-        seller.payoutAccount?.adminNote ??
-        seller.payoutAccount?.rejectionReason ??
-        "",
+      adminNote: seller.payoutAccount?.adminNote ?? seller.payoutAccount?.rejectionReason ?? "",
     });
     setReviewDialogOpen(true);
   };
@@ -354,9 +355,7 @@ export default function AdminReportsPage() {
       setReviewDialogOpen(false);
       toast.success("Seller payout account review saved.");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to review payout account.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to review payout account.");
     }
   };
 
@@ -381,9 +380,7 @@ export default function AdminReportsPage() {
       setPayoutDialogOpen(false);
       toast.success(`Payout moved to ${formatPayoutLabel(input.status).toLowerCase()}.`);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to update payout.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to update payout.");
     }
   };
 
@@ -396,9 +393,7 @@ export default function AdminReportsPage() {
       });
       toast.success("Payout batch created from eligible settlements.");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to create payout batch.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to create payout batch.");
     }
   };
 
@@ -430,9 +425,7 @@ export default function AdminReportsPage() {
       setActiveDesk("PAYOUTS");
       toast.success("Selected settlements were grouped into a payout batch.");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to create payout batch.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to create payout batch.");
     }
   };
 
@@ -461,9 +454,7 @@ export default function AdminReportsPage() {
       });
       toast.success(`Payout moved to ${formatPayoutLabel(status).toLowerCase()}.`);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to update payout.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to update payout.");
     }
   };
 
@@ -486,9 +477,7 @@ export default function AdminReportsPage() {
           : "COD remittance flagged for review.",
       );
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to update COD remittance.",
-      );
+      toast.error(error instanceof Error ? error.message : "Unable to update COD remittance.");
     }
   };
 
@@ -521,9 +510,7 @@ export default function AdminReportsPage() {
               </select>
               <select
                 value={rangeFilter}
-                onChange={(event) =>
-                  setRangeFilter(event.target.value as PaymentDashboardRange)
-                }
+                onChange={(event) => setRangeFilter(event.target.value as PaymentDashboardRange)}
                 className="h-10 rounded-xl border border-border/60 bg-surface px-3 text-sm focus:outline-none"
               >
                 <option value="ALL">All time</option>
@@ -571,425 +558,437 @@ export default function AdminReportsPage() {
           />
         </section>
 
-        <FinanceDeskTabs
-          activeDesk={activeDesk}
-          counts={deskCounts}
-          onChange={setActiveDesk}
-        />
+        <FinanceDeskTabs activeDesk={activeDesk} counts={deskCounts} onChange={setActiveDesk} />
 
         {activeDesk === "QUEUE" ? (
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
-          <AdminPanel
-            title="Seller settlement board"
-            description="Per-seller view of payment verification backlog, net due after commission, and payout progress."
-          >
-            {visibleSellerRows.length === 0 ? (
-              <div className="rounded-[16px] border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
-                No seller settlement data matches the selected filters.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {visibleSellerRows.map((row) => (
-                  <SellerFinanceRow
-                    key={row.sellerSlug}
-                    row={row}
-                    onOpenDetails={() => setSellerDetailSlug(row.sellerSlug)}
-                    onCreateBatch={() => handleCreateSellerBatch(row.sellerSlug)}
-                  />
-                ))}
-              </div>
-            )}
-          </AdminPanel>
-
-          <div className="space-y-4">
-            <AdminPanel title="Proof queues" description="Operational counts for payment verification work.">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FlowMetric
-                  label="Manual proof queue"
-                  value={String(paymentDashboard.summary.manualProofQueue)}
-                  helper="Bank transfer, Easypaisa, JazzCash"
-                  tone="warning"
-                />
-                <FlowMetric
-                  label="COD queue"
-                  value={String(paymentDashboard.summary.codProofQueue)}
-                  helper="Receipt capture and admin review"
-                  tone="warning"
-                />
-              </div>
-            </AdminPanel>
-
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
             <AdminPanel
-              title="Funds by payment method"
-              description="How each payment rail contributes to seller dues and SpareKart commissions."
+              title="Seller settlement board"
+              description="Per-seller view of payment verification backlog, net due after commission, and payout progress."
             >
-              <AdminMiniBars
-                rows={paymentDashboard.paymentMethodRows
-                  .filter((row) => row.orderCount > 0)
-                  .map((row) => ({
-                    label: `${formatPayoutLabel(row.method)} - ${row.orderCount} orders`,
-                    value: row.sellerNet,
-                    tone: row.method === "COD" ? "warning" : "success",
-                  }))}
-                valueFormatter={(value) => formatPKR(value)}
-              />
-
-              <div className="mt-3 space-y-2">
-                {paymentDashboard.paymentMethodRows
-                  .filter((row) => row.orderCount > 0)
-                  .map((row) => (
-                    <div
-                      key={row.method}
-                      className="rounded-[16px] border border-border/60 bg-surface px-3 py-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-foreground">
-                            {formatPayoutLabel(row.method)}
-                          </div>
-                          <div className="mt-1 text-[11px] text-muted-foreground">
-                            {row.orderCount} orders - {formatPKR(row.grossSales)} gross
-                          </div>
-                        </div>
-                        <AdminPill
-                          tone={row.awaitingVerification > 0 ? "warning" : "success"}
-                        >
-                          {row.awaitingVerification > 0 ? "Needs review" : "Healthy"}
-                        </AdminPill>
-                      </div>
-
-                      <div className="mt-2 grid gap-2 sm:grid-cols-3">
-                        <MetricTile
-                          label="Commission"
-                          value={formatPKR(row.platformCommission)}
-                        />
-                        <MetricTile
-                          label="Awaiting"
-                          value={formatPKR(row.awaitingVerification)}
-                        />
-                        <MetricTile label="Paid out" value={formatPKR(row.paidOut)} />
-                      </div>
-                    </div>
+              {visibleSellerRows.length === 0 ? (
+                <div className="rounded-[16px] border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
+                  No seller settlement data matches the selected filters.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {visibleSellerRows.map((row) => (
+                    <SellerFinanceRow
+                      key={row.sellerSlug}
+                      row={row}
+                      onOpenDetails={() => setSellerDetailSlug(row.sellerSlug)}
+                      onCreateBatch={() => handleCreateSellerBatch(row.sellerSlug)}
+                    />
                   ))}
-              </div>
+                </div>
+              )}
             </AdminPanel>
-          </div>
-        </section>
-        ) : null}
 
-        {activeDesk === "COD" ? (
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <AdminPanel
-            title="COD remittance management"
-            description="Orders delivered on cash-on-delivery that still need remittance confirmation or issue handling."
-          >
-            {visibleRemittances.length === 0 ? (
-              <div className="rounded-[16px] border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
-                No COD remittance records match the selected seller filter.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {visibleRemittances.slice(0, 10).map((remittance) => {
-                  const order = state.orders.find((entry) => entry.id === remittance.orderId);
-                  return (
-                    <div
-                      key={remittance.id}
-                      className="rounded-[16px] border border-border/60 bg-surface px-4 py-3"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <div className="text-sm font-semibold text-foreground">
-                              {order?.orderNumber ?? remittance.orderId}
-                            </div>
-                            <AdminPill tone={getRemittanceTone(remittance.status)}>
-                              {formatPayoutLabel(remittance.status)}
-                            </AdminPill>
-                          </div>
-                          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                            <span>Expected {formatPKR(remittance.expectedAmount)}</span>
-                            <span>
-                              Received {formatPKR(remittance.receivedAmount ?? remittance.expectedAmount)}
-                            </span>
-                            {remittance.remittanceReference ? (
-                              <span>Ref {remittance.remittanceReference}</span>
-                            ) : null}
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleRemittanceAction(remittance.id, "REMITTANCE_CONFIRMED")}
-                            className="inline-flex h-9 items-center justify-center rounded-xl border border-border/60 bg-card px-3 text-xs font-semibold"
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRemittanceAction(remittance.id, "ISSUE_FLAGGED")}
-                            className="inline-flex h-9 items-center justify-center rounded-xl border border-warning/25 bg-warning/5 px-3 text-xs font-semibold text-warning"
-                          >
-                            Flag issue
-                          </button>
-                          <Link
-                            href={`/admin/payments?desk=COD${sellerFilter !== "ALL" ? `&seller=${encodeURIComponent(sellerFilter)}` : ""}`}
-                            className="inline-flex h-9 items-center justify-center rounded-xl border border-border/60 bg-card px-3 text-xs font-semibold"
-                          >
-                            Open desk
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </AdminPanel>
-
-          <AdminPanel
-            title="Settlement ledger"
-            description="The payable ledger that drives seller liabilities, payout batches, and payout history."
-            action={
-              <button
-                type="button"
-                onClick={handleCreateSelectedSettlementBatch}
-                disabled={selectedSettlementIds.length === 0}
-                className="inline-flex h-9 items-center justify-center rounded-xl bg-foreground px-3 text-xs font-semibold text-background disabled:cursor-not-allowed disabled:opacity-50"
+            <div className="space-y-4">
+              <AdminPanel
+                title="Proof queues"
+                description="Operational counts for payment verification work."
               >
-                Create payout ({selectedSettlementIds.length})
-              </button>
-            }
-          >
-            {visibleSettlementRows.length === 0 ? (
-              <div className="text-sm text-muted-foreground">
-                No settlement rows match the selected filters.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {visibleSettlementRows.map((settlement) => (
-                  (() => {
-                    const effectiveStatus = getEffectiveSettlementStatus(state, settlement);
-                    const selectable =
-                      effectiveStatus === "READY_FOR_SETTLEMENT" && !settlement.payoutId;
-                    const sellerName =
-                      state.sellersDirectory.find((entry) => entry.slug === settlement.sellerSlug)?.name ??
-                      settlement.sellerSlug;
-                    return (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <FlowMetric
+                    label="Manual proof queue"
+                    value={String(paymentDashboard.summary.manualProofQueue)}
+                    helper="Bank transfer, Easypaisa, JazzCash"
+                    tone="warning"
+                  />
+                  <FlowMetric
+                    label="COD queue"
+                    value={String(paymentDashboard.summary.codProofQueue)}
+                    helper="Receipt capture and admin review"
+                    tone="warning"
+                  />
+                </div>
+              </AdminPanel>
+
+              <AdminPanel
+                title="Funds by payment method"
+                description="How each payment rail contributes to seller dues and SpareKart commissions."
+              >
+                <AdminMiniBars
+                  rows={paymentDashboard.paymentMethodRows
+                    .filter((row) => row.orderCount > 0)
+                    .map((row) => ({
+                      label: `${formatPayoutLabel(row.method)} - ${row.orderCount} orders`,
+                      value: row.sellerNet,
+                      tone: row.method === "COD" ? "warning" : "success",
+                    }))}
+                  valueFormatter={(value) => formatPKR(value)}
+                />
+
+                <div className="mt-3 space-y-2">
+                  {paymentDashboard.paymentMethodRows
+                    .filter((row) => row.orderCount > 0)
+                    .map((row) => (
                       <div
-                        key={settlement.id}
+                        key={row.method}
                         className="rounded-[16px] border border-border/60 bg-surface px-3 py-3"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="flex min-w-0 items-start gap-2">
-                            <input
-                              type="checkbox"
-                              checked={selectedSettlementIds.includes(settlement.id)}
-                              disabled={!selectable}
-                              onChange={() => handleToggleSettlementSelection(settlement.id)}
-                              className="mt-1 h-4 w-4 rounded border-border disabled:cursor-not-allowed disabled:opacity-40"
-                              aria-label={`Select ${settlement.productTitle} for payout`}
-                            />
-                            <div className="min-w-0">
+                          <div>
                             <div className="text-sm font-semibold text-foreground">
-                              {settlement.productTitle}
+                              {formatPayoutLabel(row.method)}
                             </div>
-                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                              <span>{settlement.orderId.replace("order-", "Order ")}</span>
-                              <span>{sellerName}</span>
-                              <span>{formatPayoutLabel(settlement.financialSourceType)}</span>
-                            </div>
+                            <div className="mt-1 text-[11px] text-muted-foreground">
+                              {row.orderCount} orders - {formatPKR(row.grossSales)} gross
                             </div>
                           </div>
-                          <AdminPill tone={getSettlementTone(effectiveStatus)}>
-                            {formatPayoutLabel(effectiveStatus)}
+                          <AdminPill tone={row.awaitingVerification > 0 ? "warning" : "success"}>
+                            {row.awaitingVerification > 0 ? "Needs review" : "Healthy"}
                           </AdminPill>
                         </div>
-                        {effectiveStatus !== settlement.settlementStatus ? (
-                          <div className="mt-2 rounded-xl border border-success/20 bg-success/5 px-3 py-2 text-[11px] text-muted-foreground">
-                            This settlement is financially cleared now. The stored status will update when the next payout or remittance action runs.
+
+                        <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                          <MetricTile
+                            label="Commission"
+                            value={formatPKR(row.platformCommission)}
+                          />
+                          <MetricTile
+                            label="Awaiting"
+                            value={formatPKR(row.awaitingVerification)}
+                          />
+                          <MetricTile label="Paid out" value={formatPKR(row.paidOut)} />
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </AdminPanel>
+            </div>
+          </section>
+        ) : null}
+
+        {activeDesk === "COD" ? (
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+            <AdminPanel
+              title="COD remittance management"
+              description="Orders delivered on cash-on-delivery that still need remittance confirmation or issue handling."
+            >
+              {visibleRemittances.length === 0 ? (
+                <div className="rounded-[16px] border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
+                  No COD remittance records match the selected seller filter.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {visibleRemittances.slice(0, 10).map((remittance) => {
+                    const order = state.orders.find((entry) => entry.id === remittance.orderId);
+                    return (
+                      <div
+                        key={remittance.id}
+                        className="rounded-[16px] border border-border/60 bg-surface px-4 py-3"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="text-sm font-semibold text-foreground">
+                                {order?.orderNumber ?? remittance.orderId}
+                              </div>
+                              <AdminPill tone={getRemittanceTone(remittance.status)}>
+                                {formatPayoutLabel(remittance.status)}
+                              </AdminPill>
+                            </div>
+                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                              <span>Expected {formatPKR(remittance.expectedAmount)}</span>
+                              <span>
+                                Received{" "}
+                                {formatPKR(remittance.receivedAmount ?? remittance.expectedAmount)}
+                              </span>
+                              {remittance.remittanceReference ? (
+                                <span>Ref {remittance.remittanceReference}</span>
+                              ) : null}
+                            </div>
                           </div>
-                        ) : null}
-                        <div className="mt-2 grid gap-2 sm:grid-cols-4">
-                          <MetricTile label="Gross" value={formatPKR(settlement.grossSaleAmount)} />
-                          <MetricTile label="Commission" value={formatPKR(settlement.commissionAmount)} />
-                          <MetricTile label="Fees" value={formatPKR(settlement.feeAmount)} />
-                          <MetricTile label="Net" value={formatPKR(settlement.netPayableAmount)} />
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleRemittanceAction(remittance.id, "REMITTANCE_CONFIRMED")
+                              }
+                              className="inline-flex h-9 items-center justify-center rounded-xl border border-border/60 bg-card px-3 text-xs font-semibold"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemittanceAction(remittance.id, "ISSUE_FLAGGED")}
+                              className="inline-flex h-9 items-center justify-center rounded-xl border border-warning/25 bg-warning/5 px-3 text-xs font-semibold text-warning"
+                            >
+                              Flag issue
+                            </button>
+                            <Link
+                              href={`/admin/payments?desk=COD${sellerFilter !== "ALL" ? `&seller=${encodeURIComponent(sellerFilter)}` : ""}`}
+                              className="inline-flex h-9 items-center justify-center rounded-xl border border-border/60 bg-card px-3 text-xs font-semibold"
+                            >
+                              Open desk
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     );
-                  })()
-                ))}
-              </div>
-            )}
-          </AdminPanel>
-        </section>
+                  })}
+                </div>
+              )}
+            </AdminPanel>
+
+            <AdminPanel
+              title="Settlement ledger"
+              description="The payable ledger that drives seller liabilities, payout batches, and payout history."
+              action={
+                <button
+                  type="button"
+                  onClick={handleCreateSelectedSettlementBatch}
+                  disabled={selectedSettlementIds.length === 0}
+                  className="inline-flex h-9 items-center justify-center rounded-xl bg-foreground px-3 text-xs font-semibold text-background disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Create payout ({selectedSettlementIds.length})
+                </button>
+              }
+            >
+              {visibleSettlementRows.length === 0 ? (
+                <div className="text-sm text-muted-foreground">
+                  No settlement rows match the selected filters.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {visibleSettlementRows.map((settlement) =>
+                    (() => {
+                      const effectiveStatus = getEffectiveSettlementStatus(state, settlement);
+                      const selectable =
+                        effectiveStatus === "READY_FOR_SETTLEMENT" && !settlement.payoutId;
+                      const sellerName =
+                        state.sellersDirectory.find((entry) => entry.slug === settlement.sellerSlug)
+                          ?.name ?? settlement.sellerSlug;
+                      return (
+                        <div
+                          key={settlement.id}
+                          className="rounded-[16px] border border-border/60 bg-surface px-3 py-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 items-start gap-2">
+                              <input
+                                type="checkbox"
+                                checked={selectedSettlementIds.includes(settlement.id)}
+                                disabled={!selectable}
+                                onChange={() => handleToggleSettlementSelection(settlement.id)}
+                                className="mt-1 h-4 w-4 rounded border-border disabled:cursor-not-allowed disabled:opacity-40"
+                                aria-label={`Select ${settlement.productTitle} for payout`}
+                              />
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold text-foreground">
+                                  {settlement.productTitle}
+                                </div>
+                                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                                  <span>{settlement.orderId.replace("order-", "Order ")}</span>
+                                  <span>{sellerName}</span>
+                                  <span>{formatPayoutLabel(settlement.financialSourceType)}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <AdminPill tone={getSettlementTone(effectiveStatus)}>
+                              {formatPayoutLabel(effectiveStatus)}
+                            </AdminPill>
+                          </div>
+                          {effectiveStatus !== settlement.settlementStatus ? (
+                            <div className="mt-2 rounded-xl border border-success/20 bg-success/5 px-3 py-2 text-[11px] text-muted-foreground">
+                              This settlement is financially cleared now. The stored status will
+                              update when the next payout or remittance action runs.
+                            </div>
+                          ) : null}
+                          <div className="mt-2 grid gap-2 sm:grid-cols-4">
+                            <MetricTile
+                              label="Gross"
+                              value={formatPKR(settlement.grossSaleAmount)}
+                            />
+                            <MetricTile
+                              label="Commission"
+                              value={formatPKR(settlement.commissionAmount)}
+                            />
+                            <MetricTile label="Fees" value={formatPKR(settlement.feeAmount)} />
+                            <MetricTile
+                              label="Net"
+                              value={formatPKR(settlement.netPayableAmount)}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })(),
+                  )}
+                </div>
+              )}
+            </AdminPanel>
+          </section>
         ) : null}
 
         {activeDesk === "PAYOUTS" ? (
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)]">
-          <AdminPanel
-            title="Seller payout accounts"
-            description="Verify seller settlement destinations before approving or processing payout requests."
-          >
-            {payoutAccountRows.length === 0 ? (
-              <div className="rounded-[16px] border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
-                No payout accounts have been submitted yet.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {payoutAccountRows.map((seller) => (
-                  <PayoutAccountRow
-                    key={seller.slug}
-                    seller={seller}
-                    onReview={() => handleOpenAccountReview(seller)}
-                  />
-                ))}
-              </div>
-            )}
-          </AdminPanel>
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)]">
+            <AdminPanel
+              title="Seller payout accounts"
+              description="Verify seller settlement destinations before approving or processing payout requests."
+            >
+              {payoutAccountRows.length === 0 ? (
+                <div className="rounded-[16px] border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
+                  No payout accounts have been submitted yet.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {payoutAccountRows.map((seller) => (
+                    <PayoutAccountRow
+                      key={seller.slug}
+                      seller={seller}
+                      onReview={() => handleOpenAccountReview(seller)}
+                    />
+                  ))}
+                </div>
+              )}
+            </AdminPanel>
 
-          <AdminPanel
-            title="Payout control desk"
-            description="Approve, hold, or complete seller payout requests after finance checks."
-          >
-            {visiblePayouts.length === 0 ? (
-              <div className="rounded-[16px] border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
-                No payout records are available for the selected seller or time range.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {visiblePayouts.map((payout) => {
-                  const seller = state.sellersDirectory.find(
-                    (entry) => entry.slug === payout.sellerSlug,
-                  );
+            <AdminPanel
+              title="Payout control desk"
+              description="Approve, hold, or complete seller payout requests after finance checks."
+            >
+              {visiblePayouts.length === 0 ? (
+                <div className="rounded-[16px] border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
+                  No payout records are available for the selected seller or time range.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {visiblePayouts.map((payout) => {
+                    const seller = state.sellersDirectory.find(
+                      (entry) => entry.slug === payout.sellerSlug,
+                    );
 
-                  return (
-                    <div
-                      key={payout.id}
-                      className="rounded-[16px] border border-border/60 bg-surface px-4 py-3"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <div className="text-sm font-semibold text-foreground">
-                              {seller?.name ?? payout.sellerSlug}
+                    return (
+                      <div
+                        key={payout.id}
+                        className="rounded-[16px] border border-border/60 bg-surface px-4 py-3"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="text-sm font-semibold text-foreground">
+                                {seller?.name ?? payout.sellerSlug}
+                              </div>
+                              <AdminPill tone={getPayoutTone(payout.status)}>
+                                {formatPayoutLabel(payout.status)}
+                              </AdminPill>
                             </div>
-                            <AdminPill tone={getPayoutTone(payout.status)}>
-                              {formatPayoutLabel(payout.status)}
-                            </AdminPill>
+                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                              <span>{payout.orderIds.length} orders</span>
+                              <span>{describePayoutRecordDestination(payout)}</span>
+                              <span>
+                                {formatPayoutLabel(payout.requestType ?? "AUTO_SCHEDULED")}
+                              </span>
+                            </div>
                           </div>
-                          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                            <span>{payout.orderIds.length} orders</span>
-                            <span>{describePayoutRecordDestination(payout)}</span>
-                            <span>{formatPayoutLabel(payout.requestType ?? "AUTO_SCHEDULED")}</span>
+                          <div className="text-right">
+                            <div className="text-sm font-black text-foreground">
+                              {formatPKR(payout.netAmount)}
+                            </div>
+                            <div className="mt-1 text-[11px] text-muted-foreground">
+                              {formatPKR(payout.totalCommissionDeducted)} commission
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm font-black text-foreground">
-                            {formatPKR(payout.netAmount)}
-                          </div>
-                          <div className="mt-1 text-[11px] text-muted-foreground">
-                            {formatPKR(payout.totalCommissionDeducted)} commission
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {["DRAFT", "PENDING_APPROVAL"].includes(payout.status) ? (
-                          <button
-                            type="button"
-                            onClick={() => handleQuickPayoutUpdate(payout, "APPROVED")}
-                            className="inline-flex h-9 items-center justify-center rounded-xl bg-success px-3 text-xs font-semibold text-success-foreground"
-                          >
-                            Approve
-                          </button>
-                        ) : null}
-                        {payout.status === "APPROVED" ? (
-                          <button
-                            type="button"
-                            onClick={() => handleQuickPayoutUpdate(payout, "PROCESSING")}
-                            className="inline-flex h-9 items-center justify-center rounded-xl bg-info px-3 text-xs font-semibold text-white"
-                          >
-                            Start transfer
-                          </button>
-                        ) : null}
-                        {payout.status === "PROCESSING" ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {["DRAFT", "PENDING_APPROVAL"].includes(payout.status) ? (
+                            <button
+                              type="button"
+                              onClick={() => handleQuickPayoutUpdate(payout, "APPROVED")}
+                              className="inline-flex h-9 items-center justify-center rounded-xl bg-success px-3 text-xs font-semibold text-success-foreground"
+                            >
+                              Approve
+                            </button>
+                          ) : null}
+                          {payout.status === "APPROVED" ? (
+                            <button
+                              type="button"
+                              onClick={() => handleQuickPayoutUpdate(payout, "PROCESSING")}
+                              className="inline-flex h-9 items-center justify-center rounded-xl bg-info px-3 text-xs font-semibold text-white"
+                            >
+                              Start transfer
+                            </button>
+                          ) : null}
+                          {payout.status === "PROCESSING" ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedPayoutId(payout.id);
+                                setPayoutDialogOpen(true);
+                              }}
+                              className="inline-flex h-9 items-center justify-center rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground"
+                            >
+                              Mark paid
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             onClick={() => {
                               setSelectedPayoutId(payout.id);
                               setPayoutDialogOpen(true);
                             }}
-                            className="inline-flex h-9 items-center justify-center rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground"
+                            className="inline-flex h-9 items-center justify-center rounded-xl border border-border/60 bg-card px-3 text-xs font-semibold"
                           >
-                            Mark paid
+                            Manage payout
                           </button>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedPayoutId(payout.id);
-                            setPayoutDialogOpen(true);
-                          }}
-                          className="inline-flex h-9 items-center justify-center rounded-xl border border-border/60 bg-card px-3 text-xs font-semibold"
-                        >
-                          Manage payout
-                        </button>
-                        {payout.transactionReference ? (
-                          <span className="inline-flex h-9 items-center rounded-xl border border-border/60 px-3 text-xs text-muted-foreground">
-                            Ref: {payout.transactionReference}
-                          </span>
-                        ) : null}
+                          {payout.transactionReference ? (
+                            <span className="inline-flex h-9 items-center rounded-xl border border-border/60 px-3 text-xs text-muted-foreground">
+                              Ref: {payout.transactionReference}
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </AdminPanel>
-        </section>
+                    );
+                  })}
+                </div>
+              )}
+            </AdminPanel>
+          </section>
         ) : null}
 
         {activeDesk === "HISTORY" ? (
-        <AdminPanel
-          title="Commission ledger snapshot"
-          description="Order-level commission deductions and seller net amounts."
-        >
-          {visibleCommissionRows.length === 0 ? (
-            <div className="text-sm text-muted-foreground">
-              No commission rows match the selected filters.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {visibleCommissionRows.map((row) => (
-                <div
-                  key={`${row.orderId}-${row.sellerSlug}`}
-                  className="rounded-[16px] border border-border/60 bg-surface px-3 py-3"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-foreground">
-                        {row.orderNumber}
+          <AdminPanel
+            title="Commission ledger snapshot"
+            description="Order-level commission deductions and seller net amounts."
+          >
+            {visibleCommissionRows.length === 0 ? (
+              <div className="text-sm text-muted-foreground">
+                No commission rows match the selected filters.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {visibleCommissionRows.map((row) => (
+                  <div
+                    key={`${row.orderId}-${row.sellerSlug}`}
+                    className="rounded-[16px] border border-border/60 bg-surface px-3 py-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-foreground">
+                          {row.orderNumber}
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                          <span>{row.sellerName}</span>
+                          <span>{row.customerName}</span>
+                          <span>{formatDate(row.createdAt)}</span>
+                        </div>
                       </div>
-                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                        <span>{row.sellerName}</span>
-                        <span>{row.customerName}</span>
-                        <span>{formatDate(row.createdAt)}</span>
-                      </div>
+                      <AdminPill tone={getLedgerTone(row.status)}>{row.status}</AdminPill>
                     </div>
-                    <AdminPill tone={getLedgerTone(row.status)}>{row.status}</AdminPill>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-4">
+                      <MetricTile label="Gross" value={formatPKR(row.grossAmount)} />
+                      <MetricTile label="Commission" value={formatPKR(row.commissionAmount)} />
+                      <MetricTile label="Net" value={formatPKR(row.sellerNetAmount)} />
+                      <MetricTile label="Rate" value={`${row.commissionRate.toFixed(1)}%`} />
+                    </div>
                   </div>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-4">
-                    <MetricTile label="Gross" value={formatPKR(row.grossAmount)} />
-                    <MetricTile label="Commission" value={formatPKR(row.commissionAmount)} />
-                    <MetricTile label="Net" value={formatPKR(row.sellerNetAmount)} />
-                    <MetricTile label="Rate" value={`${row.commissionRate.toFixed(1)}%`} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </AdminPanel>
+                ))}
+              </div>
+            )}
+          </AdminPanel>
         ) : null}
       </div>
 
@@ -1007,9 +1006,8 @@ export default function AdminReportsPage() {
         payout={selectedPayout}
         sellerName={
           selectedPayout
-            ? state.sellersDirectory.find(
-                (seller) => seller.slug === selectedPayout.sellerSlug,
-              )?.name
+            ? state.sellersDirectory.find((seller) => seller.slug === selectedPayout.sellerSlug)
+                ?.name
             : undefined
         }
         onOpenChange={setPayoutDialogOpen}
@@ -1163,7 +1161,8 @@ function SellerFinancialDialog({
             {seller ? `${seller.name} financial detail` : "Seller financial detail"}
           </DialogTitle>
           <DialogDescription>
-            Account verification, settlement ledger, payout history, and COD remittance status in one review panel.
+            Account verification, settlement ledger, payout history, and COD remittance status in
+            one review panel.
           </DialogDescription>
         </DialogHeader>
 
@@ -1255,7 +1254,8 @@ function SellerFinancialDialog({
                             {settlement.productTitle}
                           </div>
                           <div className="mt-0.5 text-[11px] text-muted-foreground">
-                            {formatPKR(settlement.netPayableAmount)} net · {formatPKR(settlement.commissionAmount)} commission
+                            {formatPKR(settlement.netPayableAmount)} net ·{" "}
+                            {formatPKR(settlement.commissionAmount)} commission
                           </div>
                         </div>
                         <AdminPill tone={getSettlementTone(settlement.settlementStatus)}>
@@ -1296,7 +1296,8 @@ function SellerFinancialDialog({
                   ) : null}
                   {openPayouts.length > 0 ? (
                     <div className="rounded-xl border border-warning/20 bg-warning/5 px-3 py-2 text-xs text-muted-foreground">
-                      {openPayouts.length} payout record{openPayouts.length === 1 ? "" : "s"} still require finance action.
+                      {openPayouts.length} payout record{openPayouts.length === 1 ? "" : "s"} still
+                      require finance action.
                     </div>
                   ) : null}
                 </div>
@@ -1319,10 +1320,7 @@ function SellerFinanceRow({
   onCreateBatch: () => void;
 }) {
   const openPayoutAmount =
-    row.readyForPayout +
-    row.scheduledPayouts +
-    row.processingPayouts +
-    row.heldPayouts;
+    row.readyForPayout + row.scheduledPayouts + row.processingPayouts + row.heldPayouts;
 
   return (
     <div className="rounded-[16px] border border-border/60 bg-surface px-3 py-3">
@@ -1340,11 +1338,7 @@ function SellerFinanceRow({
         </div>
         <AdminPill
           tone={
-            row.awaitingVerification > 0
-              ? "warning"
-              : openPayoutAmount > 0
-                ? "info"
-                : "success"
+            row.awaitingVerification > 0 ? "warning" : openPayoutAmount > 0 ? "info" : "success"
           }
         >
           {row.awaitingVerification > 0
@@ -1376,7 +1370,8 @@ function SellerFinanceRow({
       {row.awaitingVerification > 0 ? (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-warning/20 bg-warning/5 px-3 py-2.5">
           <div className="text-xs text-muted-foreground">
-            Verification is pending for this seller. Open the payment desk to approve or reject proofs.
+            Verification is pending for this seller. Open the payment desk to approve or reject
+            proofs.
           </div>
           <Link
             href={`/admin/payments?desk=MANUAL&seller=${encodeURIComponent(row.sellerSlug)}`}
@@ -1388,7 +1383,8 @@ function SellerFinanceRow({
       ) : row.readyForPayout > 0 ? (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-success/20 bg-success/5 px-3 py-2.5">
           <div className="text-xs text-muted-foreground">
-            Verified settlements are ready. Create a payout batch directly from the settlement ledger.
+            Verified settlements are ready. Create a payout batch directly from the settlement
+            ledger.
           </div>
           <button
             type="button"
@@ -1403,13 +1399,7 @@ function SellerFinanceRow({
   );
 }
 
-function PayoutAccountRow({
-  seller,
-  onReview,
-}: {
-  seller: SellerRecord;
-  onReview: () => void;
-}) {
+function PayoutAccountRow({ seller, onReview }: { seller: SellerRecord; onReview: () => void }) {
   const payoutAccount = seller.payoutAccount!;
 
   return (
@@ -1458,9 +1448,7 @@ function FlowMetric({
     <div
       className={cn(
         "rounded-[16px] border px-3 py-3",
-        tone === "warning"
-          ? "border-warning/25 bg-warning/5"
-          : "border-border/60 bg-surface",
+        tone === "warning" ? "border-warning/25 bg-warning/5" : "border-border/60 bg-surface",
       )}
     >
       <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">

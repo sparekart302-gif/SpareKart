@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import ProductPage from "@/routes/product.$slug";
-import { getProduct, getSeller } from "@/data/marketplace";
 import { buildPageMetadata } from "@/lib/metadata";
+import {
+  findMarketplaceProductBySlug,
+  findMarketplaceSellerBySlug,
+} from "@/server/marketplace/persistence";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProduct(slug);
+  const product = await findMarketplaceProductBySlug(slug);
 
   if (!product) {
     return buildPageMetadata({
@@ -31,8 +32,14 @@ export async function generateMetadata({
 
 export default async function Page({ params }: PageProps) {
   const { slug } = await params;
-  const product = getProduct(slug);
-  const seller = product ? getSeller(product.sellerSlug) : undefined;
+  const product = await findMarketplaceProductBySlug(slug);
+  const seller = product ? await findMarketplaceSellerBySlug(product.sellerSlug) : undefined;
 
-  return <ProductPage slug={slug} product={product ?? undefined} seller={seller} />;
+  return (
+    <ProductPage
+      slug={slug}
+      product={product ?? undefined}
+      seller={seller ?? undefined}
+    />
+  );
 }

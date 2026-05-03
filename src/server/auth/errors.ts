@@ -20,4 +20,3 @@ export class AuthApiError extends Error {
     this.details = options?.details;
   }
 }
-
