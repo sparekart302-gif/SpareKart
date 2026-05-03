@@ -23,9 +23,19 @@ if (!existsSync(standaloneEntry)) {
 }
 
 const port = readFlag("--port") ?? process.env.PORT ?? "3000";
-const hostname = readFlag("--hostname") ?? process.env.HOSTNAME ?? "0.0.0.0";
+const isHostedRuntime = Boolean(process.env.RENDER || process.env.PORT);
+const hostname =
+  readFlag("--hostname") ??
+  process.env.SPAREKART_HOST ??
+  process.env.HOST ??
+  (isHostedRuntime ? "0.0.0.0" : process.env.HOSTNAME ?? "0.0.0.0");
 const runtimeDir =
   process.env.SPAREKART_RUNTIME_DIR ?? resolve(process.cwd(), ".sparekart-runtime");
+
+console.info("[start] Launching SpareKart production server");
+console.info(`[start] NODE_ENV=${process.env.NODE_ENV ?? "development"}`);
+console.info(`[start] host=${hostname}`);
+console.info(`[start] port=${port}`);
 
 const child = spawn(process.execPath, [standaloneEntry], {
   stdio: "inherit",
