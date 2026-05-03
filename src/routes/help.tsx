@@ -71,9 +71,9 @@ export default function HelpPage() {
             <HelpCircle className="h-5 w-5 text-accent sm:h-6 sm:w-6" /> Frequently asked questions
           </h2>
           <div className="space-y-2">
-            {faqs.map((f, i) => (
+            {faqs.map((f) => (
               <details
-                key={i}
+                key={f.q}
                 className="group overflow-hidden rounded-[22px] bg-card shadow-[var(--shadow-soft)]"
               >
                 <summary className="flex cursor-pointer items-center justify-between gap-3 p-4 text-sm font-bold sm:p-5">

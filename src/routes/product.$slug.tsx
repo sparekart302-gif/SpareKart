@@ -433,9 +433,9 @@ export default function ProductPage({
                     <BadgeCheck className="h-4 w-4" /> Verified fitment for:
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {product.compatibility.map((c, i) => (
+                    {product.compatibility.map((c) => (
                       <span
-                        key={i}
+                        key={`${c.brand}-${c.model}-${c.years[0]}-${c.years[c.years.length - 1]}`}
                         className="rounded-full bg-card px-3 py-1.5 text-xs font-semibold shadow-[var(--shadow-soft)]"
                       >
                         {c.brand} {c.model} ({c.years[0]}–{c.years[c.years.length - 1]})
