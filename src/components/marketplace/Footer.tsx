@@ -121,19 +121,19 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-accent">
+                <Link to="/seller-policies" className="hover:text-accent">
                   Seller Policies
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-accent">
+                <Link to="/pricing-fees" className="hover:text-accent">
                   Pricing & Fees
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-accent">
+                <Link to="/seller-help" className="hover:text-accent">
                   Seller Help
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -147,29 +147,29 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-accent">
+                <Link to="/returns-refunds" className="hover:text-accent">
                   Returns & Refunds
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-accent">
+                <Link to="/shipping-info" className="hover:text-accent">
                   Shipping Info
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-accent">
+                <Link to="/payment-methods" className="hover:text-accent">
                   Payment Methods
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-accent">
+                <Link to="/privacy-policy" className="hover:text-accent">
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-accent">
+                <Link to="/terms-of-service" className="hover:text-accent">
                   Terms of Service
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
