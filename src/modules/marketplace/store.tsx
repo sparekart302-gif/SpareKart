@@ -56,7 +56,11 @@ import type {
   SystemSettings,
 } from "./types";
 import { buildEmptyMarketplaceState } from "./seed";
-import { hasMeaningfulMarketplaceState } from "./state-utils";
+import {
+  hasMeaningfulMarketplaceState,
+  shouldPreserveExistingMarketplaceState,
+} from "./state-utils";
+import { toast } from "sonner";
 
 const GUEST_CART_USER_ID = "guest-session";
 const GUEST_CART_STORAGE_KEY = "sparekart.guest-cart.v1";
@@ -221,6 +225,7 @@ export function MarketplaceProvider({
   const stateRef = useRef(state);
   const guestCartRef = useRef<MarketplaceState["cartsByUserId"][string]>([]);
   const guestCouponRef = useRef("");
+  const hasShownMarketplaceRefreshErrorRef = useRef(false);
 
   const commitState = useCallback((nextState: MarketplaceState) => {
     stateRef.current = nextState;
@@ -237,6 +242,14 @@ export function MarketplaceProvider({
       const guestCart = guestCartRef.current;
       const guestCouponCode = guestCouponRef.current;
       const nextState = withGuestSessionState(response.state, guestCart, guestCouponCode);
+
+      if (shouldPreserveExistingMarketplaceState(stateRef.current, nextState)) {
+        throw new Error(
+          "Refusing to replace the current marketplace state with an empty response payload.",
+        );
+      }
+
+      hasShownMarketplaceRefreshErrorRef.current = false;
       commitState(nextState);
       return authUser ?? null;
     },
@@ -262,6 +275,14 @@ export function MarketplaceProvider({
       const scheduleRefresh = () =>
         hydrateMarketplaceState().catch((error) => {
           console.error("Failed to refresh marketplace state in the background.", error);
+
+          if (
+            hasMeaningfulMarketplaceState(stateRef.current) &&
+            !hasShownMarketplaceRefreshErrorRef.current
+          ) {
+            hasShownMarketplaceRefreshErrorRef.current = true;
+            toast.error("Store data could not be refreshed. Showing the last loaded catalog.");
+          }
         });
 
       if (typeof window !== "undefined" && "requestIdleCallback" in window) {
@@ -300,8 +321,8 @@ export function MarketplaceProvider({
       const authUser = await getEmailSessionUser();
       await hydrateMarketplaceState(authUser);
       return authUser;
-    } catch {
-      await hydrateMarketplaceState(null).catch(() => undefined);
+    } catch (error) {
+      console.error("Failed to refresh auth session.", error);
       return null;
     }
   }, [hydrateMarketplaceState]);

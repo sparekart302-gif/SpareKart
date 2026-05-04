@@ -6,9 +6,11 @@ import { getAppUrl, getServerEnv } from "@/server/config/env";
 import { queueMarketplaceEmail } from "@/server/email/service";
 import { AuthApiError } from "./errors";
 import { AUTH_JWT_COOKIE_NAME, buildJwtCookieOptions, createAuthJwt } from "./jwt";
+import { buildExpiredJwtCookieOptions } from "./jwt";
 import {
   AUTH_COOKIE_NAME,
   AUTH_SESSION_TTL_MS,
+  buildExpiredSessionCookieOptions,
   buildSessionCookieOptions,
   createOpaqueToken,
   hashOpaqueToken,
@@ -133,9 +135,9 @@ function assertGoogleConfigured() {
   return env;
 }
 
-export function buildGoogleAuthorizationUrl(state: string) {
+export function buildGoogleAuthorizationUrl(state: string, publicSiteUrl?: string) {
   const env = assertGoogleConfigured();
-  const redirectUri = getAppUrl("/api/auth/google/callback");
+  const redirectUri = getAppUrl("/api/auth/google/callback", publicSiteUrl);
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.searchParams.set("client_id", env.GOOGLE_CLIENT_ID!);
   url.searchParams.set("redirect_uri", redirectUri);
@@ -143,7 +145,7 @@ export function buildGoogleAuthorizationUrl(state: string) {
   url.searchParams.set("scope", "openid email profile");
   url.searchParams.set("state", state);
   url.searchParams.set("prompt", "select_account");
-  console.info(`[auth] Google OAuth site URL: ${env.publicSiteUrl}`);
+  console.info(`[auth] Google OAuth site URL: ${publicSiteUrl ?? env.publicSiteUrl}`);
   console.info(`[auth] Google OAuth callback URL: ${redirectUri}`);
   return url.toString();
 }
@@ -192,8 +194,8 @@ async function issueSession(user: AuthUserRecord, device?: SessionDeviceMeta) {
 
 async function clearSessionCookie() {
   const cookieStore = await cookies();
-  cookieStore.delete(AUTH_COOKIE_NAME);
-  cookieStore.delete(AUTH_JWT_COOKIE_NAME);
+  cookieStore.set(AUTH_COOKIE_NAME, "", buildExpiredSessionCookieOptions());
+  cookieStore.set(AUTH_JWT_COOKIE_NAME, "", buildExpiredJwtCookieOptions());
 }
 
 async function createOneTimeCode(
@@ -294,9 +296,8 @@ async function sendVerificationCode(user: AuthUserRecord) {
   return verificationCode;
 }
 
-async function exchangeGoogleCodeForProfile(code: string) {
+async function exchangeGoogleCodeForProfile(code: string, redirectUri: string) {
   const env = assertGoogleConfigured();
-  const redirectUri = getAppUrl("/api/auth/google/callback");
 
   const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -448,8 +449,17 @@ export async function loginWithEmailPassword(input: LoginInput, device?: Session
   };
 }
 
-export async function loginWithGoogleCode(code: string, device?: SessionDeviceMeta) {
-  const googleProfile = await exchangeGoogleCodeForProfile(code);
+export async function loginWithGoogleCode(
+  code: string,
+  device?: SessionDeviceMeta,
+  options?: {
+    redirectUri?: string;
+    authSiteUrl?: string;
+  },
+) {
+  const redirectUri = options?.redirectUri ?? getAppUrl("/api/auth/google/callback");
+  const authSiteUrl = options?.authSiteUrl ?? getServerEnv().publicSiteUrl;
+  const googleProfile = await exchangeGoogleCodeForProfile(code, redirectUri);
 
   if (!googleProfile.email_verified) {
     throw new AuthApiError("Google did not return a verified email address for this account.", {
@@ -463,6 +473,9 @@ export async function loginWithGoogleCode(code: string, device?: SessionDeviceMe
   let user = findAuthUserByEmail(store, normalizedEmail);
   const createdAt = nowIso();
   const isNewUser = !user;
+  console.info(
+    `[auth] Google profile received for ${normalizedEmail}. existingUser=${Boolean(user)} redirectUri=${redirectUri}`,
+  );
 
   if (!user) {
     const nextUser: AuthUserRecord = {
@@ -484,6 +497,7 @@ export async function loginWithGoogleCode(code: string, device?: SessionDeviceMe
       ...current,
       users: [...current.users, nextUser],
     }));
+    console.info(`[auth] Created Google-backed user ${normalizedEmail} with role CUSTOMER.`);
 
     store = await getAuthStore();
     user = findAuthUserByEmail(store, normalizedEmail);
@@ -502,6 +516,9 @@ export async function loginWithGoogleCode(code: string, device?: SessionDeviceMe
           : entry,
       ),
     }));
+    console.info(
+      `[auth] Updated existing user ${normalizedEmail} during Google sign-in. role=${user.role}`,
+    );
 
     store = await getAuthStore();
     user = findAuthUserByEmail(store, normalizedEmail);
@@ -516,6 +533,9 @@ export async function loginWithGoogleCode(code: string, device?: SessionDeviceMe
 
   assertUserCanSignIn(user);
   const session = await issueSession(user, device);
+  console.info(
+    `[auth] Issued Google sign-in session for ${user.email}. role=${user.role} authSiteUrl=${authSiteUrl}`,
+  );
 
   if (isNewUser) {
     await queueMarketplaceEmail({
@@ -524,7 +544,7 @@ export async function loginWithGoogleCode(code: string, device?: SessionDeviceMe
       template: {
         template: "WELCOME_CUSTOMER",
         recipientName: user.name,
-        portalUrl: getAppUrl(getPostLoginPath(user.role)),
+        portalUrl: getAppUrl(getPostLoginPath(user.role), authSiteUrl),
       },
     });
   }

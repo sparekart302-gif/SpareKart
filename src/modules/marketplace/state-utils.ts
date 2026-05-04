@@ -11,3 +11,12 @@ export function hasMeaningfulMarketplaceState(state?: MarketplaceState | null) {
     state.sellersDirectory.length > 0
   );
 }
+
+export function shouldPreserveExistingMarketplaceState(
+  previousState: MarketplaceState,
+  nextState: MarketplaceState,
+) {
+  return (
+    hasMeaningfulMarketplaceState(previousState) && !hasMeaningfulMarketplaceState(nextState)
+  );
+}

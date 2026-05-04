@@ -21,6 +21,7 @@ export default function LoginPage() {
 
   const verificationState = searchParams.get("verified");
   const oauthState = searchParams.get("oauth");
+  const authError = searchParams.get("error");
   const verificationMessage = useMemo(() => {
     if (verificationState === "success") {
       return { tone: "success", text: "Your email has been verified. You can sign in now." };
@@ -36,6 +37,13 @@ export default function LoginPage() {
     return null;
   }, [verificationState]);
   const oauthMessage = useMemo(() => {
+    if (authError === "google_oauth_failed") {
+      return {
+        tone: "danger",
+        text: "Google sign-in could not be completed. Please try again.",
+      };
+    }
+
     if (oauthState === "unavailable") {
       return {
         tone: "danger",
@@ -79,7 +87,7 @@ export default function LoginPage() {
     }
 
     return null;
-  }, [oauthState]);
+  }, [authError, oauthState]);
 
   const currentSessionLabel = currentUser ? currentUser.role.replaceAll("_", " ") : "SIGNED OUT";
 

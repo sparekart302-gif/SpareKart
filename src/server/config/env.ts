@@ -55,6 +55,7 @@ const envSchema = z.object({
 export type ServerEnv = z.infer<typeof envSchema> & {
   publicSiteUrl: string;
   publicSiteUrlSource: string;
+  cookieDomain?: string;
   runtimeRoot: string;
   mongodbConfigured: boolean;
   resendConfigured: boolean;
@@ -92,6 +93,10 @@ function readRuntimeEnv(name: string) {
   return process.env[name];
 }
 
+function isIpHostname(hostname: string) {
+  return /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname) || hostname.includes(":");
+}
+
 function normalizePublicSiteUrl(value: string) {
   const url = new URL(value);
 
@@ -109,6 +114,25 @@ function normalizePublicSiteUrl(value: string) {
   }
 
   return url.toString();
+}
+
+function resolveCookieDomain(publicSiteUrl: string, nodeEnv: z.infer<typeof envSchema>["NODE_ENV"]) {
+  if (nodeEnv !== "production") {
+    return undefined;
+  }
+
+  const hostname = new URL(publicSiteUrl).hostname.toLowerCase();
+
+  if (
+    hostname === "localhost" ||
+    hostname.endsWith(".localhost") ||
+    isDisallowedPublicHostname(hostname) ||
+    isIpHostname(hostname)
+  ) {
+    return undefined;
+  }
+
+  return hostname.startsWith("www.") ? hostname.slice(4) : hostname;
 }
 
 function resolvePublicSiteUrl(parsed: z.infer<typeof envSchema>) {
@@ -196,6 +220,7 @@ export function getServerEnv(): ServerEnv {
     ...parsed,
     publicSiteUrl,
     publicSiteUrlSource,
+    cookieDomain: resolveCookieDomain(publicSiteUrl, parsed.NODE_ENV),
     runtimeRoot: resolveRuntimeRoot(parsed.SPAREKART_RUNTIME_DIR),
     mongodbConfigured: hasConfiguredMongoUri(parsed.MONGODB_URI),
     resendConfigured: resendKeyConfigured && resendFromConfigured,
@@ -212,8 +237,79 @@ export function getServerEnv(): ServerEnv {
   return cachedEnv;
 }
 
-export function getAppUrl(path = "/") {
-  return new URL(path, getServerEnv().publicSiteUrl).toString();
+export function getAppUrl(path = "/", baseUrl?: string | URL) {
+  return new URL(path, baseUrl ?? getServerEnv().publicSiteUrl).toString();
+}
+
+type RequestLike =
+  | string
+  | URL
+  | {
+      headers?: Headers | { get(name: string): string | null | undefined };
+      nextUrl?: { origin?: string; protocol?: string };
+      url?: string;
+    }
+  | null
+  | undefined;
+
+function readHeader(
+  headers: Headers | { get(name: string): string | null | undefined } | undefined,
+  name: string,
+) {
+  return headers?.get(name) ?? undefined;
+}
+
+function extractRequestOrigins(input: RequestLike) {
+  if (!input) {
+    return [];
+  }
+
+  if (typeof input === "string") {
+    return [input];
+  }
+
+  if (input instanceof URL) {
+    return [input.origin];
+  }
+
+  const origins: string[] = [];
+  const forwardedHost = readHeader(input.headers, "x-forwarded-host");
+  const forwardedProto = readHeader(input.headers, "x-forwarded-proto");
+  const host = forwardedHost ?? readHeader(input.headers, "host");
+  const proto =
+    forwardedProto?.split(",")[0]?.trim() ||
+    input.nextUrl?.protocol?.replace(/:$/, "") ||
+    undefined;
+
+  if (host && proto) {
+    origins.push(`${proto}://${host.split(",")[0]!.trim()}`);
+  }
+
+  if (input.nextUrl?.origin) {
+    origins.push(input.nextUrl.origin);
+  }
+
+  if (input.url) {
+    origins.push(new URL(input.url).origin);
+  }
+
+  return origins;
+}
+
+export function resolveRequestPublicSiteUrl(input?: RequestLike) {
+  for (const candidate of extractRequestOrigins(input)) {
+    const normalized = normalizePublicSiteUrl(candidate);
+
+    if (normalized) {
+      return normalized;
+    }
+  }
+
+  return getServerEnv().publicSiteUrl;
+}
+
+export function getRequestAppUrl(path = "/", input?: RequestLike) {
+  return new URL(path, resolveRequestPublicSiteUrl(input)).toString();
 }
 
 export function getPublicSiteUrl() {

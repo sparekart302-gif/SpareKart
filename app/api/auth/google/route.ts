@@ -1,15 +1,15 @@
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { buildGoogleAuthorizationUrl } from "@/server/auth/service";
-import { getAppUrl } from "@/server/config/env";
+import { getRequestAppUrl, getServerEnv, resolveRequestPublicSiteUrl } from "@/server/config/env";
 import { createOpaqueToken } from "@/server/auth/session";
 
 export const runtime = "nodejs";
 
 const GOOGLE_STATE_COOKIE = "sparekart_google_oauth_state";
 
-function buildStateCookieOptions() {
-  const expires = new Date(Date.now() + 10 * 60 * 1000);
+function buildStateCookieOptions(expires = new Date(Date.now() + 10 * 60 * 1000)) {
+  const env = getServerEnv();
 
   return {
     httpOnly: true,
@@ -17,19 +17,25 @@ function buildStateCookieOptions() {
     secure: process.env.NODE_ENV === "production",
     path: "/",
     expires,
+    ...(env.cookieDomain ? { domain: env.cookieDomain } : {}),
   };
 }
 
-export async function GET() {
-  const redirectUrl = new URL(getAppUrl("/login"));
+export async function GET(request: NextRequest) {
+  const authSiteUrl = resolveRequestPublicSiteUrl(request);
+  const redirectUrl = new URL(getRequestAppUrl("/login", request));
 
   try {
     const state = createOpaqueToken();
     const cookieStore = await cookies();
     cookieStore.set(GOOGLE_STATE_COOKIE, state, buildStateCookieOptions());
-    return NextResponse.redirect(buildGoogleAuthorizationUrl(state));
+    console.info(
+      `[auth] Starting Google OAuth on ${authSiteUrl} with callback ${getRequestAppUrl("/api/auth/google/callback", request)}`,
+    );
+    return NextResponse.redirect(buildGoogleAuthorizationUrl(state, authSiteUrl));
   } catch {
     redirectUrl.searchParams.set("oauth", "unavailable");
+    redirectUrl.searchParams.set("error", "google_oauth_failed");
     return NextResponse.redirect(redirectUrl);
   }
 }

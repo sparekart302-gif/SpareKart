@@ -83,11 +83,18 @@ export function verifyAuthJwt(token: string) {
 }
 
 export function buildJwtCookieOptions(expiresAt: Date) {
+  const env = getServerEnv();
+
   return {
     httpOnly: true,
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
     path: "/",
     expires: expiresAt,
+    ...(env.cookieDomain ? { domain: env.cookieDomain } : {}),
   };
+}
+
+export function buildExpiredJwtCookieOptions() {
+  return buildJwtCookieOptions(new Date(0));
 }
