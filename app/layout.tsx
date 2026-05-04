@@ -4,6 +4,7 @@ import { RouteScrollManager } from "@/components/navigation/RouteScrollManager";
 import { RouteProgressBar } from "@/components/navigation/RouteProgressBar";
 import { Toaster } from "@/components/ui/sonner";
 import { buildEmptyMarketplaceState } from "@/modules/marketplace/seed";
+import { hasMeaningfulMarketplaceState } from "@/modules/marketplace/state-utils";
 import { MarketplaceProvider } from "@/modules/marketplace/store";
 import { getServerEnv } from "@/server/config/env";
 import { getMarketplaceStateSnapshotForRequest } from "@/server/marketplace/service";
@@ -48,7 +49,7 @@ export default async function RootLayout({
   try {
     const snapshot = await getMarketplaceStateSnapshotForRequest();
     initialState = snapshot.state;
-    initialStateLoaded = true;
+    initialStateLoaded = hasMeaningfulMarketplaceState(snapshot.state);
   } catch (error) {
     console.error("Failed to load initial marketplace state.", error);
   }
@@ -56,10 +57,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
-        <MarketplaceProvider
-          initialState={initialState}
-          initialStateLoaded={initialStateLoaded}
-        >
+        <MarketplaceProvider initialState={initialState} initialStateLoaded={initialStateLoaded}>
           <RouteProgressBar />
           <RouteScrollManager />
           {children}

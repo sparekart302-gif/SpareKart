@@ -6,6 +6,7 @@ import {
   buildInitialMarketplaceState,
   normalizeMarketplaceState,
 } from "@/modules/marketplace/seed";
+import { hasMeaningfulMarketplaceState } from "@/modules/marketplace/state-utils";
 import type {
   ManagedCategory,
   ManagedProduct,
@@ -34,10 +35,24 @@ import {
   MarketplaceStateModel,
   MarketplaceUserModel,
 } from "@/server/mongodb/models/marketplace";
+import { getRuntimeFilePath, readJsonFile, writeJsonFile } from "@/server/runtime/storage";
 
 const MARKETPLACE_STATE_ID = "primary";
 const GUEST_CART_USER_ID = "guest-session";
 const MARKETPLACE_STATE_CACHE_TTL_MS = 15_000;
+const MARKETPLACE_STATE_READ_RETRY_DELAY_MS = 350;
+const MARKETPLACE_RUNTIME_SNAPSHOT_PATH = getRuntimeFilePath(
+  "marketplace",
+  "last-known-state.json",
+);
+
+type MarketplaceStateSource = "mongo" | "memory-cache" | "runtime-snapshot";
+
+export type MarketplaceStateResolution = {
+  state: MarketplaceState;
+  source: MarketplaceStateSource;
+  stale: boolean;
+};
 
 type MarketplaceBootstrapCache = {
   promise: Promise<void> | null;
@@ -45,9 +60,16 @@ type MarketplaceBootstrapCache = {
 };
 
 type MarketplaceStateCache = {
-  promise: Promise<MarketplaceState> | null;
+  promise: Promise<MarketplaceStateResolution> | null;
   state: MarketplaceState | null;
   loadedAt: number;
+  source: MarketplaceStateSource | null;
+  stale: boolean;
+};
+
+type StoredMarketplaceRuntimeSnapshot = {
+  savedAt: string;
+  state: MarketplaceState;
 };
 
 declare global {
@@ -69,6 +91,8 @@ const stateCache = globalMarketplaceRuntime.sparekartMarketplaceStateCache ?? {
   promise: null,
   state: null,
   loadedAt: 0,
+  source: null,
+  stale: false,
 };
 
 globalMarketplaceRuntime.sparekartMarketplaceBootstrapCache = bootstrapCache;
@@ -76,6 +100,100 @@ globalMarketplaceRuntime.sparekartMarketplaceStateCache = stateCache;
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    globalThis.setTimeout(resolve, ms);
+  });
+}
+
+function rememberMarketplaceState(
+  state: MarketplaceState,
+  options: {
+    source: MarketplaceStateSource;
+    stale?: boolean;
+  },
+) {
+  const resolution: MarketplaceStateResolution = {
+    state,
+    source: options.source,
+    stale: options.stale ?? false,
+  };
+
+  stateCache.state = state;
+  stateCache.loadedAt = Date.now();
+  stateCache.source = resolution.source;
+  stateCache.stale = resolution.stale;
+  stateCache.promise = Promise.resolve(resolution);
+
+  return resolution;
+}
+
+function getCachedMarketplaceResolution() {
+  if (!stateCache.state || !stateCache.source) {
+    return null;
+  }
+
+  return {
+    state: stateCache.state,
+    source: stateCache.source,
+    stale: stateCache.stale,
+  } satisfies MarketplaceStateResolution;
+}
+
+function isRetryableMarketplaceStateError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const name = error.name.toLowerCase();
+  const message = error.message.toLowerCase();
+
+  return (
+    name.includes("mongo") ||
+    name.includes("mongoose") ||
+    message.includes("server selection") ||
+    message.includes("topology") ||
+    message.includes("network") ||
+    message.includes("timed out") ||
+    message.includes("econnreset") ||
+    message.includes("econnrefused") ||
+    message.includes("ehostunreach") ||
+    message.includes("eai_again")
+  );
+}
+
+async function persistRuntimeMarketplaceSnapshot(state: MarketplaceState) {
+  try {
+    await writeJsonFile<StoredMarketplaceRuntimeSnapshot>(MARKETPLACE_RUNTIME_SNAPSHOT_PATH, {
+      savedAt: nowIso(),
+      state,
+    });
+  } catch (error) {
+    console.warn(
+      `[marketplace] Failed to persist runtime marketplace snapshot: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+}
+
+async function readRuntimeMarketplaceSnapshot() {
+  const snapshot = await readJsonFile<StoredMarketplaceRuntimeSnapshot | null>(
+    MARKETPLACE_RUNTIME_SNAPSHOT_PATH,
+    null,
+  );
+
+  if (!snapshot?.state) {
+    return null;
+  }
+
+  const normalized = normalizeMarketplaceState(snapshot.state, { seedDefaults: false });
+
+  if (!hasMeaningfulMarketplaceState(normalized)) {
+    return null;
+  }
+
+  return normalized;
 }
 
 function slugify(value: string) {
@@ -361,6 +479,15 @@ async function syncMarketplaceProjections(state: MarketplaceState) {
   ]);
 }
 
+async function readMarketplaceStateFallback() {
+  try {
+    const resolution = await ensureMarketplaceState();
+    return resolution.state;
+  } catch {
+    return null;
+  }
+}
+
 export async function saveMarketplaceState(state: MarketplaceState) {
   await connectToMongo();
   const prepared = prepareStateForStorage(state);
@@ -378,11 +505,19 @@ export async function saveMarketplaceState(state: MarketplaceState) {
     { upsert: true },
   );
 
-  await syncMarketplaceProjections(normalized);
+  try {
+    await syncMarketplaceProjections(normalized);
+  } catch (error) {
+    console.warn(
+      `[marketplace] Projection sync failed after saving canonical marketplace state: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+
   bootstrapCache.ready = true;
-  stateCache.state = normalized;
-  stateCache.loadedAt = Date.now();
-  stateCache.promise = Promise.resolve(normalized);
+  await persistRuntimeMarketplaceSnapshot(normalized);
+  rememberMarketplaceState(normalized, {
+    source: "mongo",
+  });
   return normalized;
 }
 
@@ -394,11 +529,36 @@ async function readMarketplaceStateFromMongo() {
   }>();
 
   if (existing?.state) {
-    return normalizeMarketplaceState(existing.state, { seedDefaults: false });
+    const normalized = normalizeMarketplaceState(existing.state, { seedDefaults: false });
+    await persistRuntimeMarketplaceSnapshot(normalized);
+    return normalized;
   }
 
   const initial = buildInitialMarketplaceState();
   return saveMarketplaceState(initial);
+}
+
+async function readMarketplaceStateFromMongoWithRetry() {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      return await readMarketplaceStateFromMongo();
+    } catch (error) {
+      lastError = error;
+
+      if (attempt >= 2 || !isRetryableMarketplaceStateError(error)) {
+        throw error;
+      }
+
+      console.warn(
+        `[marketplace] MongoDB state read failed on attempt ${attempt}. Retrying in ${MARKETPLACE_STATE_READ_RETRY_DELAY_MS}ms: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+      await wait(MARKETPLACE_STATE_READ_RETRY_DELAY_MS);
+    }
+  }
+
+  throw lastError;
 }
 
 async function ensureMarketplaceBootstrap() {
@@ -436,22 +596,51 @@ async function ensureMarketplaceBootstrap() {
 
 export async function ensureMarketplaceState() {
   const now = Date.now();
+  const cachedResolution = getCachedMarketplaceResolution();
 
-  if (stateCache.state && now - stateCache.loadedAt < MARKETPLACE_STATE_CACHE_TTL_MS) {
-    return stateCache.state;
+  if (cachedResolution && now - stateCache.loadedAt < MARKETPLACE_STATE_CACHE_TTL_MS) {
+    return {
+      ...cachedResolution,
+      source: cachedResolution.source === "mongo" ? "memory-cache" : cachedResolution.source,
+    } satisfies MarketplaceStateResolution;
   }
 
   if (!stateCache.promise) {
-    stateCache.promise = readMarketplaceStateFromMongo().then((state) => {
-      stateCache.state = state;
-      stateCache.loadedAt = Date.now();
+    stateCache.promise = readMarketplaceStateFromMongoWithRetry().then((state) => {
       bootstrapCache.ready = true;
-      return state;
+      return rememberMarketplaceState(state, {
+        source: "mongo",
+      });
     });
   }
 
   try {
     return await stateCache.promise;
+  } catch (error) {
+    if (cachedResolution && hasMeaningfulMarketplaceState(cachedResolution.state)) {
+      console.warn(
+        `[marketplace] Serving stale in-memory marketplace state after MongoDB refresh failure: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+      return rememberMarketplaceState(cachedResolution.state, {
+        source: "memory-cache",
+        stale: true,
+      });
+    }
+
+    const runtimeSnapshot = await readRuntimeMarketplaceSnapshot();
+
+    if (runtimeSnapshot) {
+      console.warn(
+        `[marketplace] Serving runtime marketplace snapshot after MongoDB refresh failure: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+      bootstrapCache.ready = true;
+      return rememberMarketplaceState(runtimeSnapshot, {
+        source: "runtime-snapshot",
+        stale: true,
+      });
+    }
+
+    throw error;
   } finally {
     stateCache.promise = null;
   }
@@ -463,56 +652,154 @@ export async function getMarketplaceState(input?: {
   guestCouponCode?: string;
 }) {
   const stored = await ensureMarketplaceState();
-  return applyMarketplaceSessionContext(
-    stored,
-    input?.currentUserId,
-    input?.guestCart,
-    input?.guestCouponCode,
-  );
+  return {
+    ...stored,
+    state: applyMarketplaceSessionContext(
+      stored.state,
+      input?.currentUserId,
+      input?.guestCart,
+      input?.guestCouponCode,
+    ),
+  } satisfies MarketplaceStateResolution;
 }
 
 export async function findMarketplaceProductBySlug(slug: string) {
-  await ensureMarketplaceBootstrap();
-  return MarketplaceProductModel.findOne({ slug }).lean<ManagedProduct | null>();
+  try {
+    await ensureMarketplaceBootstrap();
+    const product = await MarketplaceProductModel.findOne({ slug }).lean<ManagedProduct | null>();
+
+    if (product) {
+      return product;
+    }
+  } catch (error) {
+    console.warn(
+      `[marketplace] Falling back to marketplace snapshot for product ${slug}: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+
+  const fallbackState = await readMarketplaceStateFallback();
+  return fallbackState?.managedProducts.find((product) => product.slug === slug) ?? null;
 }
 
 export async function findMarketplaceCategoryBySlug(slug: string) {
-  await ensureMarketplaceBootstrap();
-  return MarketplaceCategoryModel.findOne({ slug }).lean<ManagedCategory | null>();
+  try {
+    await ensureMarketplaceBootstrap();
+    const category = await MarketplaceCategoryModel.findOne({
+      slug,
+    }).lean<ManagedCategory | null>();
+
+    if (category) {
+      return category;
+    }
+  } catch (error) {
+    console.warn(
+      `[marketplace] Falling back to marketplace snapshot for category ${slug}: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+
+  const fallbackState = await readMarketplaceStateFallback();
+  return fallbackState?.managedCategories.find((category) => category.slug === slug) ?? null;
 }
 
 export async function findMarketplaceSellerBySlug(slug: string) {
-  await ensureMarketplaceBootstrap();
-  return MarketplaceSellerProfileModel.findOne({ _id: slug }).lean<SellerRecord | null>();
+  try {
+    await ensureMarketplaceBootstrap();
+    const seller = await MarketplaceSellerProfileModel.findOne({
+      _id: slug,
+    }).lean<SellerRecord | null>();
+
+    if (seller) {
+      return seller;
+    }
+  } catch (error) {
+    console.warn(
+      `[marketplace] Falling back to marketplace snapshot for seller ${slug}: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+
+  const fallbackState = await readMarketplaceStateFallback();
+  return fallbackState?.sellersDirectory.find((seller) => seller.slug === slug) ?? null;
 }
 
 export async function listMarketplaceProducts() {
-  await ensureMarketplaceBootstrap();
-  return MarketplaceProductModel.find({ deletedAt: null }).sort({ createdAt: -1 }).lean<
-    ManagedProduct[]
-  >();
+  try {
+    await ensureMarketplaceBootstrap();
+    return MarketplaceProductModel.find({ deletedAt: null })
+      .sort({ createdAt: -1 })
+      .lean<ManagedProduct[]>();
+  } catch (error) {
+    console.warn(
+      `[marketplace] Falling back to marketplace snapshot for product list: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+
+  const fallbackState = await readMarketplaceStateFallback();
+  return (
+    fallbackState?.managedProducts.filter((product) => !product.deletedAt).slice() ?? []
+  ).sort((left, right) => right.createdAt.localeCompare(left.createdAt));
 }
 
 export async function listMarketplaceProductsByCategory(categorySlug: string, limit = 60) {
-  await ensureMarketplaceBootstrap();
-  return MarketplaceProductModel.find({
-    deletedAt: null,
-    category: categorySlug,
-    moderationStatus: "ACTIVE",
-  })
-    .sort({ createdAt: -1 })
-    .limit(limit)
-    .lean<ManagedProduct[]>();
+  try {
+    await ensureMarketplaceBootstrap();
+    return MarketplaceProductModel.find({
+      deletedAt: null,
+      category: categorySlug,
+      moderationStatus: "ACTIVE",
+    })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean<ManagedProduct[]>();
+  } catch (error) {
+    console.warn(
+      `[marketplace] Falling back to marketplace snapshot for category product list ${categorySlug}: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+
+  const fallbackState = await readMarketplaceStateFallback();
+  return (
+    fallbackState?.managedProducts
+      .filter(
+        (product) =>
+          !product.deletedAt &&
+          product.category === categorySlug &&
+          product.moderationStatus === "ACTIVE",
+      )
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+      .slice(0, limit) ?? []
+  );
 }
 
 export async function listMarketplaceCategories() {
-  await ensureMarketplaceBootstrap();
-  return MarketplaceCategoryModel.find({}).sort({ name: 1 }).lean<ManagedCategory[]>();
+  try {
+    await ensureMarketplaceBootstrap();
+    return MarketplaceCategoryModel.find({}).sort({ name: 1 }).lean<ManagedCategory[]>();
+  } catch (error) {
+    console.warn(
+      `[marketplace] Falling back to marketplace snapshot for categories: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+
+  const fallbackState = await readMarketplaceStateFallback();
+  return (fallbackState?.managedCategories.slice() ?? []).sort((left, right) =>
+    left.name.localeCompare(right.name),
+  );
 }
 
 export async function listMarketplaceSellers() {
-  await ensureMarketplaceBootstrap();
-  return MarketplaceSellerProfileModel.find({}).sort({ name: 1 }).lean<SellerRecord[]>();
+  try {
+    await ensureMarketplaceBootstrap();
+    return MarketplaceSellerProfileModel.find({}).sort({ name: 1 }).lean<SellerRecord[]>();
+  } catch (error) {
+    console.warn(
+      `[marketplace] Falling back to marketplace snapshot for sellers: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+
+  const fallbackState = await readMarketplaceStateFallback();
+  return (fallbackState?.sellersDirectory.slice() ?? []).sort((left, right) =>
+    left.name.localeCompare(right.name),
+  );
 }
 
 export function isGuestCartUserId(userId: string) {

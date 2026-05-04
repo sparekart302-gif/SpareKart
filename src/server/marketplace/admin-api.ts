@@ -162,7 +162,7 @@ export async function listMarketplaceUsersAdmin(input: {
 }
 
 export async function getMarketplaceUserAdmin(userId: string) {
-  const state = await getMarketplaceState();
+  const { state } = await getMarketplaceState();
   return requireMarketplaceUser(state, userId);
 }
 
@@ -183,10 +183,7 @@ export async function createMarketplaceUserAdmin(input: AdminUserInput) {
   return user;
 }
 
-export async function updateMarketplaceUserAdmin(
-  userId: string,
-  input: Partial<AdminUserInput>,
-) {
+export async function updateMarketplaceUserAdmin(userId: string, input: Partial<AdminUserInput>) {
   const current = await getMarketplaceUserAdmin(userId);
   const result = await executeMarketplaceCommand({
     command: "SAVE_USER",
@@ -228,12 +225,7 @@ export async function listMarketplaceProductsAdmin(input: {
   if (search) {
     const pattern = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
     andConditions.push({
-      $or: [
-        { title: pattern },
-        { brand: pattern },
-        { sku: pattern },
-        { description: pattern },
-      ],
+      $or: [{ title: pattern }, { brand: pattern }, { sku: pattern }, { description: pattern }],
     });
   }
 
@@ -292,7 +284,7 @@ export async function listMarketplaceProductsAdmin(input: {
 }
 
 export async function getMarketplaceProductAdmin(productId: string) {
-  const state = await getMarketplaceState();
+  const { state } = await getMarketplaceState();
   return requireMarketplaceProduct(state, productId);
 }
 
@@ -445,7 +437,7 @@ export async function listMarketplaceOrdersAdmin(input: {
 }
 
 export async function getMarketplaceOrderAdmin(orderId: string) {
-  const state = await getMarketplaceState();
+  const { state } = await getMarketplaceState();
   const order = requireMarketplaceOrder(state, orderId);
   return mapOrderAdminRecord(state, order);
 }

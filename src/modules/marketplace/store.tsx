@@ -226,6 +226,7 @@ export function MarketplaceProvider({
   const guestCartRef = useRef<MarketplaceState["cartsByUserId"][string]>([]);
   const guestCouponRef = useRef("");
   const hasShownMarketplaceRefreshErrorRef = useRef(false);
+  const hasShownMarketplaceStaleWarningRef = useRef(false);
 
   const commitState = useCallback((nextState: MarketplaceState) => {
     stateRef.current = nextState;
@@ -239,6 +240,16 @@ export function MarketplaceProvider({
   const hydrateMarketplaceState = useCallback(
     async (authUser?: AuthenticatedUser | null) => {
       const response = await fetchMarketplaceState();
+
+      if (
+        !response?.state ||
+        !Array.isArray(response.state.managedProducts) ||
+        !Array.isArray(response.state.managedCategories) ||
+        !Array.isArray(response.state.sellersDirectory)
+      ) {
+        throw new Error("Marketplace API returned an invalid state payload.");
+      }
+
       const guestCart = guestCartRef.current;
       const guestCouponCode = guestCouponRef.current;
       const nextState = withGuestSessionState(response.state, guestCart, guestCouponCode);
@@ -250,6 +261,14 @@ export function MarketplaceProvider({
       }
 
       hasShownMarketplaceRefreshErrorRef.current = false;
+      if (response.stale) {
+        if (!hasShownMarketplaceStaleWarningRef.current) {
+          hasShownMarketplaceStaleWarningRef.current = true;
+          toast.warning("Showing the last available catalog while the database reconnects.");
+        }
+      } else {
+        hasShownMarketplaceStaleWarningRef.current = false;
+      }
       commitState(nextState);
       return authUser ?? null;
     },
@@ -366,7 +385,9 @@ export function MarketplaceProvider({
   const addToCart = useCallback(
     async (productId: string, qty = 1) => {
       if (!stateRef.current.currentUserId) {
-        runGuestLocalUpdate((previous) => addItemToCart(previous, previous.currentUserId, productId, qty));
+        runGuestLocalUpdate((previous) =>
+          addItemToCart(previous, previous.currentUserId, productId, qty),
+        );
         return;
       }
 
@@ -415,7 +436,9 @@ export function MarketplaceProvider({
   const removeFromCart = useCallback(
     async (productId: string) => {
       if (!stateRef.current.currentUserId) {
-        runGuestLocalUpdate((previous) => removeCartLine(previous, previous.currentUserId, productId));
+        runGuestLocalUpdate((previous) =>
+          removeCartLine(previous, previous.currentUserId, productId),
+        );
         return;
       }
 

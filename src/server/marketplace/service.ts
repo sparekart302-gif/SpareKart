@@ -595,7 +595,12 @@ const codRemittanceReviewSchema = z.object({
 type MarketplaceCommand = z.infer<typeof commandEnvelopeSchema>;
 
 type SideEffect =
-  | { kind: "ORDER_CREATED"; orderId: string; paymentMethod: string; paymentProofId?: string | null }
+  | {
+      kind: "ORDER_CREATED";
+      orderId: string;
+      paymentMethod: string;
+      paymentProofId?: string | null;
+    }
   | { kind: "PAYMENT_PROOF_RECEIVED"; orderId: string; proofId: string }
   | { kind: "ORDER_STATUS_CHANGED"; orderId: string; status: OrderStatus };
 
@@ -612,14 +617,15 @@ async function getMarketplaceStateForRequest(input?: {
   guestCouponCode?: string;
 }) {
   const sessionUser = await getCurrentSessionUser();
-  let state = await getMarketplaceState({
+  let stateResolution = await getMarketplaceState({
     currentUserId: sessionUser?.id,
     guestCart: input?.guestCart,
     guestCouponCode: input?.guestCouponCode,
   });
+  let state = stateResolution.state;
 
   if (!sessionUser) {
-    return { state, sessionUser };
+    return { ...stateResolution, state, sessionUser };
   }
 
   const syncedState = syncAuthenticatedMarketplaceUser(state, sessionUser);
@@ -632,9 +638,19 @@ async function getMarketplaceStateForRequest(input?: {
       input?.guestCart,
       input?.guestCouponCode,
     );
+    stateResolution = {
+      state,
+      source: "mongo",
+      stale: false,
+    };
+  } else {
+    stateResolution = {
+      ...stateResolution,
+      state,
+    };
   }
 
-  return { state, sessionUser };
+  return { ...stateResolution, sessionUser };
 }
 
 function rebuildResponseState(
@@ -1016,7 +1032,9 @@ export async function executeMarketplaceCommand(input: MarketplaceCommand) {
       );
       const proofResult = submitPaymentProofByLookup(state, payload.lookup, payload.proof);
       nextState = proofResult.state;
-      const proof = nextState.paymentProofs.find((candidate) => candidate.id === proofResult.proofId);
+      const proof = nextState.paymentProofs.find(
+        (candidate) => candidate.id === proofResult.proofId,
+      );
 
       if (!proof) {
         throw new MongoApiError("Payment proof was created but could not be reloaded.", {
@@ -1041,7 +1059,12 @@ export async function executeMarketplaceCommand(input: MarketplaceCommand) {
         }),
         parsed.payload,
       );
-      const proofResult = submitCODCollectionProof(state, actorUserId, payload.orderId, payload.proof);
+      const proofResult = submitCODCollectionProof(
+        state,
+        actorUserId,
+        payload.orderId,
+        payload.proof,
+      );
       nextState = proofResult.state;
       sideEffects.push({
         kind: "PAYMENT_PROOF_RECEIVED",

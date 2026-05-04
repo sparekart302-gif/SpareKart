@@ -20,9 +20,13 @@ export async function GET() {
       {
         state: result.state,
         authenticated: Boolean(result.sessionUser),
+        stale: result.stale,
+        source: result.source,
       },
       {
-        message: "Marketplace state fetched successfully.",
+        message: result.stale
+          ? "Marketplace state fetched from the last available snapshot."
+          : "Marketplace state fetched successfully.",
       },
     );
 

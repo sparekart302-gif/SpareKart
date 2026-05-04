@@ -178,10 +178,16 @@ export async function getDeploymentReadiness() {
     createCheck(
       "marketplace-state",
       "Marketplace shared state",
-      env.mongodbConfigured ? (marketplaceStateAvailable ? "pass" : "warn") : env.NODE_ENV === "production" ? "fail" : "warn",
       env.mongodbConfigured
         ? marketplaceStateAvailable
-          ? "Catalog, users, carts, orders, order items, payment proofs, inventory, notifications, reviews, and admin logs are stored in MongoDB. Guest cart localStorage remains only as a safe browser convenience until checkout persists the order."
+          ? "pass"
+          : "warn"
+        : env.NODE_ENV === "production"
+          ? "fail"
+          : "warn",
+      env.mongodbConfigured
+        ? marketplaceStateAvailable
+          ? "MongoDB stores the canonical catalog, users, carts, orders, order items, payment proofs, inventory, notifications, reviews, and admin logs. In-memory cache and runtime snapshots are used only as read-through resilience fallbacks, while guest cart localStorage remains a browser-only convenience until checkout persists the order."
           : "MongoDB is configured but the marketplace snapshot has not been materialized yet. It will be created on first marketplace request."
         : "Marketplace persistence requires MongoDB. Configure MONGODB_URI so catalog, order, and customer state does not remain local-only.",
     ),

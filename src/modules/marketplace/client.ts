@@ -51,6 +51,8 @@ export async function fetchMarketplaceState() {
   return requestJson<{
     state: MarketplaceState;
     authenticated: boolean;
+    stale?: boolean;
+    source?: "mongo" | "memory-cache" | "runtime-snapshot";
   }>("/api/marketplace/state", {
     method: "GET",
     cache: "no-store",

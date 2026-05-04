@@ -26,6 +26,15 @@ globalCache.sparekartMongoose = cache;
 
 mongoose.set("strictQuery", true);
 
+function getCachedReadyState() {
+  return cache.conn?.connection.readyState ?? 0;
+}
+
+function clearMongoCache() {
+  cache.conn = null;
+  cache.promise = null;
+}
+
 export async function connectToMongo() {
   const env = getServerEnv();
 
@@ -36,8 +45,24 @@ export async function connectToMongo() {
     });
   }
 
-  if (cache.conn) {
+  const readyState = getCachedReadyState();
+
+  if (cache.conn && readyState === 1) {
     return cache.conn;
+  }
+
+  if (cache.conn && readyState !== 2) {
+    clearMongoCache();
+  }
+
+  if (cache.promise) {
+    try {
+      cache.conn = await cache.promise;
+      return cache.conn;
+    } catch (error) {
+      clearMongoCache();
+      throw error;
+    }
   }
 
   if (!cache.promise) {
@@ -47,8 +72,9 @@ export async function connectToMongo() {
       bufferCommands: false,
       maxPoolSize: 15,
       minPoolSize: env.NODE_ENV === "production" ? 1 : 0,
-      serverSelectionTimeoutMS: 10_000,
-      socketTimeoutMS: 45_000,
+      connectTimeoutMS: 5_000,
+      serverSelectionTimeoutMS: 5_000,
+      socketTimeoutMS: 30_000,
     });
   }
 
@@ -56,7 +82,7 @@ export async function connectToMongo() {
     cache.conn = await cache.promise;
     return cache.conn;
   } catch (error) {
-    cache.promise = null;
+    clearMongoCache();
     throw error;
   }
 }
