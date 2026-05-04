@@ -118,8 +118,8 @@ export function Navbar() {
       </div>
 
       {/* Main bar */}
-      <div className="container relative mx-auto flex h-14 items-center gap-2.5 px-3 sm:px-4 md:h-16 lg:h-20 md:px-6 lg:px-8">
-        <div className="md:hidden flex items-center gap-1">
+      <div className="container relative mx-auto grid h-14 grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-2 px-3 sm:px-4 md:flex md:h-16 md:gap-2.5 md:px-6 lg:h-20 lg:px-8">
+        <div className="flex w-9 items-center md:hidden">
           <Sheet>
             <SheetTrigger asChild>
               <button
@@ -295,16 +295,16 @@ export function Navbar() {
 
         <Link
           to="/"
-          className="md:hidden absolute left-1/2 -translate-x-1/2 transition-transform hover:scale-[1.02]"
+          className="min-w-0 justify-self-center overflow-hidden px-2 transition-transform hover:scale-[1.02] md:hidden"
         >
           <BrandLogo
             variant="mark"
             priority
-            className="text-[1.18rem] tracking-[0.14em] text-primary min-[420px]:text-[1.35rem]"
+            className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[0.98rem] tracking-[0.08em] text-primary min-[360px]:text-[1.06rem] min-[420px]:text-[1.16rem]"
           />
         </Link>
 
-        <div className="ml-auto flex items-center gap-1 md:gap-2 md:ml-0">
+        <div className="ml-auto flex items-center gap-0.5 justify-self-end min-[360px]:gap-1 md:ml-0 md:gap-2">
           <Link
             href={accountHref}
             className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface transition-colors"
