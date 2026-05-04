@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Search as SearchIcon, Sparkles } from "lucide-react";
 import { Link } from "@/components/navigation/Link";
+import { beginRouteProgress } from "@/components/navigation/RouteProgressBar";
 import { PageLayout, Breadcrumbs } from "@/components/marketplace/PageLayout";
 import { ProductCard } from "@/components/marketplace/ProductCard";
 import {
@@ -76,6 +77,7 @@ export default function SearchPage({
       params.set("category", selectedCategory);
     }
 
+    beginRouteProgress();
     router.push(params.size > 0 ? `/search?${params.toString()}` : "/search");
   };
 
@@ -141,7 +143,10 @@ export default function SearchPage({
               <Sparkles className="h-3.5 w-3.5" /> Did you mean:
               <button
                 type="button"
-                onClick={() => router.push("/search?q=brake")}
+                onClick={() => {
+                  beginRouteProgress();
+                  router.push("/search?q=brake");
+                }}
                 className="underline"
               >
                 brake
@@ -149,7 +154,10 @@ export default function SearchPage({
               ,
               <button
                 type="button"
-                onClick={() => router.push("/search?q=oil%20filter")}
+                onClick={() => {
+                  beginRouteProgress();
+                  router.push("/search?q=oil%20filter");
+                }}
                 className="underline"
               >
                 oil filter
@@ -164,7 +172,10 @@ export default function SearchPage({
             <button
               key={c.slug}
               type="button"
-              onClick={() => router.push(`/search?category=${encodeURIComponent(c.slug)}`)}
+              onClick={() => {
+                beginRouteProgress();
+                router.push(`/search?category=${encodeURIComponent(c.slug)}`);
+              }}
               className={`rounded-full px-3 py-1.5 text-xs font-semibold shadow-[var(--shadow-soft)] transition-colors ${
                 categoryFromUrl === c.slug
                   ? "bg-accent text-primary"

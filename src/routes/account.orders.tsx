@@ -457,9 +457,11 @@ function ProofAttemptCard({ proof }: { proof: PaymentProof }) {
       </div>
 
       <div className="mt-2.5 flex gap-3">
-        <img
+        <OptimizedImage
           src={proof.screenshotUrl}
           alt={`Payment proof ${proof.attemptNumber}`}
+          width={56}
+          height={56}
           className="h-14 w-14 rounded-xl object-cover"
         />
         <div className="min-w-0 flex-1">

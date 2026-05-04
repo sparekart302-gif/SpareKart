@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ShoppingCart, Star, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@/components/navigation/Link";
@@ -9,6 +10,7 @@ import { useMarketplace } from "@/modules/marketplace/store";
 
 export function ProductCard({ product, compact = false }: { product: Product; compact?: boolean }) {
   const { addToCart, currentUser, state } = useMarketplace();
+  const [adding, setAdding] = useState(false);
   const seller = state.sellersDirectory.find((item) => item.slug === product.sellerSlug);
   const availableStock = state.inventory[product.id]?.available ?? product.stock;
   const discount = product.comparePrice
@@ -24,10 +26,13 @@ export function ProductCard({ product, compact = false }: { product: Product; co
     }
 
     try {
+      setAdding(true);
       await addToCart(product.id, 1);
       toast.success(`${product.title} added to cart.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to add item to cart.");
+    } finally {
+      setAdding(false);
     }
   };
 
@@ -129,13 +134,13 @@ export function ProductCard({ product, compact = false }: { product: Product; co
             </div>
             <button
               onClick={() => void handleAddToCart()}
-              disabled={availableStock === 0}
+              disabled={availableStock === 0 || adding}
               title={
                 !canAddToCart ? "Shopping cart is only for customers or guest checkout" : undefined
               }
               className="inline-flex h-[1.875rem] w-full items-center justify-center gap-1 rounded-lg bg-primary text-[11px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground sm:h-8 sm:gap-1.5 sm:text-xs"
             >
-              <ShoppingCart className="h-3.5 w-3.5" /> Add to Cart
+              <ShoppingCart className="h-3.5 w-3.5" /> {adding ? "Adding..." : "Add to Cart"}
             </button>
           </div>
         </div>
@@ -261,13 +266,14 @@ export function ProductCard({ product, compact = false }: { product: Product; co
             </div>
             <button
               onClick={() => void handleAddToCart()}
-              disabled={availableStock === 0}
+              disabled={availableStock === 0 || adding}
               title={
                 !canAddToCart ? "Shopping cart is only for customers or guest checkout" : undefined
               }
               className="inline-flex h-8 items-center justify-center gap-1.5 rounded-xl bg-primary px-3 text-[12px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground sm:h-10 sm:gap-2 sm:px-4 sm:text-sm"
             >
-              <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Add
+              <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              {adding ? "Adding..." : "Add"}
             </button>
           </div>
         </div>

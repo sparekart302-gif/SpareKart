@@ -1,12 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { RouteScrollManager } from "@/components/navigation/RouteScrollManager";
+import { RouteProgressBar } from "@/components/navigation/RouteProgressBar";
 import { Toaster } from "@/components/ui/sonner";
+import { buildEmptyMarketplaceState } from "@/modules/marketplace/seed";
 import { MarketplaceProvider } from "@/modules/marketplace/store";
 import { getServerEnv } from "@/server/config/env";
+import { getMarketplaceStateSnapshotForRequest } from "@/server/marketplace/service";
 import "../src/styles.css";
 
 const siteUrl = getServerEnv().publicSiteUrl;
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   applicationName: "SpareKart",
@@ -32,15 +37,30 @@ export const viewport: Viewport = {
   width: "device-width",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  let initialState = buildEmptyMarketplaceState();
+  let initialStateLoaded = false;
+
+  try {
+    const snapshot = await getMarketplaceStateSnapshotForRequest();
+    initialState = snapshot.state;
+    initialStateLoaded = true;
+  } catch (error) {
+    console.error("Failed to load initial marketplace state.", error);
+  }
+
   return (
     <html lang="en">
       <body>
-        <MarketplaceProvider>
+        <MarketplaceProvider
+          initialState={initialState}
+          initialStateLoaded={initialStateLoaded}
+        >
+          <RouteProgressBar />
           <RouteScrollManager />
           {children}
           <Toaster richColors position="top-right" />

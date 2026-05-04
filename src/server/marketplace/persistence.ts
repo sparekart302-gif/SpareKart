@@ -37,6 +37,42 @@ import {
 
 const MARKETPLACE_STATE_ID = "primary";
 const GUEST_CART_USER_ID = "guest-session";
+const MARKETPLACE_STATE_CACHE_TTL_MS = 15_000;
+
+type MarketplaceBootstrapCache = {
+  promise: Promise<void> | null;
+  ready: boolean;
+};
+
+type MarketplaceStateCache = {
+  promise: Promise<MarketplaceState> | null;
+  state: MarketplaceState | null;
+  loadedAt: number;
+};
+
+declare global {
+  var sparekartMarketplaceBootstrapCache: MarketplaceBootstrapCache | undefined;
+  var sparekartMarketplaceStateCache: MarketplaceStateCache | undefined;
+}
+
+const globalMarketplaceRuntime = globalThis as typeof globalThis & {
+  sparekartMarketplaceBootstrapCache?: MarketplaceBootstrapCache;
+  sparekartMarketplaceStateCache?: MarketplaceStateCache;
+};
+
+const bootstrapCache = globalMarketplaceRuntime.sparekartMarketplaceBootstrapCache ?? {
+  promise: null,
+  ready: false,
+};
+
+const stateCache = globalMarketplaceRuntime.sparekartMarketplaceStateCache ?? {
+  promise: null,
+  state: null,
+  loadedAt: 0,
+};
+
+globalMarketplaceRuntime.sparekartMarketplaceBootstrapCache = bootstrapCache;
+globalMarketplaceRuntime.sparekartMarketplaceStateCache = stateCache;
 
 function nowIso() {
   return new Date().toISOString();
@@ -343,10 +379,14 @@ export async function saveMarketplaceState(state: MarketplaceState) {
   );
 
   await syncMarketplaceProjections(normalized);
+  bootstrapCache.ready = true;
+  stateCache.state = normalized;
+  stateCache.loadedAt = Date.now();
+  stateCache.promise = Promise.resolve(normalized);
   return normalized;
 }
 
-export async function ensureMarketplaceState() {
+async function readMarketplaceStateFromMongo() {
   await connectToMongo();
 
   const existing = await MarketplaceStateModel.findById(MARKETPLACE_STATE_ID).lean<{
@@ -359,6 +399,62 @@ export async function ensureMarketplaceState() {
 
   const initial = buildInitialMarketplaceState();
   return saveMarketplaceState(initial);
+}
+
+async function ensureMarketplaceBootstrap() {
+  if (bootstrapCache.ready) {
+    return;
+  }
+
+  if (!bootstrapCache.promise) {
+    bootstrapCache.promise = (async () => {
+      await connectToMongo();
+
+      const existing = await MarketplaceStateModel.findById(MARKETPLACE_STATE_ID)
+        .select({ _id: 1 })
+        .lean();
+
+      if (!existing) {
+        await saveMarketplaceState(buildInitialMarketplaceState());
+      }
+
+      bootstrapCache.ready = true;
+    })().catch((error) => {
+      bootstrapCache.ready = false;
+      throw error;
+    });
+  }
+
+  try {
+    await bootstrapCache.promise;
+  } finally {
+    if (bootstrapCache.ready) {
+      bootstrapCache.promise = null;
+    }
+  }
+}
+
+export async function ensureMarketplaceState() {
+  const now = Date.now();
+
+  if (stateCache.state && now - stateCache.loadedAt < MARKETPLACE_STATE_CACHE_TTL_MS) {
+    return stateCache.state;
+  }
+
+  if (!stateCache.promise) {
+    stateCache.promise = readMarketplaceStateFromMongo().then((state) => {
+      stateCache.state = state;
+      stateCache.loadedAt = Date.now();
+      bootstrapCache.ready = true;
+      return state;
+    });
+  }
+
+  try {
+    return await stateCache.promise;
+  } finally {
+    stateCache.promise = null;
+  }
 }
 
 export async function getMarketplaceState(input?: {
@@ -376,34 +472,46 @@ export async function getMarketplaceState(input?: {
 }
 
 export async function findMarketplaceProductBySlug(slug: string) {
-  await ensureMarketplaceState();
+  await ensureMarketplaceBootstrap();
   return MarketplaceProductModel.findOne({ slug }).lean<ManagedProduct | null>();
 }
 
 export async function findMarketplaceCategoryBySlug(slug: string) {
-  await ensureMarketplaceState();
+  await ensureMarketplaceBootstrap();
   return MarketplaceCategoryModel.findOne({ slug }).lean<ManagedCategory | null>();
 }
 
 export async function findMarketplaceSellerBySlug(slug: string) {
-  await ensureMarketplaceState();
+  await ensureMarketplaceBootstrap();
   return MarketplaceSellerProfileModel.findOne({ _id: slug }).lean<SellerRecord | null>();
 }
 
 export async function listMarketplaceProducts() {
-  await ensureMarketplaceState();
+  await ensureMarketplaceBootstrap();
   return MarketplaceProductModel.find({ deletedAt: null }).sort({ createdAt: -1 }).lean<
     ManagedProduct[]
   >();
 }
 
+export async function listMarketplaceProductsByCategory(categorySlug: string, limit = 60) {
+  await ensureMarketplaceBootstrap();
+  return MarketplaceProductModel.find({
+    deletedAt: null,
+    category: categorySlug,
+    moderationStatus: "ACTIVE",
+  })
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .lean<ManagedProduct[]>();
+}
+
 export async function listMarketplaceCategories() {
-  await ensureMarketplaceState();
+  await ensureMarketplaceBootstrap();
   return MarketplaceCategoryModel.find({}).sort({ name: 1 }).lean<ManagedCategory[]>();
 }
 
 export async function listMarketplaceSellers() {
-  await ensureMarketplaceState();
+  await ensureMarketplaceBootstrap();
   return MarketplaceSellerProfileModel.find({}).sort({ name: 1 }).lean<SellerRecord[]>();
 }
 

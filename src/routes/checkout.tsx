@@ -13,6 +13,7 @@ import {
   Smartphone,
   BadgeCheck,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@/components/navigation/Link";
@@ -126,6 +127,7 @@ export default function CheckoutPage() {
   const [proofDraft, setProofDraft] = useState<PaymentProofSubmission | undefined>();
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
   const [guestEmail, setGuestEmail] = useState("");
+  const [placingOrder, setPlacingOrder] = useState(false);
 
   const defaultAddress = useMemo(
     () =>
@@ -235,6 +237,7 @@ export default function CheckoutPage() {
     }
 
     try {
+      setPlacingOrder(true);
       const payload: CheckoutSubmission = {
         checkoutMode: isGuestCheckout ? "GUEST" : "CUSTOMER",
         guestEmail: isGuestCheckout ? guestEmail.trim() || undefined : undefined,
@@ -259,6 +262,8 @@ export default function CheckoutPage() {
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to place order.");
+    } finally {
+      setPlacingOrder(false);
     }
   };
 
@@ -430,10 +435,16 @@ export default function CheckoutPage() {
                   </button>
                 ) : (
                   <button
-                  onClick={() => void handlePlaceOrder()}
+                    onClick={() => void handlePlaceOrder()}
+                    disabled={placingOrder}
                     className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl gradient-accent px-8 text-sm font-bold text-primary hover:opacity-95 sm:flex-none"
                   >
-                    Place order <Check className="h-4 w-4" />
+                    {placingOrder ? "Preparing checkout..." : "Place order"}
+                    {placingOrder ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="h-4 w-4" />
+                    )}
                   </button>
                 )}
               </div>

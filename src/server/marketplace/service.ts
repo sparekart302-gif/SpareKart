@@ -671,6 +671,18 @@ async function runSideEffects(state: MarketplaceState, sideEffects: SideEffect[]
   );
 }
 
+function queueSideEffects(state: MarketplaceState, sideEffects: SideEffect[]) {
+  if (sideEffects.length === 0) {
+    return;
+  }
+
+  queueMicrotask(() => {
+    void runSideEffects(state, sideEffects).catch((error) => {
+      console.error("Marketplace side effects failed.", error);
+    });
+  });
+}
+
 export async function getMarketplaceStateSnapshotForRequest() {
   return getMarketplaceStateForRequest();
 }
@@ -1146,7 +1158,7 @@ export async function executeMarketplaceCommand(input: MarketplaceCommand) {
 
   const savedState = await saveMarketplaceState(nextState);
   const responseState = rebuildResponseState(savedState, nextState, sessionUser);
-  await runSideEffects(responseState, sideEffects);
+  queueSideEffects(responseState, sideEffects);
 
   return {
     state: responseState,

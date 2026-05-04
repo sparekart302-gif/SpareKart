@@ -45,6 +45,10 @@ export async function connectToMongo() {
       dbName: env.MONGODB_DB_NAME,
       autoIndex: env.NODE_ENV !== "production",
       bufferCommands: false,
+      maxPoolSize: 15,
+      minPoolSize: env.NODE_ENV === "production" ? 1 : 0,
+      serverSelectionTimeoutMS: 10_000,
+      socketTimeoutMS: 45_000,
     });
   }
 

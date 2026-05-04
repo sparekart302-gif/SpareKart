@@ -16,11 +16,13 @@ import {
   Plus,
   MessageCircle,
   Clock,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MultipleImageUploadField } from "@/components/uploads/ImageUploadField";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Link } from "@/components/navigation/Link";
+import { beginRouteProgress } from "@/components/navigation/RouteProgressBar";
 import { PageLayout, Breadcrumbs } from "@/components/marketplace/PageLayout";
 import { ProductCard } from "@/components/marketplace/ProductCard";
 import { formatPKR, type Product, type Seller } from "@/data/marketplace";
@@ -45,6 +47,10 @@ export default function ProductPage({
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState<"desc" | "specs" | "compat" | "ship">("desc");
+  const [cartAction, setCartAction] = useState<{
+    productId: string;
+    mode: "add" | "buy";
+  } | null>(null);
   const [reviewDraft, setReviewDraft] = useState({
     title: "",
     body: "",
@@ -210,14 +216,21 @@ export default function ProductPage({
     }
 
     try {
+      setCartAction({
+        productId: targetProduct.id,
+        mode: goToCheckout ? "buy" : "add",
+      });
       await addToCart(targetProduct.id, quantity);
       toast.success(`${targetProduct.title} added to cart.`);
 
       if (goToCheckout) {
+        beginRouteProgress();
         router.push("/checkout");
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to add item to cart.");
+    } finally {
+      setCartAction(null);
     }
   };
 
@@ -376,6 +389,12 @@ export default function ProductPage({
                     }
                     onBuyNow={() => void handleAddToCart(product, qty, true)}
                     onAddToCart={() => void handleAddToCart(product, qty)}
+                    buyingNow={
+                      cartAction?.productId === product.id && cartAction.mode === "buy"
+                    }
+                    addingToCart={
+                      cartAction?.productId === product.id && cartAction.mode === "add"
+                    }
                     onToggleWishlist={() => void handleToggleWishlist()}
                   />
                 </div>
@@ -550,6 +569,8 @@ export default function ProductPage({
               }
               onBuyNow={() => void handleAddToCart(product, qty, true)}
               onAddToCart={() => void handleAddToCart(product, qty)}
+              buyingNow={cartAction?.productId === product.id && cartAction.mode === "buy"}
+              addingToCart={cartAction?.productId === product.id && cartAction.mode === "add"}
               onToggleWishlist={() => void handleToggleWishlist()}
             />
             <SellerPanel seller={seller} product={product} />
@@ -982,10 +1003,14 @@ export default function ProductPage({
                   <div className="text-lg font-black tabular-nums">{formatPKR(p.price)}</div>
                   <button
                     onClick={() => void handleAddToCart(p)}
-                    disabled={offerStock === 0}
+                    disabled={offerStock === 0 || cartAction?.productId === p.id}
                     className="mt-1 h-9 rounded-lg px-4 text-xs font-bold text-primary transition-opacity disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground gradient-accent"
                   >
-                    {offerStock === 0 ? "Out of stock" : "Add to cart"}
+                    {offerStock === 0
+                      ? "Out of stock"
+                      : cartAction?.productId === p.id
+                        ? "Adding..."
+                        : "Add to cart"}
                   </button>
                 </div>
               </div>
@@ -1020,6 +1045,8 @@ function PurchasePanel({
   onIncrease,
   onBuyNow,
   onAddToCart,
+  buyingNow,
+  addingToCart,
   onToggleWishlist,
 }: {
   product: Product;
@@ -1032,6 +1059,8 @@ function PurchasePanel({
   onIncrease: () => void;
   onBuyNow: () => void;
   onAddToCart: () => void;
+  buyingNow: boolean;
+  addingToCart: boolean;
   onToggleWishlist: () => void;
 }) {
   return (
@@ -1099,17 +1128,27 @@ function PurchasePanel({
       <div className="mt-5 space-y-2">
         <button
           onClick={onBuyNow}
-          disabled={availableStock === 0}
+          disabled={availableStock === 0 || buyingNow || addingToCart}
           className="flex h-11 w-full items-center justify-center gap-2 rounded-xl gradient-accent text-sm font-bold text-primary transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50 sm:h-12"
         >
-          <Zap className="h-4 w-4" /> Buy Now
+          {buyingNow ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Zap className="h-4 w-4" />
+          )}{" "}
+          {buyingNow ? "Preparing checkout..." : "Buy Now"}
         </button>
         <button
           onClick={onAddToCart}
-          disabled={availableStock === 0}
+          disabled={availableStock === 0 || buyingNow || addingToCart}
           className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground sm:h-12"
         >
-          <ShoppingCart className="h-4 w-4" /> Add to Cart
+          {addingToCart ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <ShoppingCart className="h-4 w-4" />
+          )}{" "}
+          {addingToCart ? "Adding to cart..." : "Add to Cart"}
         </button>
         <button
           onClick={onToggleWishlist}

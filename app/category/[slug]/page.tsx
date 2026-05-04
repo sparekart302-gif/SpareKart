@@ -6,7 +6,7 @@ import CategoryPage from "@/routes/category.$slug";
 import { buildPageMetadata } from "@/lib/metadata";
 import {
   findMarketplaceCategoryBySlug,
-  listMarketplaceProducts,
+  listMarketplaceProductsByCategory,
 } from "@/server/marketplace/persistence";
 
 type PageProps = {
@@ -40,7 +40,7 @@ export default async function Page({ params }: PageProps) {
     notFound();
   }
 
-  const products = (await listMarketplaceProducts()).filter((product) => product.category === slug);
+  const products = await listMarketplaceProductsByCategory(slug);
 
   return <CategoryPage category={category} items={products} />;
 }

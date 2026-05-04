@@ -10,7 +10,14 @@ import type {
   PaymentStatus,
 } from "@/modules/marketplace/types";
 import { MongoApiError } from "@/server/mongodb/errors";
-import { buildPaginationMeta } from "@/server/mongodb/utils";
+import {
+  MarketplaceOrderModel,
+  MarketplacePaymentModel,
+  MarketplaceProductModel,
+  MarketplaceUserModel,
+} from "@/server/mongodb/models/marketplace";
+import { buildPaginationMeta, normalizeMongoDocument } from "@/server/mongodb/utils";
+import { measureAsync } from "@/server/performance";
 import { getMarketplaceState } from "./persistence";
 import { executeMarketplaceCommand } from "./service";
 
@@ -99,30 +106,59 @@ export async function listMarketplaceUsersAdmin(input: {
   role?: string;
   status?: string;
 }) {
-  const state = await getMarketplaceState();
   const search = input.search?.trim().toLowerCase();
-  let items = [...state.users];
+  const page = Math.max(1, input.page ?? 1);
+  const limit = Math.max(1, input.limit ?? 20);
+  const skip = (page - 1) * limit;
+  const filter: Record<string, unknown> = {};
 
   if (search) {
-    items = items.filter(
-      (user) =>
-        includesSearch(user.name, search) ||
-        includesSearch(user.email, search) ||
-        includesSearch(user.phone, search) ||
-        includesSearch(user.sellerSlug, search),
-    );
+    const pattern = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    filter.$or = [
+      { name: pattern },
+      { email: pattern },
+      { phone: pattern },
+      { sellerSlug: pattern },
+    ];
   }
 
   if (input.role) {
-    items = items.filter((user) => user.role === input.role);
+    filter.role = input.role;
   }
 
   if (input.status) {
-    items = items.filter((user) => user.status === input.status);
+    filter.status = input.status;
   }
 
-  items.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
-  return paginate(items, input.page, input.limit);
+  return measureAsync(
+    "admin.users.list",
+    async () => {
+      const [items, total] = await Promise.all([
+        MarketplaceUserModel.find(filter)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean<MarketplaceUser[]>(),
+        MarketplaceUserModel.countDocuments(filter),
+      ]);
+
+      return {
+        items: items.map((item) => normalizeMongoDocument(item) as MarketplaceUser),
+        meta: buildPaginationMeta({
+          page,
+          limit,
+          total,
+        }),
+      };
+    },
+    {
+      details: {
+        page,
+        limit,
+        hasSearch: Boolean(search),
+      },
+    },
+  ).then(({ result }) => result);
 }
 
 export async function getMarketplaceUserAdmin(userId: string) {
@@ -182,34 +218,77 @@ export async function listMarketplaceProductsAdmin(input: {
   sellerSlug?: string;
   isActive?: boolean;
 }) {
-  const state = await getMarketplaceState();
   const search = input.search?.trim().toLowerCase();
-  let items = [...state.managedProducts];
+  const page = Math.max(1, input.page ?? 1);
+  const limit = Math.max(1, input.limit ?? 20);
+  const skip = (page - 1) * limit;
+  const filter: Record<string, unknown> = {};
+  const andConditions: Record<string, unknown>[] = [];
 
   if (search) {
-    items = items.filter(
-      (product) =>
-        includesSearch(product.title, search) ||
-        includesSearch(product.brand, search) ||
-        includesSearch(product.sku, search) ||
-        includesSearch(product.description, search),
-    );
+    const pattern = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    andConditions.push({
+      $or: [
+        { title: pattern },
+        { brand: pattern },
+        { sku: pattern },
+        { description: pattern },
+      ],
+    });
   }
 
   if (input.category) {
-    items = items.filter((product) => product.category === input.category);
+    filter.category = input.category;
   }
 
   if (input.sellerSlug) {
-    items = items.filter((product) => product.sellerSlug === input.sellerSlug);
+    filter.sellerSlug = input.sellerSlug;
   }
 
   if (typeof input.isActive === "boolean") {
-    items = items.filter((product) => mapProductActiveState(product) === input.isActive);
+    if (input.isActive) {
+      filter.moderationStatus = "ACTIVE";
+      filter.deletedAt = null;
+    } else {
+      andConditions.push({
+        $or: [{ moderationStatus: { $ne: "ACTIVE" } }, { deletedAt: { $ne: null } }],
+      });
+    }
   }
 
-  items.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
-  return paginate(items, input.page, input.limit);
+  if (andConditions.length > 0) {
+    filter.$and = andConditions;
+  }
+
+  return measureAsync(
+    "admin.products.list",
+    async () => {
+      const [items, total] = await Promise.all([
+        MarketplaceProductModel.find(filter)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean<ManagedProduct[]>(),
+        MarketplaceProductModel.countDocuments(filter),
+      ]);
+
+      return {
+        items: items.map((item) => normalizeMongoDocument(item) as ManagedProduct),
+        meta: buildPaginationMeta({
+          page,
+          limit,
+          total,
+        }),
+      };
+    },
+    {
+      details: {
+        page,
+        limit,
+        hasSearch: Boolean(search),
+      },
+    },
+  ).then(({ result }) => result);
 }
 
 export async function getMarketplaceProductAdmin(productId: string) {
@@ -272,38 +351,97 @@ export async function listMarketplaceOrdersAdmin(input: {
   paymentMethod?: string;
   isGuest?: boolean;
 }) {
-  const state = await getMarketplaceState();
   const search = input.search?.trim().toLowerCase();
-  let items = state.orders.map((order) => mapOrderAdminRecord(state, order));
+  const page = Math.max(1, input.page ?? 1);
+  const limit = Math.max(1, input.limit ?? 20);
+  const skip = (page - 1) * limit;
+  const filter: Record<string, unknown> = {};
 
   if (search) {
-    items = items.filter(
-      (order) =>
-        includesSearch(order.orderNumber, search) ||
-        includesSearch(order.customerEmail, search) ||
-        includesSearch(order.shippingAddress.fullName, search) ||
-        includesSearch(order.shippingAddress.phone, search),
-    );
+    const pattern = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    filter.$or = [
+      { orderNumber: pattern },
+      { customerEmail: pattern },
+      { "shippingAddress.fullName": pattern },
+      { "shippingAddress.phone": pattern },
+    ];
   }
 
   if (input.status) {
-    items = items.filter((order) => order.status === input.status);
-  }
-
-  if (input.paymentStatus) {
-    items = items.filter((order) => order.paymentStatus === input.paymentStatus);
+    filter.status = input.status;
   }
 
   if (input.paymentMethod) {
-    items = items.filter((order) => order.paymentMethod === input.paymentMethod);
+    filter.paymentMethod = input.paymentMethod;
   }
 
   if (typeof input.isGuest === "boolean") {
-    items = items.filter((order) => (order.customerType === "GUEST") === input.isGuest);
+    filter.customerType = input.isGuest ? "GUEST" : "REGISTERED";
   }
 
-  items.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
-  return paginate(items, input.page, input.limit);
+  if (input.paymentStatus) {
+    const matchingOrderIds = await MarketplacePaymentModel.find({
+      status: input.paymentStatus,
+    })
+      .select({ orderId: 1, _id: 0 })
+      .lean<{ orderId: string }[]>();
+
+    filter._id = {
+      $in: matchingOrderIds.map((payment) => payment.orderId),
+    };
+  }
+
+  return measureAsync(
+    "admin.orders.list",
+    async () => {
+      const [items, total] = await Promise.all([
+        MarketplaceOrderModel.find(filter)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean<MarketplaceOrder[]>(),
+        MarketplaceOrderModel.countDocuments(filter),
+      ]);
+
+      const orderIds = items
+        .map((order) => normalizeMongoDocument(order).id)
+        .filter((orderId): orderId is string => Boolean(orderId));
+      const payments = await MarketplacePaymentModel.find({
+        orderId: {
+          $in: orderIds,
+        },
+      })
+        .select({ orderId: 1, status: 1, activeProofId: 1 })
+        .lean<{ orderId: string; status?: PaymentStatus; activeProofId?: string | null }[]>();
+
+      const paymentByOrderId = new Map(payments.map((payment) => [payment.orderId, payment]));
+      const records = items.map((order) => {
+        const normalizedOrder = normalizeMongoDocument(order) as MarketplaceOrder;
+
+        return {
+          ...normalizedOrder,
+          paymentStatus: paymentByOrderId.get(normalizedOrder.id)?.status,
+          activeProofId: paymentByOrderId.get(normalizedOrder.id)?.activeProofId ?? null,
+        };
+      });
+
+      return {
+        items: records,
+        meta: buildPaginationMeta({
+          page,
+          limit,
+          total,
+        }),
+      };
+    },
+    {
+      details: {
+        page,
+        limit,
+        hasSearch: Boolean(search),
+      },
+    },
+  ).then(({ result }) => result);
 }
 
 export async function getMarketplaceOrderAdmin(orderId: string) {

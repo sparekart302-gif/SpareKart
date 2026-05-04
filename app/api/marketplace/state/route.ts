@@ -1,22 +1,38 @@
 import { jsonSuccess } from "@/server/http/responses";
 import { jsonMongoError } from "@/server/mongodb/http";
 import { getMarketplaceStateSnapshotForRequest } from "@/server/marketplace/service";
+import { appendServerTiming, measureAsync } from "@/server/performance";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const { state, sessionUser } = await getMarketplaceStateSnapshotForRequest();
-
-    return jsonSuccess(
+    const { durationMs, result } = await measureAsync(
+      "marketplace.state",
+      () => getMarketplaceStateSnapshotForRequest(),
       {
-        state,
-        authenticated: Boolean(sessionUser),
+        details: {
+          route: "/api/marketplace/state",
+        },
+      },
+    );
+    const response = jsonSuccess(
+      {
+        state: result.state,
+        authenticated: Boolean(result.sessionUser),
       },
       {
         message: "Marketplace state fetched successfully.",
       },
     );
+
+    return appendServerTiming(response, [
+      {
+        name: "app",
+        durationMs,
+        description: "marketplace-state",
+      },
+    ]);
   } catch (error) {
     return jsonMongoError(error, "Unable to load marketplace state.");
   }

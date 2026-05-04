@@ -16,6 +16,7 @@ import {
   Package,
 } from "lucide-react";
 import { Link } from "@/components/navigation/Link";
+import { beginRouteProgress } from "@/components/navigation/RouteProgressBar";
 import { BrandLogo } from "@/components/marketplace/BrandLogo";
 import {
   getActiveMarketplaceCategories,
@@ -87,6 +88,7 @@ export function Navbar() {
       params.set("category", searchCategory);
     }
 
+    beginRouteProgress();
     router.push(params.size > 0 ? `/search?${params.toString()}` : "/search");
   };
 

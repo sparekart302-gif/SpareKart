@@ -56,6 +56,7 @@ import type {
   SystemSettings,
 } from "./types";
 import { buildEmptyMarketplaceState } from "./seed";
+import { hasMeaningfulMarketplaceState } from "./state-utils";
 
 const GUEST_CART_USER_ID = "guest-session";
 const GUEST_CART_STORAGE_KEY = "sparekart.guest-cart.v1";
@@ -204,8 +205,18 @@ function withGuestSessionState(
   };
 }
 
-export function MarketplaceProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<MarketplaceState>(() => buildEmptyMarketplaceState());
+export function MarketplaceProvider({
+  children,
+  initialState,
+  initialStateLoaded = false,
+}: {
+  children: ReactNode;
+  initialState?: MarketplaceState;
+  initialStateLoaded?: boolean;
+}) {
+  const [state, setState] = useState<MarketplaceState>(
+    () => initialState ?? buildEmptyMarketplaceState(),
+  );
   const [hydrated, setHydrated] = useState(false);
   const stateRef = useRef(state);
   const guestCartRef = useRef<MarketplaceState["cartsByUserId"][string]>([]);
@@ -237,18 +248,48 @@ export function MarketplaceProvider({ children }: { children: ReactNode }) {
     guestCouponRef.current = loadStoredGuestCoupon();
 
     const bootstrapState = withGuestSessionState(
-      buildEmptyMarketplaceState(),
+      stateRef.current,
       guestCartRef.current,
       guestCouponRef.current,
     );
     commitState(bootstrapState);
+    const shouldUseBackgroundRefresh =
+      initialStateLoaded && hasMeaningfulMarketplaceState(initialState);
+
+    if (shouldUseBackgroundRefresh) {
+      setHydrated(true);
+
+      const scheduleRefresh = () =>
+        hydrateMarketplaceState().catch((error) => {
+          console.error("Failed to refresh marketplace state in the background.", error);
+        });
+
+      if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+        const idleWindow = window as Window & {
+          requestIdleCallback: (callback: () => void) => number;
+          cancelIdleCallback?: (id: number) => void;
+        };
+        const idleId = idleWindow.requestIdleCallback(scheduleRefresh);
+
+        return () => {
+          idleWindow.cancelIdleCallback?.(idleId);
+        };
+      }
+
+      const timeoutId = globalThis.setTimeout(scheduleRefresh, 250);
+      return () => {
+        globalThis.clearTimeout(timeoutId);
+      };
+    }
 
     void hydrateMarketplaceState()
-      .catch(() => undefined)
+      .catch((error) => {
+        console.error("Failed to hydrate marketplace state.", error);
+      })
       .finally(() => {
         setHydrated(true);
       });
-  }, [commitState, hydrateMarketplaceState]);
+  }, [commitState, hydrateMarketplaceState, initialState, initialStateLoaded]);
 
   useEffect(() => {
     stateRef.current = state;

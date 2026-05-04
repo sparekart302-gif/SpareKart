@@ -236,6 +236,8 @@ Basic health:
 GET /api/health
 ```
 
+`/api/health` is intentionally lightweight and should stay fast even if MongoDB is slow or restarting.
+
 Deployment readiness:
 
 ```text
@@ -272,6 +274,8 @@ GET /api/ready
    - **Build Command**: `npm ci && npm run build`
    - **Start Command**: `npm run start`
    - **Plan**: Standard or Pro (depending on traffic expectations)
+
+If you deploy on Render Free, expect cold starts after inactivity. That can make the first request noticeably slower even when the app is healthy. Upgrade to Starter or higher if you want more consistent response times in production.
 
 ### Environment Variables for Render
 

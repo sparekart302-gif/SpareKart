@@ -58,6 +58,7 @@ userSchema.index({ role: 1, status: 1, createdAt: -1 });
 const sellerProfileSchema = new Schema(
   {
     ...stringId,
+    slug: { type: String, required: true, trim: true, lowercase: true, index: true },
     ownerUserId: { type: String, index: true },
     name: { type: String, required: true, trim: true },
     tagline: { type: String, trim: true },
@@ -104,6 +105,7 @@ const sellerProfileSchema = new Schema(
 
 sellerProfileSchema.index({ ownerUserId: 1 });
 sellerProfileSchema.index({ status: 1, updatedAt: -1 });
+sellerProfileSchema.index({ slug: 1 }, { unique: true });
 
 const categorySchema = new Schema(
   {
@@ -183,6 +185,16 @@ const productSchema = new Schema(
 productSchema.index({ slug: 1 }, { unique: true });
 productSchema.index({ sellerSlug: 1, moderationStatus: 1, createdAt: -1 });
 productSchema.index({ category: 1, brand: 1, createdAt: -1 });
+productSchema.index({ moderationStatus: 1, category: 1, createdAt: -1 });
+productSchema.index({ moderationStatus: 1, sellerSlug: 1, createdAt: -1 });
+productSchema.index({ moderationStatus: 1, brand: 1, "compatibility.model": 1 });
+productSchema.index({ brand: 1, createdAt: -1 });
+productSchema.index({ category: 1, createdAt: -1 });
+productSchema.index({ price: 1 });
+productSchema.index({ stock: 1 });
+productSchema.index({ "compatibility.brand": 1 });
+productSchema.index({ "compatibility.model": 1 });
+productSchema.index({ "compatibility.years": 1 });
 
 const cartSchema = new Schema(
   {
@@ -249,6 +261,9 @@ const orderSchema = new Schema(
 orderSchema.index({ orderNumber: 1 }, { unique: true });
 orderSchema.index({ customerUserId: 1, createdAt: -1 });
 orderSchema.index({ status: 1, createdAt: -1 });
+orderSchema.index({ customerEmail: 1, orderNumber: 1 });
+orderSchema.index({ customerType: 1, createdAt: -1 });
+orderSchema.index({ paymentMethod: 1, createdAt: -1 });
 
 const orderItemSchema = new Schema(
   {
@@ -313,6 +328,7 @@ const paymentSchema = new Schema(
 );
 
 paymentSchema.index({ orderId: 1 }, { unique: true });
+paymentSchema.index({ status: 1, updatedAt: -1 });
 
 const paymentProofSchema = new Schema(
   {

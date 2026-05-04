@@ -114,6 +114,12 @@ Useful endpoints:
 - `GET /api/ready`
 - `GET /api/mongodb/health`
 
+Performance notes:
+
+- `GET /api/health` is intentionally lightweight and does not require a database round-trip.
+- `GET /api/ready` is the dependency-aware endpoint for MongoDB, email, OAuth, runtime storage, and deployment warnings.
+- Public route transitions now use route-level loading states and a top progress bar so users see immediate feedback while Mongo-backed pages stream in.
+
 ## Data storage map
 
 MongoDB collections used by SpareKart:
@@ -168,6 +174,8 @@ That localStorage usage is limited to guest cart convenience. Checkout, orders, 
 ## Deployment
 
 SpareKart is currently best suited for a Node-capable host with a writable runtime directory, such as Render or Railway.
+
+If you are deploying on Render Free, expect cold-start delays after inactivity. The app can show loading feedback, but the first request after spin-down will still be slower than a paid instance. Render Starter or higher is recommended for serious production traffic.
 
 Recommended production env vars:
 

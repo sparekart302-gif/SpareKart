@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, Store, ArrowRight } from "lucide-react";
+import { Loader2, ShoppingBag, Store, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@/components/navigation/Link";
 import { PageLayout } from "@/components/marketplace/PageLayout";
@@ -13,6 +13,7 @@ export default function RegisterPage() {
 
   const [role, setRole] = useState<"customer" | "seller">("customer");
   const [submitting, setSubmitting] = useState(false);
+  const [googleRedirecting, setGoogleRedirecting] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -91,15 +92,21 @@ export default function RegisterPage() {
 
           {role === "customer" ? (
             <>
-              <a
-                href="/api/auth/google"
+              <button
+                type="button"
+                onClick={() => {
+                  setGoogleRedirecting(true);
+                  window.location.assign("/api/auth/google");
+                }}
+                disabled={googleRedirecting}
                 className="mt-5 flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-border/70 bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-surface sm:h-12"
               >
                 <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-sm font-black text-[#4285F4] shadow-[var(--shadow-soft)]">
                   G
                 </span>
-                Create account with Google
-              </a>
+                {googleRedirecting ? "Opening Google..." : "Create account with Google"}
+                {googleRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              </button>
 
               <div className="mt-5 flex items-center gap-3">
                 <div className="h-px flex-1 bg-border/70" />
@@ -215,7 +222,11 @@ export default function RegisterPage() {
                 : role === "customer"
                   ? "Create account"
                   : "Apply to sell"}
-              <ArrowRight className="h-4 w-4" />
+              {submitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowRight className="h-4 w-4" />
+              )}
             </button>
           </form>
 

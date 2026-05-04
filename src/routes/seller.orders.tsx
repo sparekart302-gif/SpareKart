@@ -1232,9 +1232,11 @@ export default function SellerOrdersPage({
                         Logo
                       </p>
                       {storeDraft.logo ? (
-                        <img
+                        <OptimizedImage
                           src={storeDraft.logo}
                           alt="Logo"
+                          width={64}
+                          height={64}
                           className="h-16 w-16 rounded-lg object-contain"
                         />
                       ) : (
@@ -1246,9 +1248,11 @@ export default function SellerOrdersPage({
                         Banner
                       </p>
                       {storeDraft.banner ? (
-                        <img
+                        <OptimizedImage
                           src={storeDraft.banner}
                           alt="Banner"
+                          width={320}
+                          height={64}
                           className="h-16 rounded-lg object-contain w-full"
                         />
                       ) : (

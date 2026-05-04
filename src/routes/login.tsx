@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mail, LockKeyhole, ArrowRight, ShieldCheck } from "lucide-react";
+import { Loader2, Mail, LockKeyhole, ArrowRight, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@/components/navigation/Link";
 import { PageLayout } from "@/components/marketplace/PageLayout";
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState(searchParams.get("email") ?? "");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [googleRedirecting, setGoogleRedirecting] = useState(false);
 
   const verificationState = searchParams.get("verified");
   const oauthState = searchParams.get("oauth");
@@ -153,15 +154,21 @@ export default function LoginPage() {
               </div>
             ) : null}
 
-            <a
-              href="/api/auth/google"
+            <button
+              type="button"
+              onClick={() => {
+                setGoogleRedirecting(true);
+                window.location.assign("/api/auth/google");
+              }}
+              disabled={googleRedirecting}
               className="mt-5 flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-border/70 bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-surface sm:h-12"
             >
               <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-sm font-black text-[#4285F4] shadow-[var(--shadow-soft)]">
                 G
               </span>
-              Continue with Google
-            </a>
+              {googleRedirecting ? "Opening Google..." : "Continue with Google"}
+              {googleRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            </button>
 
             <div className="mt-5 flex items-center gap-3">
               <div className="h-px flex-1 bg-border/70" />
@@ -218,7 +225,12 @@ export default function LoginPage() {
                 disabled={submitting}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-xl gradient-accent text-sm font-bold text-primary hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70 sm:h-12"
               >
-                {submitting ? "Signing in..." : "Sign in"} <ArrowRight className="h-4 w-4" />
+                {submitting ? "Signing in..." : "Sign in"}
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowRight className="h-4 w-4" />
+                )}
               </button>
             </form>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, type ReactNode } from "react";
+import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
 import { SlidersHorizontal, ChevronDown, Star, X } from "lucide-react";
 import { Link } from "@/components/navigation/Link";
 import { PageLayout, Breadcrumbs } from "@/components/marketplace/PageLayout";
@@ -28,6 +28,8 @@ export default function ShopPage() {
   const categories = getActiveMarketplaceCategories(state);
   const brands = getMarketplaceBrands(state);
   const sellers = getActiveMarketplaceSellers(state);
+  const deferredProducts = useDeferredValue(products);
+  const deferredInventory = useDeferredValue(state.inventory);
   const [sort, setSort] = useState("popular");
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -37,14 +39,14 @@ export default function ShopPage() {
   const [minRating, setMinRating] = useState(0);
 
   const filtered = useMemo(() => {
-    let list = products.slice();
+    let list = deferredProducts.slice();
     if (selectedCats.length) list = list.filter((p) => selectedCats.includes(p.category));
     if (selectedBrands.length) list = list.filter((p) => selectedBrands.includes(p.brand));
     if (selectedSellers.length) list = list.filter((p) => selectedSellers.includes(p.sellerSlug));
     list = list.filter((p) => p.price <= priceMax);
     if (inStockOnly) {
       list = list.filter(
-        (product) => (state.inventory[product.id]?.available ?? product.stock) > 0,
+        (product) => (deferredInventory[product.id]?.available ?? product.stock) > 0,
       );
     }
     if (minRating) list = list.filter((p) => p.rating >= minRating);
@@ -54,6 +56,8 @@ export default function ShopPage() {
     else if (sort === "newest") list.reverse();
     return list;
   }, [
+    deferredInventory,
+    deferredProducts,
     inStockOnly,
     minRating,
     priceMax,
@@ -61,8 +65,8 @@ export default function ShopPage() {
     selectedCats,
     selectedSellers,
     sort,
-    state.inventory,
   ]);
+  const isFiltering = deferredProducts !== products || deferredInventory !== state.inventory;
 
   const toggle = (arr: string[], setArr: (a: string[]) => void, val: string) =>
     setArr(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
@@ -189,6 +193,9 @@ export default function ShopPage() {
                   </span>{" "}
                   products from {sellers.length} verified sellers
                 </p>
+                {isFiltering ? (
+                  <p className="mt-1 text-xs font-semibold text-accent">Updating results...</p>
+                ) : null}
               </div>
               <div className="flex w-full items-center gap-2 sm:w-auto">
                 <Sheet>
