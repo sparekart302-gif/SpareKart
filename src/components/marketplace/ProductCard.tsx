@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Link } from "@/components/navigation/Link";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { type Product, formatPKR } from "@/data/marketplace";
+import { formatRating } from "@/lib/format-rating";
 import { useMarketplace } from "@/modules/marketplace/store";
 
 export function ProductCard({ product, compact = false }: { product: Product; compact?: boolean }) {
@@ -91,7 +92,7 @@ export function ProductCard({ product, compact = false }: { product: Product; co
             <div className="flex items-center gap-0.5 text-warning">
               <Star className="h-3 w-3 fill-current" />
               <span className="font-semibold text-foreground tabular-nums">
-                {product.rating.toFixed(1)}
+                {formatRating(product.rating)}
               </span>
             </div>
             <span className="text-muted-foreground">({product.reviewCount})</span>
@@ -203,7 +204,7 @@ export function ProductCard({ product, compact = false }: { product: Product; co
             <div className="flex items-center gap-0.5 text-warning">
               <Star className="h-3.5 w-3.5 fill-current" />
               <span className="font-semibold text-foreground tabular-nums">
-                {product.rating.toFixed(1)}
+                {formatRating(product.rating)}
               </span>
             </div>
             <span className="text-muted-foreground">({product.reviewCount})</span>

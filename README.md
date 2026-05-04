@@ -36,7 +36,7 @@ MONGODB_URI=mongodb+srv://username:password@cluster.example.mongodb.net/?retryWr
 MONGODB_DB_NAME=sparekart
 
 RESEND_API_KEY=re_example_replace_me
-RESEND_FROM_EMAIL=no-reply@example.com
+RESEND_FROM_EMAIL=noreply@sparekart.live
 RESEND_FROM_NAME=SpareKart
 
 GOOGLE_CLIENT_ID=replace-with-your-google-client-id.apps.googleusercontent.com
@@ -52,6 +52,7 @@ SPAREKART_SUPER_ADMIN_PASSWORD=replace-with-a-strong-super-admin-password
 Notes:
 
 - `RESEND_API_KEY` and `RESEND_FROM_EMAIL` must be set together for live delivery.
+- `RESEND_FROM_EMAIL` must use a verified sending domain. Do not use consumer inbox domains like `gmail.com`, `yahoo.com`, or `outlook.com`, because Resend will reject them.
 - If Resend is not configured, email previews are written to `SPAREKART_RUNTIME_DIR/email-previews`.
 - Legacy aliases `SPAREKART_SUPERADMIN_EMAIL` and `SPAREKART_SUPERADMIN_PASSWORD` are still supported, but `SPAREKART_SUPER_ADMIN_*` is the preferred format.
 
@@ -78,11 +79,13 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 6. Add these authorized redirect URIs:
 
 #### For Local Development:
+
 ```
 http://localhost:3000/api/auth/google/callback
 ```
 
 #### For Production:
+
 ```
 https://sparekart.live/api/auth/google/callback
 ```
@@ -92,6 +95,7 @@ https://sparekart.live/api/auth/google/callback
 ### How It Works
 
 The redirect URI is constructed dynamically using the `NEXT_PUBLIC_SITE_URL` environment variable:
+
 - Local development: `NEXT_PUBLIC_SITE_URL=http://localhost:3000`
 - Production: `NEXT_PUBLIC_SITE_URL=https://sparekart.live`
 
@@ -113,6 +117,7 @@ Useful endpoints:
 - `GET /api/health`
 - `GET /api/ready`
 - `GET /api/mongodb/health`
+- `POST /api/email/test` for an authenticated admin-only Resend delivery check
 
 Performance notes:
 
@@ -193,5 +198,29 @@ Recommended production env vars:
 - `SPAREKART_SEED_PASSWORD=...`
 - `SPAREKART_SUPER_ADMIN_EMAIL=...`
 - `SPAREKART_SUPER_ADMIN_PASSWORD=...`
+
+## Resend sender requirements
+
+SpareKart sends verification, password reset, order confirmation, seller notification, and status update emails from the backend only. The Resend API key must stay server-side.
+
+Before expecting production email delivery, make sure:
+
+- `RESEND_FROM_EMAIL` belongs to a domain you have verified inside Resend
+- that domain has the required DNS records configured in your DNS provider:
+  - SPF
+  - DKIM
+  - DMARC
+- the sender address matches your verified domain, for example `noreply@sparekart.live`
+
+If you need to test delivery after deployment, sign in as an admin and call:
+
+```bash
+curl -X POST https://sparekart.live/api/email/test \
+  -H "Content-Type: application/json" \
+  -H "Cookie: <your-admin-session-cookie>" \
+  -d '{"email":"you@example.com","name":"SpareKart Admin"}'
+```
+
+In local development without Resend, the app writes preview files to `SPAREKART_RUNTIME_DIR/email-previews` instead of sending live mail.
 
 See [DEPLOYMENT.md](/Users/mm/drive-deliver-marketplace/DEPLOYMENT.md) for the full deployment guide and handoff checklist.

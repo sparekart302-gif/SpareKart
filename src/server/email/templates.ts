@@ -146,6 +146,22 @@ export function renderEmailTemplate(payload: EmailTemplatePayload) {
           ctaUrl: payload.recoveryUrl,
         }),
       };
+    case "TEST_DELIVERY":
+      return {
+        subject: "SpareKart email delivery test",
+        text: `This is a SpareKart delivery test for ${payload.recipientName}. Requested by ${payload.requestedBy} in ${payload.environmentLabel}.`,
+        html: layout({
+          eyebrow: "Delivery test",
+          title: "SpareKart email is working",
+          intro: `Hi ${payload.recipientName}, this is a backend delivery test generated from the SpareKart admin tools.`,
+          body: `
+            <p style="margin:0;color:#334155;font-size:14px;line-height:1.8;">The request was submitted by <strong>${escapeHtml(payload.requestedBy)}</strong> in the <strong>${escapeHtml(payload.environmentLabel)}</strong> environment.</p>
+            <p style="margin:20px 0 0;color:#334155;font-size:14px;line-height:1.8;">If you received this email, Resend credentials, sender configuration, and DNS records are aligned for the current environment.</p>
+          `,
+          ctaLabel: "Open SpareKart admin",
+          ctaUrl: payload.dashboardUrl,
+        }),
+      };
     case "ORDER_CONFIRMATION_CUSTOMER":
       return {
         subject: `Order confirmed: ${payload.orderNumber}`,

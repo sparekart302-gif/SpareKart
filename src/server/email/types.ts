@@ -5,6 +5,7 @@ export type EmailTemplateKey =
   | "WELCOME_SELLER"
   | "VERIFY_EMAIL"
   | "PASSWORD_RESET"
+  | "TEST_DELIVERY"
   | "ORDER_CONFIRMATION_CUSTOMER"
   | "ORDER_CONFIRMATION_SELLER"
   | "ORDER_STATUS_UPDATE"
@@ -34,6 +35,13 @@ export type EmailTemplatePayload =
       otpCode: string;
       recoveryUrl: string;
       expiresLabel: string;
+    }
+  | {
+      template: "TEST_DELIVERY";
+      recipientName: string;
+      requestedBy: string;
+      environmentLabel: string;
+      dashboardUrl: string;
     }
   | {
       template: "ORDER_CONFIRMATION_CUSTOMER";

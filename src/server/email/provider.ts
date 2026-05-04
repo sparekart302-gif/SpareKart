@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { Resend } from "resend";
 import { getServerEnv } from "@/server/config/env";
 import { getRuntimeFilePath } from "@/server/runtime/storage";
+import { getResendFromAddress, validateResendSenderEmail } from "./config";
 import type { EmailJobRecord } from "./types";
 
 type DeliveryResult = {
@@ -22,23 +23,39 @@ function hasPartialResendConfig() {
 async function deliverViaResend(job: EmailJobRecord): Promise<DeliveryResult> {
   const env = getServerEnv();
   const resend = new Resend(env.RESEND_API_KEY!);
-
-  const response = await resend.emails.send({
-    to: job.to.email,
-    from: env.RESEND_FROM_NAME
-      ? `${env.RESEND_FROM_NAME} <${env.RESEND_FROM_EMAIL!}>`
-      : env.RESEND_FROM_EMAIL!,
-    subject: job.subject,
-    html: job.html,
-    text: job.text,
+  const senderValidation = validateResendSenderEmail({
+    fromEmail: env.RESEND_FROM_EMAIL,
+    publicSiteUrl: env.publicSiteUrl,
+    nodeEnv: env.NODE_ENV,
   });
 
-  if (response.error) {
-    throw new Error(response.error.message);
+  if (!senderValidation.ok) {
+    throw new Error(senderValidation.detail);
   }
 
-  console.info(`[email] Delivered ${job.template} via Resend to ${job.to.email}.`);
-  return { provider: "resend" };
+  try {
+    const response = await resend.emails.send({
+      to: job.to.email,
+      from: getResendFromAddress(),
+      subject: job.subject,
+      html: job.html,
+      text: job.text,
+    });
+
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+
+    console.info(
+      `[email] Delivered ${job.template} via Resend to ${job.to.email}. senderDomain=${senderValidation.senderDomain ?? "unknown"} messageId=${response.data?.id ?? "unknown"}`,
+    );
+    return { provider: "resend" };
+  } catch (error) {
+    console.error(
+      `[email] Resend delivery failed for ${job.template} -> ${job.to.email}. senderDomain=${senderValidation.senderDomain ?? "unknown"} ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+    throw error;
+  }
 }
 
 async function deliverViaLocalPreview(job: EmailJobRecord): Promise<DeliveryResult> {
@@ -56,6 +73,8 @@ async function deliverViaLocalPreview(job: EmailJobRecord): Promise<DeliveryResu
 }
 
 export async function deliverEmail(job: EmailJobRecord) {
+  const env = getServerEnv();
+
   if (hasPartialResendConfig()) {
     throw new Error(
       "Resend configuration is incomplete. Set both RESEND_API_KEY and RESEND_FROM_EMAIL.",
@@ -64,6 +83,12 @@ export async function deliverEmail(job: EmailJobRecord) {
 
   if (hasResendConfig()) {
     return deliverViaResend(job);
+  }
+
+  if (env.NODE_ENV === "production") {
+    throw new Error(
+      "Resend email delivery is not configured for production. Set RESEND_API_KEY and RESEND_FROM_EMAIL, and verify the sender domain in Resend.",
+    );
   }
 
   console.warn(

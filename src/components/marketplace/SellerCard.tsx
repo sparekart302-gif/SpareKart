@@ -2,6 +2,7 @@ import { Star, BadgeCheck, MapPin, Package } from "lucide-react";
 import { Link } from "@/components/navigation/Link";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import type { Seller } from "@/data/marketplace";
+import { formatRating } from "@/lib/format-rating";
 
 export function SellerCard({ seller }: { seller: Seller }) {
   return (
@@ -46,7 +47,9 @@ export function SellerCard({ seller }: { seller: Seller }) {
         <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground sm:mt-3 sm:text-xs">
           <span className="flex items-center gap-1 text-warning">
             <Star className="h-3.5 w-3.5 fill-current" />
-            <span className="font-semibold text-foreground tabular-nums">{seller.rating}</span>
+            <span className="font-semibold text-foreground tabular-nums">
+              {formatRating(seller.rating)}
+            </span>
           </span>
           <span className="flex items-center gap-1">
             <Package className="h-3.5 w-3.5" /> {seller.productCount}

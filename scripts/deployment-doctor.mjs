@@ -24,6 +24,22 @@ const PLACEHOLDER_PATTERNS = [
   /^re_example/i,
 ];
 
+const COMMON_FREEMAIL_DOMAINS = new Set([
+  "gmail.com",
+  "googlemail.com",
+  "yahoo.com",
+  "yahoo.co.uk",
+  "hotmail.com",
+  "outlook.com",
+  "live.com",
+  "msn.com",
+  "icloud.com",
+  "me.com",
+  "aol.com",
+  "proton.me",
+  "protonmail.com",
+]);
+
 function check(condition, message, level = "error") {
   if (condition) {
     return;
@@ -117,9 +133,74 @@ function resolvePublicSiteUrl(environment, port) {
   }
 
   return {
-    siteUrl:
-      environment === "production" ? "https://sparekart.live/" : `http://localhost:${port}/`,
+    siteUrl: environment === "production" ? "https://sparekart.live/" : `http://localhost:${port}/`,
     siteUrlSource: "fallback",
+  };
+}
+
+function getEmailDomain(email) {
+  const normalized = email?.trim().toLowerCase();
+
+  if (!normalized || !normalized.includes("@")) {
+    return null;
+  }
+
+  return normalized.split("@").at(-1) ?? null;
+}
+
+function getPublicRootDomain(siteUrl) {
+  const hostname = new URL(siteUrl).hostname.toLowerCase();
+  return hostname.startsWith("www.") ? hostname.slice(4) : hostname;
+}
+
+function validateResendSenderEmail(fromEmail, siteUrl, environment) {
+  const senderDomain = getEmailDomain(fromEmail);
+
+  if (!fromEmail || !senderDomain) {
+    return {
+      ok: false,
+      level: environment === "production" ? "error" : "warn",
+      detail: "RESEND_FROM_EMAIL is missing or invalid.",
+      senderDomain,
+    };
+  }
+
+  if (senderDomain === "resend.dev") {
+    return {
+      ok: true,
+      level: "pass",
+      detail: "Using the Resend onboarding sender for test delivery.",
+      senderDomain,
+    };
+  }
+
+  if (COMMON_FREEMAIL_DOMAINS.has(senderDomain)) {
+    return {
+      ok: false,
+      level: environment === "production" ? "error" : "warn",
+      detail: `The sender domain ${senderDomain} is a consumer inbox domain. Use a verified sending domain such as noreply@${getPublicRootDomain(siteUrl)}.`,
+      senderDomain,
+    };
+  }
+
+  const siteRootDomain = getPublicRootDomain(siteUrl);
+  const matchesSiteDomain =
+    senderDomain === siteRootDomain || senderDomain.endsWith(`.${siteRootDomain}`);
+
+  if (!matchesSiteDomain) {
+    return {
+      ok: true,
+      level: environment === "production" ? "warn" : "pass",
+      detail: `The sender domain ${senderDomain} does not match ${siteRootDomain}. This can still work if that domain is verified in Resend and has SPF, DKIM, and DMARC configured.`,
+      senderDomain,
+    };
+  }
+
+  return {
+    ok: true,
+    level: "pass",
+    detail: `Using ${senderDomain} as the Resend sender domain.`,
+    senderDomain,
   };
 }
 
@@ -201,6 +282,7 @@ const googleConfigured =
   hasConfiguredGoogleClientId(googleClientId) && hasConfiguredValue(googleClientSecret);
 const googlePartial =
   hasConfiguredGoogleClientId(googleClientId) !== hasConfiguredValue(googleClientSecret);
+const resendSenderValidation = validateResendSenderEmail(resendFromEmail, siteUrl, environment);
 let marketplaceStateAvailable = false;
 
 check(nodeMajor >= 20, `Node ${nodeVersion} is too old. Use Node 20+ for Next.js 16.`);
@@ -231,6 +313,11 @@ check(
 check(
   !resendPartial,
   "Resend configuration is partial. Set both RESEND_API_KEY and RESEND_FROM_EMAIL together.",
+);
+check(
+  resendSenderValidation.ok,
+  resendSenderValidation.detail,
+  resendSenderValidation.level === "error" ? "error" : "warn",
 );
 check(
   !googlePartial,
@@ -361,6 +448,9 @@ console.log(
 console.log(
   `- Resend: ${resendConfigured ? "configured" : resendPartial ? "partial configuration" : "local preview fallback"}`,
 );
+if (resendConfigured) {
+  console.log(`- Resend sender: ${resendFromEmail} (${resendSenderValidation.detail})`);
+}
 console.log(
   `- Google OAuth: ${googleConfigured ? "configured" : googlePartial ? "partial configuration" : "not configured"}`,
 );

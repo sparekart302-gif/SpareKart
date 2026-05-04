@@ -1,4 +1,5 @@
 import { getServerEnv } from "@/server/config/env";
+import { getEmailDomain, validateResendSenderEmail } from "@/server/email/config";
 import { jsonSuccess } from "@/server/http/responses";
 import { jsonMongoError } from "@/server/mongodb/http";
 import { probeRuntimeDirectory } from "@/server/runtime/storage";
@@ -9,6 +10,11 @@ export async function GET() {
   try {
     const env = getServerEnv();
     const runtime = await probeRuntimeDirectory();
+    const resendSenderValidation = validateResendSenderEmail({
+      fromEmail: env.RESEND_FROM_EMAIL,
+      publicSiteUrl: env.publicSiteUrl,
+      nodeEnv: env.NODE_ENV,
+    });
     const status = runtime.ok ? "ok" : "warning";
 
     const payload = {
@@ -19,6 +25,12 @@ export async function GET() {
       googleConfigured: env.googleConfigured,
       resendConfigured: env.resendConfigured,
       emailDelivery: env.resendConfigured ? "resend" : "local-preview",
+      resendSenderDomain: getEmailDomain(env.RESEND_FROM_EMAIL),
+      resendSenderStatus: resendSenderValidation.ok
+        ? resendSenderValidation.level
+        : env.resendConfigured
+          ? "error"
+          : "not-configured",
       runtimePersistence: env.mongodbConfigured ? "mongodb-enabled" : "file-fallback",
       runtimeRoot: env.runtimeRoot,
       runtimeWritable: runtime.ok,

@@ -11,6 +11,7 @@ import {
   AdminPanel,
   AdminPill,
 } from "@/components/admin/AdminUI";
+import { formatRating } from "@/lib/format-rating";
 import { getReviewInsights } from "@/modules/marketplace/admin-selectors";
 import { useMarketplace } from "@/modules/marketplace/store";
 import type { ReviewModerationStatus } from "@/modules/marketplace/types";
@@ -152,12 +153,12 @@ export default function AdminReviewsPage() {
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <AdminCompactStat
             label="Avg product rating"
-            value={insights.averageProductRating.toFixed(1)}
+            value={formatRating(insights.averageProductRating)}
             helper="Across moderated product reviews"
           />
           <AdminCompactStat
             label="Avg store rating"
-            value={insights.averageStoreRating.toFixed(1)}
+            value={formatRating(insights.averageStoreRating)}
             helper="Across moderated store reviews"
           />
           <AdminCompactStat
@@ -242,7 +243,7 @@ export default function AdminReviewsPage() {
                       <td className="px-3 py-4">
                         <div className="flex items-center gap-1">
                           <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                          <span className="font-medium">{review.rating.toFixed(1)}</span>
+                          <span className="font-medium">{formatRating(review.rating)}</span>
                         </div>
                       </td>
                       <td className="px-3 py-4">
@@ -360,7 +361,7 @@ export default function AdminReviewsPage() {
                       {selectedReview.body}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <AdminPill>{selectedReview.rating.toFixed(1)} / 5</AdminPill>
+                      <AdminPill>{formatRating(selectedReview.rating)} / 5</AdminPill>
                       {selectedReview.reportedCount > 0 && (
                         <AdminPill tone="danger">
                           <AlertTriangle className="h-3 w-3" />

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminPageHeader } from "@/components/admin/AdminUI";
+import { formatRating } from "@/lib/format-rating";
 import {
   OperationsDetailPanel,
   OperationsKeyValue,
@@ -837,7 +838,7 @@ export default function SellerOrdersPage({
                 />
                 <SellerMetricCard
                   label="Store Rating"
-                  value={storeRating.toFixed(1)}
+                  value={formatRating(storeRating)}
                   helper={`${approvedReviews.length || sellerRecord.reviewCount} published reviews`}
                 />
               </section>
@@ -1122,7 +1123,10 @@ export default function SellerOrdersPage({
                       description="Customer trust and storefront quality signals that affect conversion."
                     >
                       <div className="space-y-3">
-                        <HealthRow label="Store rating" value={`${storeRating.toFixed(1)} / 5`} />
+                        <HealthRow
+                          label="Store rating"
+                          value={`${formatRating(storeRating)} / 5`}
+                        />
                         <HealthRow
                           label="Published reviews"
                           value={String(approvedReviews.length || sellerRecord.reviewCount)}

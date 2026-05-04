@@ -23,7 +23,7 @@ MONGODB_URI=mongodb+srv://username:password@cluster.example.mongodb.net/?retryWr
 MONGODB_DB_NAME=sparekart
 
 RESEND_API_KEY=re_example_replace_me
-RESEND_FROM_EMAIL=no-reply@example.com
+RESEND_FROM_EMAIL=noreply@sparekart.live
 RESEND_FROM_NAME=SpareKart
 
 GOOGLE_CLIENT_ID=replace-with-your-google-client-id.apps.googleusercontent.com
@@ -39,6 +39,7 @@ SPAREKART_SUPER_ADMIN_PASSWORD=replace-with-a-strong-super-admin-password
 Notes:
 
 - `RESEND_API_KEY` and `RESEND_FROM_EMAIL` must be set together for live email delivery.
+- `RESEND_FROM_EMAIL` must use a verified sender domain. Do not use personal inbox domains like `gmail.com`, `yahoo.com`, or `outlook.com`, because Resend will reject them.
 - If Resend is disabled, email previews are written to `SPAREKART_RUNTIME_DIR/email-previews`.
 - `SPAREKART_SUPERADMIN_EMAIL` and `SPAREKART_SUPERADMIN_PASSWORD` are still accepted as legacy aliases if an older `.env` already uses them.
 
@@ -69,11 +70,13 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 6. Add these authorized redirect URIs:
 
 #### For Local Development:
+
 ```
 http://localhost:3000/api/auth/google/callback
 ```
 
 #### For Production:
+
 ```
 https://sparekart.live/api/auth/google/callback
 ```
@@ -83,6 +86,7 @@ https://sparekart.live/api/auth/google/callback
 ### How It Works
 
 The redirect URI is constructed dynamically using the `NEXT_PUBLIC_SITE_URL` environment variable:
+
 - Local development: `NEXT_PUBLIC_SITE_URL=http://localhost:3000`
 - Production: `NEXT_PUBLIC_SITE_URL=https://sparekart.live`
 
@@ -95,6 +99,10 @@ Set:
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
 - `RESEND_FROM_NAME`
+
+Recommended production sender:
+
+- `RESEND_FROM_EMAIL=noreply@sparekart.live`
 
 If Resend is omitted, SpareKart falls back to local preview files in:
 
@@ -109,6 +117,23 @@ Supported email flows:
 - seller order notification
 - order status update
 - payment proof notification
+
+Production requirements:
+
+- verify the sender domain in Resend before go-live
+- publish the DNS records Resend provides for:
+  - SPF
+  - DKIM
+  - DMARC
+- keep `RESEND_API_KEY` server-side only
+
+Admin-only delivery test:
+
+```text
+POST /api/email/test
+```
+
+This endpoint requires an authenticated `ADMIN` or `SUPER_ADMIN` session and confirms whether the current Resend API key and sender domain can deliver live mail.
 
 ## 5. MongoDB Atlas setup
 
@@ -222,6 +247,7 @@ Sign in as an admin before testing these protected endpoints:
 6. Repeat the same pattern for `/api/mongodb/users`
 7. `GET /api/mongodb/orders`
 8. `GET /api/mongodb/orders/:orderId`
+9. `POST /api/email/test`
 
 Notes:
 
@@ -374,6 +400,7 @@ curl https://sparekart.live/api/mongodb/health
 ```
 
 Expected responses:
+
 - `/api/health` → `status: "ok"` or `"warning"`
 - `/api/ready` → `status: "ready"` or `"warning"`
 - `/api/mongodb/health` → `status: "ready"` (if MongoDB is configured)
@@ -410,16 +437,19 @@ Expected responses:
 ### Monitoring and Troubleshooting
 
 **View logs**:
+
 - In Render dashboard, open your Web Service
 - Click "Logs" tab to see real-time logs
 - Look for any errors or warnings
 
 **Common issues**:
+
 - If MongoDB connection fails, verify MONGODB_URI is correct and Render IP is whitelisted
 - If emails don't send, verify RESEND_API_KEY and RESEND_FROM_EMAIL are set correctly
 - If Google OAuth fails, verify GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET match your credentials
 
 **Scale up**:
+
 - If experiencing high traffic, upgrade your Render plan
 - Consider using Render's background workers for email processing if needed
 

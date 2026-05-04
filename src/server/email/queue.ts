@@ -17,6 +17,8 @@ import type {
 
 const OUTBOX_PATH = getRuntimeFilePath("email-outbox.json");
 const AUDIT_PATH = getRuntimeFilePath("email-audit.json");
+const EMAIL_JOB_WAIT_TIMEOUT_MS = 12_000;
+const EMAIL_JOB_WAIT_INTERVAL_MS = 150;
 
 const emptyOutbox: EmailOutboxState = { jobs: [] };
 const emptyAudit: EmailAuditState = { entries: [] };
@@ -25,6 +27,12 @@ let processing = false;
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    globalThis.setTimeout(resolve, ms);
+  });
 }
 
 function shouldUseMongoEmailQueue() {
@@ -115,6 +123,57 @@ export async function enqueueTemplatedEmail(to: EmailAddress, payload: EmailTemp
   }
 
   return enqueueFileTemplatedEmail(to, payload);
+}
+
+async function getMongoEmailJob(jobId: string) {
+  await connectToMongo();
+  const document = await EmailJobModel.findById(jobId).lean();
+  return document ? normalizeEmailJob(document) : null;
+}
+
+async function getFileEmailJob(jobId: string) {
+  const outbox = await readJsonFile(OUTBOX_PATH, emptyOutbox);
+  return outbox.jobs.find((job) => job.id === jobId) ?? null;
+}
+
+async function getEmailJob(jobId: string) {
+  if (shouldUseMongoEmailQueue()) {
+    return getMongoEmailJob(jobId);
+  }
+
+  return getFileEmailJob(jobId);
+}
+
+export async function sendTemplatedEmailNow(to: EmailAddress, payload: EmailTemplatePayload) {
+  const job = shouldUseMongoEmailQueue()
+    ? await enqueueMongoTemplatedEmail(to, payload)
+    : await enqueueFileTemplatedEmail(to, payload);
+
+  await processEmailQueue();
+
+  const deadline = Date.now() + EMAIL_JOB_WAIT_TIMEOUT_MS;
+  let refreshed = await getEmailJob(job.id);
+
+  while (
+    refreshed &&
+    (refreshed.status === "QUEUED" || refreshed.status === "PROCESSING") &&
+    Date.now() < deadline
+  ) {
+    await wait(EMAIL_JOB_WAIT_INTERVAL_MS);
+    refreshed = await getEmailJob(job.id);
+  }
+
+  if (!refreshed) {
+    throw new Error(`Email job ${job.id} could not be reloaded after delivery.`);
+  }
+
+  if (refreshed.status !== "SENT") {
+    throw new Error(
+      refreshed.lastError ?? `Email ${refreshed.template} failed before it could be delivered.`,
+    );
+  }
+
+  return refreshed;
 }
 
 async function recordAudit(input: {

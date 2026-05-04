@@ -26,6 +26,7 @@ import { beginRouteProgress } from "@/components/navigation/RouteProgressBar";
 import { PageLayout, Breadcrumbs } from "@/components/marketplace/PageLayout";
 import { ProductCard } from "@/components/marketplace/ProductCard";
 import { formatPKR, type Product, type Seller } from "@/data/marketplace";
+import { formatRating } from "@/lib/format-rating";
 import { canUserReviewProduct } from "@/modules/marketplace/selectors";
 import { useMarketplace } from "@/modules/marketplace/store";
 import { buildSellerWhatsAppLink } from "@/modules/marketplace/whatsapp";
@@ -356,7 +357,7 @@ export default function ProductPage({
                       ))}
                     </div>
                     <span className="text-sm font-bold tabular-nums">
-                      {productRating.toFixed(1)}
+                      {formatRating(productRating)}
                     </span>
                     <span className="text-sm text-muted-foreground">
                       ({productReviewCount} reviews)
@@ -389,12 +390,8 @@ export default function ProductPage({
                     }
                     onBuyNow={() => void handleAddToCart(product, qty, true)}
                     onAddToCart={() => void handleAddToCart(product, qty)}
-                    buyingNow={
-                      cartAction?.productId === product.id && cartAction.mode === "buy"
-                    }
-                    addingToCart={
-                      cartAction?.productId === product.id && cartAction.mode === "add"
-                    }
+                    buyingNow={cartAction?.productId === product.id && cartAction.mode === "buy"}
+                    addingToCart={cartAction?.productId === product.id && cartAction.mode === "add"}
                     onToggleWishlist={() => void handleToggleWishlist()}
                   />
                 </div>
@@ -588,7 +585,7 @@ export default function ProductPage({
             <h2 className="mt-1 text-[1.8rem] font-black sm:text-3xl">Verified buyer feedback</h2>
             <div className="mt-5 rounded-[24px] bg-surface p-4 shadow-[var(--shadow-soft)] sm:mt-6 sm:rounded-[26px] sm:p-5">
               <div className="text-4xl font-black tabular-nums text-foreground sm:text-5xl">
-                {productRating.toFixed(1)}
+                {formatRating(productRating)}
               </div>
               <div className="flex text-warning mt-1">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -610,7 +607,7 @@ export default function ProductPage({
                   <div key={m.label} className="text-xs">
                     <div className="flex justify-between mb-1">
                       <span className="text-muted-foreground">{m.label}</span>
-                      <span className="font-bold tabular-nums">{m.value}</span>
+                      <span className="font-bold tabular-nums">{formatRating(m.value)}</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
                       <div
@@ -759,7 +756,7 @@ export default function ProductPage({
                   />
                   <button
                     type="button"
-                      onClick={() => void handleSubmitReview()}
+                    onClick={() => void handleSubmitReview()}
                     className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground"
                   >
                     Submit guest review
@@ -818,13 +815,22 @@ export default function ProductPage({
                 ) : null}
                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
                   <span>
-                    Fitment <strong className="text-foreground tabular-nums">{r.fitment}/5</strong>
+                    Fitment{" "}
+                    <strong className="text-foreground tabular-nums">
+                      {formatRating(r.fitment)}/5
+                    </strong>
                   </span>
                   <span>
-                    Quality <strong className="text-foreground tabular-nums">{r.quality}/5</strong>
+                    Quality{" "}
+                    <strong className="text-foreground tabular-nums">
+                      {formatRating(r.quality)}/5
+                    </strong>
                   </span>
                   <span>
-                    Value <strong className="text-foreground tabular-nums">{r.value}/5</strong>
+                    Value{" "}
+                    <strong className="text-foreground tabular-nums">
+                      {formatRating(r.value)}/5
+                    </strong>
                   </span>
                 </div>
               </div>
@@ -847,7 +853,9 @@ export default function ProductPage({
               delivery and communication.
             </p>
             <div className="mt-5 rounded-[24px] bg-surface p-4 shadow-[var(--shadow-soft)] sm:mt-6 sm:rounded-[26px] sm:p-5">
-              <div className="text-4xl font-black tabular-nums sm:text-5xl">{seller.rating}</div>
+              <div className="text-4xl font-black tabular-nums sm:text-5xl">
+                {formatRating(seller.rating)}
+              </div>
               <div className="flex text-warning mt-1">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star
@@ -868,7 +876,7 @@ export default function ProductPage({
                   <div key={m.label} className="text-xs">
                     <div className="flex justify-between mb-1">
                       <span className="text-muted-foreground">{m.label}</span>
-                      <span className="font-bold tabular-nums">{m.value}</span>
+                      <span className="font-bold tabular-nums">{formatRating(m.value)}</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
                       <div
@@ -928,15 +936,22 @@ export default function ProductPage({
                 ) : null}
                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
                   <span>
-                    Service <strong className="text-foreground tabular-nums">{r.service}/5</strong>
+                    Service{" "}
+                    <strong className="text-foreground tabular-nums">
+                      {formatRating(r.service)}/5
+                    </strong>
                   </span>
                   <span>
                     Delivery{" "}
-                    <strong className="text-foreground tabular-nums">{r.delivery}/5</strong>
+                    <strong className="text-foreground tabular-nums">
+                      {formatRating(r.delivery)}/5
+                    </strong>
                   </span>
                   <span>
                     Communication{" "}
-                    <strong className="text-foreground tabular-nums">{r.communication}/5</strong>
+                    <strong className="text-foreground tabular-nums">
+                      {formatRating(r.communication)}/5
+                    </strong>
                   </span>
                 </div>
               </div>
@@ -987,14 +1002,12 @@ export default function ProductPage({
                     className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
                   >
                     Sold by{" "}
-                    <span className="font-semibold text-foreground">
-                      {s?.name ?? p.sellerSlug}
-                    </span>{" "}
+                    <span className="font-semibold text-foreground">{s?.name ?? p.sellerSlug}</span>{" "}
                     {s?.verified && <BadgeCheck className="h-3 w-3 text-info" />}
                     <span className="text-warning ml-2 flex items-center gap-0.5">
                       <Star className="h-3 w-3 fill-current" />{" "}
                       <span className="text-foreground font-semibold tabular-nums">
-                        {s?.rating ?? p.rating}
+                        {formatRating(s?.rating ?? p.rating)}
                       </span>
                     </span>
                   </Link>
@@ -1131,11 +1144,7 @@ function PurchasePanel({
           disabled={availableStock === 0 || buyingNow || addingToCart}
           className="flex h-11 w-full items-center justify-center gap-2 rounded-xl gradient-accent text-sm font-bold text-primary transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50 sm:h-12"
         >
-          {buyingNow ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Zap className="h-4 w-4" />
-          )}{" "}
+          {buyingNow ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}{" "}
           {buyingNow ? "Preparing checkout..." : "Buy Now"}
         </button>
         <button
@@ -1224,7 +1233,7 @@ function SellerPanel({ seller, product }: { seller: Seller; product: Product }) 
         <div className="rounded-xl bg-background p-2 shadow-[var(--shadow-soft)]">
           <div className="flex items-center justify-center gap-0.5 text-sm font-black tabular-nums">
             <Star className="h-3 w-3 fill-current text-warning" />
-            {seller.rating}
+            {formatRating(seller.rating)}
           </div>
           <div className="text-[10px] text-muted-foreground">Rating</div>
         </div>

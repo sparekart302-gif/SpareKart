@@ -17,6 +17,7 @@ import {
 } from "@/modules/marketplace/admin-selectors";
 import { useMarketplace } from "@/modules/marketplace/store";
 import { formatPKR } from "@/data/marketplace";
+import { formatRating } from "@/lib/format-rating";
 
 export default function AdminUserDetailPage({ userId }: { userId: string }) {
   const { currentUser, state } = useMarketplace();
@@ -321,7 +322,7 @@ function UserDetailContent({ userId }: { userId: string }) {
                 />
                 <ReviewBox
                   label="Avg. rating"
-                  value={averageRating([...reviews.product, ...reviews.store]).toFixed(1)}
+                  value={formatRating(averageRating([...reviews.product, ...reviews.store]))}
                   Icon={Star}
                 />
               </div>

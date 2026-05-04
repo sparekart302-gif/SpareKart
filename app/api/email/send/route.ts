@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { jsonError } from "@/server/auth/http";
+import { getCurrentSessionUser } from "@/server/auth/service";
 import { queueMarketplaceEmail } from "@/server/email/service";
 import { jsonFailure, jsonSuccess } from "@/server/http/responses";
 
@@ -112,6 +113,15 @@ const emailRequestSchema = z.discriminatedUnion("type", [
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentSessionUser();
+
+    if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
+      return jsonFailure("Email queue access is limited to authenticated admins.", {
+        status: 403,
+        code: "EMAIL_QUEUE_FORBIDDEN",
+      });
+    }
+
     const body = await request.json();
     const payload = emailRequestSchema.parse(body);
 

@@ -23,6 +23,7 @@ import {
 import { useMarketplace } from "@/modules/marketplace/store";
 import type { SellerRecord, SellerStatus } from "@/modules/marketplace/types";
 import { formatPKR } from "@/data/marketplace";
+import { formatRating } from "@/lib/format-rating";
 
 export default function AdminSellerDetailPage({ slug }: { slug: string }) {
   const { currentUser, state } = useMarketplace();
@@ -186,7 +187,7 @@ function SellerDetailContent({ slug }: { slug: string }) {
               <AdminKeyValue label="Response time" value={seller.responseTime} />
               <AdminKeyValue
                 label="Rating"
-                value={`${seller.rating.toFixed(1)} / 5 from ${seller.reviewCount} reviews`}
+                value={`${formatRating(seller.rating)} / 5 from ${seller.reviewCount} reviews`}
               />
               <AdminKeyValue label="Commission rate" value={`${seller.commissionRate}%`} />
               <AdminKeyValue

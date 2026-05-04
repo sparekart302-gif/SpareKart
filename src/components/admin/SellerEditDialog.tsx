@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { formatRating } from "@/lib/format-rating";
 import type { SellerRecord, SellerStatus, SellerTier } from "@/modules/marketplace/types";
 
 const sellerStatuses: SellerStatus[] = [
@@ -269,7 +270,7 @@ export function SellerEditDialog({
                 <div className="mt-3 divide-y divide-border/60">
                   <SummaryRow label="City" value={draft.city} />
                   <SummaryRow label="Joined" value={draft.joined} />
-                  <SummaryRow label="Rating" value={`${draft.rating.toFixed(1)} / 5`} />
+                  <SummaryRow label="Rating" value={`${formatRating(draft.rating)} / 5`} />
                   <SummaryRow label="Review count" value={String(draft.reviewCount)} />
                   <SummaryRow
                     label="Last active"

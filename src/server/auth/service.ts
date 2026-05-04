@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { getAppUrl, getServerEnv } from "@/server/config/env";
 import { queueMarketplaceEmail } from "@/server/email/service";
+import { sendTemplatedEmailNow } from "@/server/email/queue";
 import { AuthApiError } from "./errors";
 import { AUTH_JWT_COOKIE_NAME, buildJwtCookieOptions, createAuthJwt } from "./jwt";
 import { buildExpiredJwtCookieOptions } from "./jwt";
@@ -279,19 +280,32 @@ async function sendVerificationCode(user: AuthUserRecord) {
     EMAIL_VERIFICATION_TTL_MINUTES,
   );
 
-  await queueMarketplaceEmail({
-    type: "AUTH_TEMPLATE",
-    to: { email: user.email, name: user.name },
-    template: {
-      template: "VERIFY_EMAIL",
-      recipientName: user.name,
-      verificationCode,
-      verificationUrl: getAppUrl(
-        `/api/auth/verify-email?email=${encodeURIComponent(user.email)}&code=${encodeURIComponent(verificationCode)}`,
-      ),
-      expiresLabel: `${EMAIL_VERIFICATION_TTL_MINUTES} minutes`,
-    },
-  });
+  try {
+    await sendTemplatedEmailNow(
+      { email: user.email, name: user.name },
+      {
+        template: "VERIFY_EMAIL",
+        recipientName: user.name,
+        verificationCode,
+        verificationUrl: getAppUrl(
+          `/api/auth/verify-email?email=${encodeURIComponent(user.email)}&code=${encodeURIComponent(verificationCode)}`,
+        ),
+        expiresLabel: `${EMAIL_VERIFICATION_TTL_MINUTES} minutes`,
+      },
+    );
+  } catch (error) {
+    throw new AuthApiError(
+      "We could not deliver the verification email. Confirm the Resend sender domain and try again.",
+      {
+        status: 502,
+        code: "VERIFICATION_EMAIL_DELIVERY_FAILED",
+        details: {
+          email: user.email,
+          reason: error instanceof Error ? error.message : "Unknown delivery error",
+        },
+      },
+    );
+  }
 
   return verificationCode;
 }
@@ -410,7 +424,25 @@ export async function signupWithEmailPassword(input: SignupInput) {
     users: [...current.users, user],
   }));
 
-  await sendVerificationCode(user);
+  try {
+    await sendVerificationCode(user);
+  } catch (error) {
+    if (error instanceof AuthApiError && error.code === "VERIFICATION_EMAIL_DELIVERY_FAILED") {
+      throw new AuthApiError(
+        "Your account was created, but the verification email could not be delivered. Open the verification screen and request a fresh code after fixing email delivery settings.",
+        {
+          status: 502,
+          code: "VERIFICATION_EMAIL_DELIVERY_FAILED_AFTER_SIGNUP",
+          details: {
+            email: user.email,
+            accountCreated: true,
+          },
+        },
+      );
+    }
+
+    throw error;
+  }
 
   return {
     user: sanitizeAuthUser(user),

@@ -22,6 +22,7 @@ import {
 import { useMarketplace } from "@/modules/marketplace/store";
 import type { ManagedProductInput, ProductModerationStatus } from "@/modules/marketplace/types";
 import { formatPKR } from "@/data/marketplace";
+import { formatRating } from "@/lib/format-rating";
 
 export default function AdminProductDetailPage({ productId }: { productId: string }) {
   const { currentUser, state } = useMarketplace();
@@ -201,7 +202,7 @@ function ProductDetailContent({ productId }: { productId: string }) {
         />
         <AdminCompactStat
           label="Rating"
-          value={product.rating.toFixed(1)}
+          value={formatRating(product.rating)}
           helper="Storefront rating"
         />
       </section>

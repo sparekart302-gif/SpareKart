@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getServerEnv } from "./env";
+import { validateResendSenderEmail } from "@/server/email/config";
 import { MarketplaceStateModel } from "@/server/mongodb/models/marketplace";
 import { connectToMongo } from "@/server/mongodb/connection";
 import { probeRuntimeDirectory } from "@/server/runtime/storage";
@@ -29,6 +30,11 @@ export async function getDeploymentReadiness() {
   const env = getServerEnv();
   const checks: ReadinessCheck[] = [];
   const runtimeProbe = await probeRuntimeDirectory();
+  const resendSenderValidation = validateResendSenderEmail({
+    fromEmail: env.RESEND_FROM_EMAIL,
+    publicSiteUrl: env.publicSiteUrl,
+    nodeEnv: env.NODE_ENV,
+  });
   let marketplaceStateAvailable = false;
   const usesLocalhostSiteUrl =
     env.publicSiteUrl.includes("localhost") || env.publicSiteUrl.includes("127.0.0.1");
@@ -58,8 +64,16 @@ export async function getDeploymentReadiness() {
       createCheck(
         "email-delivery",
         "Transactional email delivery",
-        "pass",
-        `Resend is configured with ${env.RESEND_FROM_EMAIL}.`,
+        resendSenderValidation.ok
+          ? resendSenderValidation.level === "warn"
+            ? "warn"
+            : "pass"
+          : env.NODE_ENV === "production"
+            ? "fail"
+            : "warn",
+        resendSenderValidation.ok
+          ? `Resend is configured with ${env.RESEND_FROM_EMAIL}. ${resendSenderValidation.detail}`
+          : resendSenderValidation.detail,
       ),
     );
   } else if (env.resendPartiallyConfigured) {

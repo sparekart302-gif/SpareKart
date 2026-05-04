@@ -40,7 +40,7 @@ import { getRuntimeFilePath, readJsonFile, writeJsonFile } from "@/server/runtim
 const MARKETPLACE_STATE_ID = "primary";
 const GUEST_CART_USER_ID = "guest-session";
 const MARKETPLACE_STATE_CACHE_TTL_MS = 15_000;
-const MARKETPLACE_STATE_READ_RETRY_DELAY_MS = 350;
+const MARKETPLACE_STATE_READ_RETRY_DELAY_MS = 750;
 const MARKETPLACE_RUNTIME_SNAPSHOT_PATH = getRuntimeFilePath(
   "marketplace",
   "last-known-state.json",

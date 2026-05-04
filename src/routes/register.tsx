@@ -6,7 +6,7 @@ import { Loader2, ShoppingBag, Store, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@/components/navigation/Link";
 import { PageLayout } from "@/components/marketplace/PageLayout";
-import { signupWithEmail } from "@/modules/auth/client";
+import { ApiRequestError, signupWithEmail } from "@/modules/auth/client";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -47,6 +47,17 @@ export default function RegisterPage() {
       toast.success("Verification code sent to your email.");
       router.push(`/verify-email?email=${encodeURIComponent(result.user.email)}`);
     } catch (error) {
+      if (
+        error instanceof ApiRequestError &&
+        error.code === "VERIFICATION_EMAIL_DELIVERY_FAILED_AFTER_SIGNUP"
+      ) {
+        const failedEmail =
+          typeof error.payload?.email === "string" ? error.payload.email : form.email.trim();
+        toast.error(error.message);
+        router.push(`/verify-email?email=${encodeURIComponent(failedEmail)}`);
+        return;
+      }
+
       toast.error(error instanceof Error ? error.message : "Could not create account.");
     } finally {
       setSubmitting(false);

@@ -24,6 +24,7 @@ import { Link } from "@/components/navigation/Link";
 import { PageLayout, Breadcrumbs } from "@/components/marketplace/PageLayout";
 import { ProductCard } from "@/components/marketplace/ProductCard";
 import { type Seller } from "@/data/marketplace";
+import { formatRating } from "@/lib/format-rating";
 import { canUserReviewStore } from "@/modules/marketplace/selectors";
 import { useMarketplace } from "@/modules/marketplace/store";
 import { buildSellerWhatsAppLink } from "@/modules/marketplace/whatsapp";
@@ -157,7 +158,7 @@ export default function SellerPage({ seller }: SellerPageProps) {
                     <div className="inline-flex items-center gap-1.5">
                       <Star className="h-4 w-4 fill-current text-warning" />
                       <span className="font-black tabular-nums text-foreground">
-                        {displayRating.toFixed(1)}
+                        {formatRating(displayRating)}
                       </span>
                       <span className="text-muted-foreground">({displayReviewCount} reviews)</span>
                     </div>
@@ -222,7 +223,7 @@ export default function SellerPage({ seller }: SellerPageProps) {
               <div className="grid gap-3 sm:grid-cols-2">
                 <MetricCard label="Products Listed" value={String(sellerProducts.length)} />
                 <MetricCard label="Orders Handled" value={String(sellerOrders.length)} />
-                <MetricCard label="Store Rating" value={displayRating.toFixed(1)} />
+                <MetricCard label="Store Rating" value={formatRating(displayRating)} />
                 <MetricCard label="Customer Reviews" value={String(displayReviewCount)} />
               </div>
             </div>
@@ -317,7 +318,7 @@ export default function SellerPage({ seller }: SellerPageProps) {
                   <div className="mt-4 space-y-3">
                     <PerformanceRow label="Live products" value={String(sellerProducts.length)} />
                     <PerformanceRow label="Orders handled" value={String(sellerOrders.length)} />
-                    <PerformanceRow label="Average rating" value={displayRating.toFixed(1)} />
+                    <PerformanceRow label="Average rating" value={formatRating(displayRating)} />
                     <PerformanceRow label="Published reviews" value={String(displayReviewCount)} />
                   </div>
                 </div>
@@ -382,7 +383,7 @@ export default function SellerPage({ seller }: SellerPageProps) {
               <section className="space-y-6">
                 <div className="rounded-[26px] bg-card p-5 shadow-[var(--shadow-premium)]">
                   <div className="text-5xl font-black tracking-tight text-foreground">
-                    {displayRating.toFixed(1)}
+                    {formatRating(displayRating)}
                   </div>
                   <div className="mt-2 flex items-center gap-1 text-warning">
                     {Array.from({ length: 5 }).map((_, index) => (
@@ -722,7 +723,7 @@ function ServiceBar({ label, value }: { label: string; value: number }) {
     <div>
       <div className="mb-1.5 flex items-center justify-between text-sm">
         <span className="text-muted-foreground">{label}</span>
-        <span className="font-semibold text-foreground">{value.toFixed(1)}</span>
+        <span className="font-semibold text-foreground">{formatRating(value)}</span>
       </div>
       <div className="h-2 rounded-full bg-surface">
         <div
